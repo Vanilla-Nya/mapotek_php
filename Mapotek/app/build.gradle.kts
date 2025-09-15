@@ -36,6 +36,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -55,10 +56,12 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation("com.google.android.material:material:1.10.0")
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation (libs.androidx.appcompat) // Changed from libs.appcompat
+    implementation (libs.androidx.appcompat)
     implementation (libs.material)
+    implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.navigation.ui)
     testImplementation (libs.junit)
-    androidTestImplementation (libs.androidx.junit) // Also ensure this alias is correct, it is androidx-junit in your toml androidTestImplementation libs.androidx.espresso.core // And this one is androidx-espresso-core testImplementation(libs.junit)
+    androidTestImplementation (libs.androidx.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

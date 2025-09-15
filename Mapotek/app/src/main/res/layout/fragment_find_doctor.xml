@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Search Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <!-- Search Field -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="12dp"
+                    android:hint="Cari dokter, spesialis..."
+                    app:startIconDrawable="@drawable/ic_search"
+                    app:boxStrokeColor="@color/primary_color"
+                    app:hintTextColor="@color/primary_color"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSearch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Queue Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQueue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="56dp"
+                    android:text="Antrian"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/accent_color"
+                    app:icon="@drawable/ic_queue"
+                    app:cornerRadius="12dp"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="16dp" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Filter Chips -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="4dp"
+                app:singleSelection="false">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Semua"
+                    android:checked="true"
+                    style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipUmum"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dokter Umum"
+                    style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipAnak"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Anak"
+                    style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipJantung"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Jantung"
+                    style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMata"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mata"
+                    style="@style/Widget.MaterialComponents.Chip.Filter" />
+
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <!-- Doctor List Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dokter Tersedia"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Doctor Cards Container -->
+        <LinearLayout
+            android:id="@+id/doctorContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

@@ -95,6 +95,11 @@ public class loginActivity extends AppCompatActivity {
             // TODO: Implement forgot password functionality
             Toast.makeText(this, "Fitur lupa password akan segera hadir", Toast.LENGTH_SHORT).show();
         });
+
+        tvForgotPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(loginActivity.this, forgotPasswordActivity.class);
+            startActivity(intent);
+        });
     }
 
     private boolean validateForm() {
@@ -161,10 +166,12 @@ public class loginActivity extends AppCompatActivity {
                 // Login successful
                 Toast.makeText(this, "Login berhasil!\nSelamat datang!", Toast.LENGTH_LONG).show();
 
-                // TODO: Navigate to main activity
-                // Intent intent = new Intent(loginactivity.this, MainActivity.class);
-                // startActivity(intent);
-                // finish();
+                // Navigate to main activity
+                Intent intent = new Intent(loginActivity.this, MainActivity.class);
+                intent.putExtra("USER_NAME", email); // Pass user name to dashboard
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
 
             } else {
                 // Login failed

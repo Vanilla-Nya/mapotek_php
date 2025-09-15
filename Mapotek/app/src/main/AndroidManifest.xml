@@ -12,13 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Mapotek">
         <activity
-            android:name=".registeractivity"
-            android:exported="false" />
-<!--        <activity-->
-<!--            android:name=".ui.theme.loginActivity"-->
-<!--            android:exported="false" /> &lt;!&ndash; <activity &ndash;&gt;-->
-<!--         android:name=".registeractivity" -->
-<!--         android:exported="false" /> -->
+            android:name=".FindDoctorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mapotek" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Mapotek" />
         <activity
             android:name=".loginActivity"
             android:exported="true"
@@ -30,6 +30,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".forgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".registeractivity"
+            android:exported="false" />
     </application>
 
 </manifest>

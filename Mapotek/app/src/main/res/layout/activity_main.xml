@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color"
+    tools:context=".MainActivity">
+
+    <!-- Top App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primary_color"
+            app:title="MapoTek"
+            app:titleTextColor="@color/white"
+            app:menu="@menu/top_menu" />
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Fragment Container -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="80dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <!-- Bottom App Bar -->
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottomAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:fabCradleMargin="8dp"
+        app:fabCradleRoundedCornerRadius="16dp"
+        app:fabCradleVerticalOffset="8dp"
+        app:backgroundTint="@color/white"
+        app:elevation="8dp">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:menu="@menu/bottom_navigation_menu"
+            app:itemIconTint="@color/bottom_nav_item_color"
+            app:itemTextColor="@color/bottom_nav_item_color"
+            app:labelVisibilityMode="labeled" />
+
+    </com.google.android.material.bottomappbar.BottomAppBar>
+
+    <!-- Floating Action Button for QR Scanner -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScanQR"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_qr_code_scanner"
+        android:contentDescription="Scan QR Code"
+        app:backgroundTint="@color/accent_color"
+        app:tint="@color/white"
+        app:layout_anchor="@id/bottomAppBar" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
