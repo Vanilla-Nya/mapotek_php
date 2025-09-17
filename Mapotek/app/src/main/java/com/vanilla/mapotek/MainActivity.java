@@ -21,7 +21,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 public class MainActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbar;
-    private BottomNavigationView bottomNavigation;
     private FloatingActionButton fabScanQR;
 
     // Fragments
@@ -52,21 +51,43 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         setupToolbar();
         setupFragments();
-        setupBottomNavigation();
         setupFAB();
         setupBackPressHandler();
+    }
 
-        // Load dashboard fragment by default
-        if (savedInstanceState == null) {
-            loadFragment(dashboardFragment, "Dashboard");
-            bottomNavigation.setSelectedItemId(R.id.nav_dashboard);
+    private void selectNavItemInternal(String navItem) {
+        switch (navItem) {
+            case "dashboard":
+                loadFragment(dashboardFragment, "Dashboard");
+                updateToolbarTitle("MapoTek");
+                break;
+            case "findDoctor":
+                loadFragment(findDoctorFragment, "Cari Dokter");
+                updateToolbarTitle("Cari Dokter");
+                break;
+            case "history":
+                loadFragment(historyFragment, "Riwayat");
+                updateToolbarTitle("Riwayat");
+                break;
+            case "profile":
+                loadFragment(profileFragment, "Profil");
+                updateToolbarTitle("Profil");
+                break;
         }
     }
 
+
+
     private void initializeViews() {
         toolbar = findViewById(R.id.toolbar);
-        bottomNavigation = findViewById(R.id.bottomNavigation);
         fabScanQR = findViewById(R.id.fabScanQR);
+
+        // Custom navigation views
+        findViewById(R.id.navDashboard).setOnClickListener(v -> selectNavItemInternal("dashboard"));
+        findViewById(R.id.navFindDoctor).setOnClickListener(v -> selectNavItemInternal("findDoctor"));
+        findViewById(R.id.navHistory).setOnClickListener(v -> selectNavItemInternal("history"));
+        findViewById(R.id.navProfile).setOnClickListener(v -> selectNavItemInternal("profile"));
+
         sharedPreferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
     }
 
@@ -89,35 +110,25 @@ public class MainActivity extends AppCompatActivity {
         }
         args.putString("USER_NAME", userName);
 
+        // Set arguments for fragments that need user data
         dashboardFragment.setArguments(args);
         profileFragment.setArguments(args);
+
+        // Also save user data to SharedPreferences for profile fragment to access
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("user_name", userName);
+
+        // You can add more user data here when available from registration
+        // For now, set some default values
+        if (!sharedPreferences.contains("nik")) {
+            editor.putString("nik", "1234567890123456");
+            editor.putString("nama_lengkap", userName);
+            editor.putString("tanggal_lahir", "01/01/1990");
+            editor.putString("alamat", "Jl. Raya No. 123, Surabaya, Jawa Timur");
+        }
+        editor.apply();
     }
 
-    private void setupBottomNavigation() {
-        bottomNavigation.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-
-            if (id == R.id.nav_dashboard) {
-                loadFragment(dashboardFragment, "Dashboard");
-                updateToolbarTitle("MapoTek");
-                return true;
-            } else if (id == R.id.nav_find_doctor) {
-                loadFragment(findDoctorFragment, "Cari Dokter");
-                updateToolbarTitle("Cari Dokter");
-                return true;
-            } else if (id == R.id.nav_history) {
-                loadFragment(historyFragment, "Riwayat");
-                updateToolbarTitle("Riwayat");
-                return true;
-            } else if (id == R.id.nav_profile) {
-                loadFragment(profileFragment, "Profil");
-                updateToolbarTitle("Profil");
-                return true;
-            }
-
-            return false;
-        });
-    }
 
     private void setupFAB() {
         fabScanQR.setOnClickListener(v -> openQRScanner());
@@ -233,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
                             .show();
                 } else {
                     // Go back to dashboard
-                    bottomNavigation.setSelectedItemId(R.id.nav_dashboard);
+                    selectNavItemInternal("dashboard");
                 }
             }
         });
