@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.*;
+import android.view.ViewGroup;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -18,6 +19,7 @@ import com.google.android.material.button.MaterialButton;
 
 public class loginActivity extends AppCompatActivity {
 
+    private RelativeLayout loadingOverlay;
     private TextInputEditText etEmail, etPassword;
     private TextInputLayout tilEmail, tilPassword;
     private MaterialCheckBox cbRememberMe;
@@ -47,6 +49,7 @@ public class loginActivity extends AppCompatActivity {
         setupSharedPreferences();
         loadSavedCredentials();
         setupClickListeners();
+        createLoadingOverlay();
     }
 
     private void initializeViews() {
@@ -131,6 +134,61 @@ public class loginActivity extends AppCompatActivity {
         tilPassword.setError(null);
     }
 
+    private void createLoadingOverlay() {
+        loadingOverlay = new RelativeLayout(this);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.MATCH_PARENT);
+        loadingOverlay.setLayoutParams(params);
+        loadingOverlay.setBackgroundColor(0x80000000); // Semi-transparent black
+        loadingOverlay.setVisibility(View.GONE);
+
+        // Add spinning progress bar
+        ProgressBar spinner = new ProgressBar(this);
+        RelativeLayout.LayoutParams spinnerParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT);
+        spinnerParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+        spinner.setLayoutParams(spinnerParams);
+
+        // Add loading text
+        TextView loadingText = new TextView(this);
+        loadingText.setText("Menyiapkan akun Anda...");
+        loadingText.setTextColor(0xFFFFFFFF);
+        loadingText.setTextSize(16);
+        RelativeLayout.LayoutParams textParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT);
+        textParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        textParams.addRule(RelativeLayout.BELOW, spinner.getId());
+        textParams.setMargins(0, 30, 0, 0);
+        loadingText.setLayoutParams(textParams);
+
+        loadingOverlay.addView(spinner);
+        loadingOverlay.addView(loadingText);
+
+        // Add to main layout
+        ((ViewGroup) findViewById(R.id.main)).addView(loadingOverlay);
+    }
+
+    private void showLoadingOverlay() {
+        loadingOverlay.setVisibility(View.VISIBLE);
+        loadingOverlay.setAlpha(0f);
+        loadingOverlay.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start();
+    }
+
+    private void hideLoadingOverlay() {
+        loadingOverlay.animate()
+                .alpha(0f)
+                .setDuration(300)
+                .withEndAction(() -> loadingOverlay.setVisibility(View.GONE))
+                .start();
+    }
+
+    // Modify your performLogin() method
     private void performLogin() {
         // Show progress
         progressBar.setVisibility(View.VISIBLE);
@@ -147,8 +205,6 @@ public class loginActivity extends AppCompatActivity {
             btnLogin.setEnabled(true);
             btnLogin.setText("Masuk");
 
-            // TODO: Implement actual login logic here
-            // For demo purposes, we'll use simple validation
             if (isValidCredentials(email, password)) {
                 // Save credentials if remember me is checked
                 if (cbRememberMe.isChecked()) {
@@ -157,13 +213,12 @@ public class loginActivity extends AppCompatActivity {
                     clearSavedCredentials();
                 }
 
-                // Login successful
-                Toast.makeText(this, "Login berhasil!\nSelamat datang!", Toast.LENGTH_LONG).show();
+                // Login successful - go to LoadingActivity (not overlay!)
+                Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show();
 
-                // Navigate to main activity
-                Intent intent = new Intent(loginActivity.this, MainActivity.class);
-                intent.putExtra("USER_NAME", email); // Pass user name to dashboard
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                Intent intent = new Intent(loginActivity.this, loadingActivity.class);
+                intent.putExtra("USER_NAME", email);
+                intent.putExtra("NEXT_ACTIVITY", "MainActivity");
                 startActivity(intent);
                 finish();
 
@@ -174,7 +229,7 @@ public class loginActivity extends AppCompatActivity {
                 Toast.makeText(this, "Login gagal. Periksa kembali data Anda.", Toast.LENGTH_SHORT).show();
             }
 
-        }, 2000); // 2 second delay to simulate network request
+        }, 2000);
     }
 
     private boolean isValidCredentials(String email, String password) {

@@ -168,13 +168,83 @@
                         android:inputType="phone" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Alamat Field -->
+                <!-- REGION SPINNERS - Like your desktop version -->
+
+                <!-- Provinsi -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Provinsi"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_color"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spProvinsi"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/spinner_background"
+                    android:padding="12dp"/>
+
+                <!-- Kota/Kabupaten -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Kota/Kabupaten"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_color"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spKota"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/spinner_background"
+                    android:padding="12dp"/>
+
+                <!-- Kecamatan -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Kecamatan"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_color"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spKecamatan"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/spinner_background"
+                    android:padding="12dp"/>
+
+                <!-- Kelurahan/Desa -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Kelurahan/Desa"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_color"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp"/>
+
+                <Spinner
+                    android:id="@+id/spKelurahan"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/spinner_background"
+                    android:padding="12dp"/>
+
+                <!-- Alamat Detail Field -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilAlamat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="Alamat Lengkap"
+                    android:hint="Alamat Detail (Jalan, RT/RW, No.)"
                     app:startIconDrawable="@drawable/ic_location"
                     app:boxStrokeColor="@color/primary_color"
                     app:hintTextColor="@color/primary_color"

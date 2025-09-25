@@ -53,13 +53,16 @@ public class MainActivity extends AppCompatActivity {
         setupFragments();
         setupFAB();
         setupBackPressHandler();
+        if (savedInstanceState == null) {
+            selectNavItemInternal("dashboard");
+        }
     }
 
     private void selectNavItemInternal(String navItem) {
         switch (navItem) {
             case "dashboard":
                 loadFragment(dashboardFragment, "Dashboard");
-                updateToolbarTitle("MapoTek");
+                updateToolbarTitle("Dahboard");
                 break;
             case "findDoctor":
                 loadFragment(findDoctorFragment, "Cari Dokter");
@@ -118,8 +121,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("user_name", userName);
 
-        // You can add more user data here when available from registration
-        // For now, set some default values
+        // User data for profile fragment
         if (!sharedPreferences.contains("nik")) {
             editor.putString("nik", "1234567890123456");
             editor.putString("nama_lengkap", userName);
@@ -136,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadFragment(Fragment fragment, String tag) {
         if (fragment == activeFragment) {
-            return; // Don't reload the same fragment
+            return;
         }
 
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
@@ -171,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
     private void openQRScanner() {
         Toast.makeText(this, "Membuka Scanner QR", Toast.LENGTH_SHORT).show();
         // TODO: Implement QR Scanner
-        // You can use libraries like ZXing or ML Kit for QR scanning
     }
 
     @Override
