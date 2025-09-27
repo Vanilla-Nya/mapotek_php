@@ -1,5 +1,7 @@
 package com.vanilla.mapotek;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,8 +17,9 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.vanilla.mapotek.auth.AuthManager;
+import com.vanilla.mapotek.auth.loginActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
 
     // SharedPreferences for user data
     private SharedPreferences sharedPreferences;
+    private BroadcastReceiver authStateReceiver;
+    private AuthManager authManager;
     private static final String PREF_NAME = "UserPrefs";
 
     @Override
@@ -41,6 +46,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        authManager = new AuthManager(this);
+
+        // Setup receiver
+        authStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                boolean isLoggedIn = intent.getBooleanExtra("isLoggedIn", false);
+
+                if (isLoggedIn) {
+                    // User logged in
+                    Toast.makeText(MainActivity.this, "Logged in!", Toast.LENGTH_SHORT).show();
+                    // Navigate to home or update UI
+                } else {
+                    // User logged out
+                    Toast.makeText(MainActivity.this, "Logged out!", Toast.LENGTH_SHORT).show();
+                    // Navigate to login
+                    Intent loginIntent = new Intent(MainActivity.this, loginActivity.class);
+                    startActivity(loginIntent);
+                    finish();
+                }
+            }
+        };
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.appBarLayout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

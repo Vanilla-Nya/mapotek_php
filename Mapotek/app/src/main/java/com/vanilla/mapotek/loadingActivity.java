@@ -13,6 +13,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.vanilla.mapotek.auth.loginActivity;
+
 public class loadingActivity extends AppCompatActivity {
 
     private ImageView logoLoading;

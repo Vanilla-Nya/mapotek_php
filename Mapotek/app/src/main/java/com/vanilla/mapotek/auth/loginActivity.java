@@ -1,4 +1,4 @@
-package com.vanilla.mapotek;
+package com.vanilla.mapotek.auth;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,6 +16,8 @@ import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.button.MaterialButton;
+import com.vanilla.mapotek.R;
+import com.vanilla.mapotek.loadingActivity;
 
 public class loginActivity extends AppCompatActivity {
 
@@ -32,6 +34,7 @@ public class loginActivity extends AppCompatActivity {
     private static final String PREF_NAME = "LoginPrefs";
     private static final String KEY_REMEMBER = "remember_me";
     private static final String KEY_EMAIL = "email";
+    private static final String KEY_TOKEN = "token";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

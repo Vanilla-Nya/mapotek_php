@@ -11,6 +11,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.vanilla.mapotek.auth.loginActivity;
+
 public class splashScreenActivity extends AppCompatActivity {
 
     private ImageView splashLogo;

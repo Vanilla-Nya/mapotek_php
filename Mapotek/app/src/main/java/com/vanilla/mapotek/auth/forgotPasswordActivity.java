@@ -1,4 +1,4 @@
-package com.vanilla.mapotek;
+package com.vanilla.mapotek.auth;
 
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.button.MaterialButton;
+import com.vanilla.mapotek.R;
 
 public class forgotPasswordActivity extends AppCompatActivity {
 

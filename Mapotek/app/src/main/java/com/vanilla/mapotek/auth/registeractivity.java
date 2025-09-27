@@ -1,25 +1,42 @@
-package com.vanilla.mapotek;
+package com.vanilla.mapotek.auth;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.vanilla.mapotek.R;
+import com.vanilla.mapotek.database.supabaseHelper;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class registeractivity extends AppCompatActivity {
 
-    private TextInputEditText etNIK, etNamaLengkap, etTanggalLahir, etNoTelp, etAlamat;
-    private TextInputLayout tilNIK, tilNamaLengkap, tilTanggalLahir, tilNoTelp, tilAlamat;
+    private TextInputEditText etNIK, etNamaLengkap, etEmail, etTanggalLahir, etNoTelp, etAlamat;
+    private TextInputEditText etPassword, etConfirmPassword;
+    private TextInputLayout tilNIK, tilNamaLengkap, tilEmail, tilTanggalLahir, tilNoTelp, tilAlamat;
+    private TextInputLayout tilPassword, tilConfirmPassword;
     private Spinner spJenisKelamin, spProvinsi, spKota, spKecamatan, spKelurahan;
     private Button btnRegister, btnLogin;
     private ProgressBar progressBar;
@@ -42,7 +59,7 @@ public class registeractivity extends AppCompatActivity {
 
         initializeViews();
         setupGenderSpinner();
-        loadProvinces(); // Load initial province data
+        loadProvinces();
         setupSpinnerListeners();
         setupDatePicker();
         setupClickListeners();
@@ -51,15 +68,21 @@ public class registeractivity extends AppCompatActivity {
     private void initializeViews() {
         etNIK = findViewById(R.id.etNIK);
         etNamaLengkap = findViewById(R.id.etNamaLengkap);
+        etEmail = findViewById(R.id.etEmail);
         etTanggalLahir = findViewById(R.id.etTanggalLahir);
         etNoTelp = findViewById(R.id.etNoTelp);
         etAlamat = findViewById(R.id.etAlamat);
+        etPassword = findViewById(R.id.etPassword);
+        etConfirmPassword = findViewById(R.id.etConfirmPassword);
 
         tilNIK = findViewById(R.id.tilNIK);
         tilNamaLengkap = findViewById(R.id.tilNamaLengkap);
+        tilEmail = findViewById(R.id.tilEmail);
         tilTanggalLahir = findViewById(R.id.tilTanggalLahir);
         tilNoTelp = findViewById(R.id.tilNoTelp);
         tilAlamat = findViewById(R.id.tilAlamat);
+        tilPassword = findViewById(R.id.tilPassword);
+        tilConfirmPassword = findViewById(R.id.tilConfirmPassword);
 
         spJenisKelamin = findViewById(R.id.spJenisKelamin);
         spProvinsi = findViewById(R.id.spProvinsi);
@@ -73,14 +96,13 @@ public class registeractivity extends AppCompatActivity {
     }
 
     private void setupGenderSpinner() {
-        String[] jenisKelamin = {"Pilih Jenis Kelamin", "Laki-laki", "Perempuan"};
+        String[] jenisKelamin = {"Pilih Jenis Kelamin", "Laki-laki", "Perempuan", "Tidak Bisa Dijelaskan"};
         ArrayAdapter<String> genderAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, jenisKelamin);
         spJenisKelamin.setAdapter(genderAdapter);
     }
 
     private void loadProvinces() {
-        // Show loading state
         String[] loadingData = {"Memuat provinsi..."};
         ArrayAdapter<String> loadingAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, loadingData);
@@ -91,7 +113,6 @@ public class registeractivity extends AppCompatActivity {
             public void onSuccess(List<RegionApiHelper.Region> regions) {
                 provinsiList = regions;
 
-                // Add "Pilih Provinsi" option at the beginning
                 String[] provinsiNames = new String[regions.size() + 1];
                 provinsiNames[0] = "Pilih Provinsi";
                 for (int i = 0; i < regions.size(); i++) {
@@ -107,8 +128,6 @@ public class registeractivity extends AppCompatActivity {
             public void onError(String error) {
                 Toast.makeText(registeractivity.this,
                         "Gagal memuat data provinsi: " + error, Toast.LENGTH_SHORT).show();
-
-                // Fallback to empty state
                 resetSpinner(spProvinsi, "Pilih Provinsi");
             }
         });
@@ -119,7 +138,6 @@ public class registeractivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
-                    // "Pilih Provinsi" selected
                     selectedProvinsiId = "";
                     resetSpinner(spKota, "Pilih Kota");
                     resetSpinner(spKecamatan, "Pilih Kecamatan");
@@ -127,7 +145,6 @@ public class registeractivity extends AppCompatActivity {
                     return;
                 }
 
-                // Get selected province ID (position - 1 because of "Pilih Provinsi")
                 if (provinsiList != null && position - 1 < provinsiList.size()) {
                     selectedProvinsiId = provinsiList.get(position - 1).id;
                     loadCities(selectedProvinsiId);
@@ -199,7 +216,6 @@ public class registeractivity extends AppCompatActivity {
                         android.R.layout.simple_spinner_dropdown_item, kotaNames);
                 spKota.setAdapter(adapter);
 
-                // Reset dependent spinners
                 resetSpinner(spKecamatan, "Pilih Kecamatan");
                 resetSpinner(spKelurahan, "Pilih Kelurahan");
             }
@@ -323,12 +339,15 @@ public class registeractivity extends AppCompatActivity {
 
         String nik = etNIK.getText().toString().trim();
         String nama = etNamaLengkap.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
         String jk = spJenisKelamin.getSelectedItem().toString();
         String tgl = etTanggalLahir.getText().toString().trim();
         String telp = etNoTelp.getText().toString().trim();
         String alamat = etAlamat.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+        String confirmPassword = etConfirmPassword.getText().toString().trim();
 
-        // Validate basic fields
+        // Validate NIK
         if (TextUtils.isEmpty(nik)) {
             tilNIK.setError("NIK harus diisi");
             isValid = false;
@@ -337,6 +356,7 @@ public class registeractivity extends AppCompatActivity {
             isValid = false;
         }
 
+        // Validate Nama
         if (TextUtils.isEmpty(nama)) {
             tilNamaLengkap.setError("Nama lengkap harus diisi");
             isValid = false;
@@ -345,16 +365,19 @@ public class registeractivity extends AppCompatActivity {
             isValid = false;
         }
 
+        // Validate Jenis Kelamin
         if (jk.equals("Pilih Jenis Kelamin")) {
             Toast.makeText(this, "Pilih jenis kelamin", Toast.LENGTH_SHORT).show();
             isValid = false;
         }
 
+        // Validate Tanggal Lahir
         if (TextUtils.isEmpty(tgl)) {
             tilTanggalLahir.setError("Tanggal lahir harus diisi");
             isValid = false;
         }
 
+        // Validate No Telp
         if (TextUtils.isEmpty(telp)) {
             tilNoTelp.setError("No. telepon harus diisi");
             isValid = false;
@@ -363,8 +386,27 @@ public class registeractivity extends AppCompatActivity {
             isValid = false;
         }
 
+        // Validate Alamat
         if (TextUtils.isEmpty(alamat)) {
             tilAlamat.setError("Alamat harus diisi");
+            isValid = false;
+        }
+
+        // Validate Password
+        if (TextUtils.isEmpty(password)) {
+            tilPassword.setError("Password harus diisi");
+            isValid = false;
+        } else if (password.length() < 6) {
+            tilPassword.setError("Password minimal 6 karakter");
+            isValid = false;
+        }
+
+        // Validate Confirm Password
+        if (TextUtils.isEmpty(confirmPassword)) {
+            tilConfirmPassword.setError("Konfirmasi password harus diisi");
+            isValid = false;
+        } else if (!password.equals(confirmPassword)) {
+            tilConfirmPassword.setError("Password tidak cocok");
             isValid = false;
         }
 
@@ -388,9 +430,12 @@ public class registeractivity extends AppCompatActivity {
     private void clearErrors() {
         tilNIK.setError(null);
         tilNamaLengkap.setError(null);
+        tilEmail.setError(null);
         tilTanggalLahir.setError(null);
         tilNoTelp.setError(null);
         tilAlamat.setError(null);
+        tilPassword.setError(null);
+        tilConfirmPassword.setError(null);
     }
 
     private void performRegistration() {
@@ -398,45 +443,150 @@ public class registeractivity extends AppCompatActivity {
         btnRegister.setEnabled(false);
         btnRegister.setText("Mendaftar...");
 
-        btnRegister.postDelayed(() -> {
-            progressBar.setVisibility(View.GONE);
-            btnRegister.setEnabled(true);
-            btnRegister.setText("Daftar");
+        // Get all form data
+        String nik = etNIK.getText().toString().trim();
+        String nama = etNamaLengkap.getText().toString().trim();
+        String email = etEmail.getText().toString().trim();
+        String jk = spJenisKelamin.getSelectedItem().toString();
+        String tgl = etTanggalLahir.getText().toString().trim();
+        String telp = etNoTelp.getText().toString().trim();
+        String alamatDetail = etAlamat.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
 
-            // Get all form data
-            String nik = etNIK.getText().toString().trim();
-            String nama = etNamaLengkap.getText().toString().trim();
-            String jk = spJenisKelamin.getSelectedItem().toString();
-            String tgl = etTanggalLahir.getText().toString().trim();
-            String telp = etNoTelp.getText().toString().trim();
-            String alamatDetail = etAlamat.getText().toString().trim();
+        // Get region names and codes
+        String provinsiName = spProvinsi.getSelectedItem().toString();
+        String kotaName = spKota.getSelectedItem().toString();
+        String kecamatanName = spKecamatan.getSelectedItem().toString();
+        String kelurahanName = spKelurahan.getSelectedItem() != null ?
+                spKelurahan.getSelectedItem().toString() : "";
 
-            // Get region names and IDs
-            String provinsiName = spProvinsi.getSelectedItem().toString();
-            String kotaName = spKota.getSelectedItem().toString();
-            String kecamatanName = spKecamatan.getSelectedItem().toString();
-            String kelurahanName = spKelurahan.getSelectedItem() != null ?
-                    spKelurahan.getSelectedItem().toString() : "";
+        // Get kelurahan code
+        String kelurahanCode = "";
+        if (spKelurahan.getSelectedItemPosition() > 0 && kelurahanList != null) {
+            kelurahanCode = kelurahanList.get(spKelurahan.getSelectedItemPosition() - 1).id;
+        }
 
-            // Create complete address with administrative codes
-            String alamatLengkap = alamatDetail + ", " + kelurahanName + ", " +
-                    kecamatanName + ", " + kotaName + ", " + provinsiName;
+        // Format address
+        String formattedAlamat = provinsiName + "(" + selectedProvinsiId + ")," +
+                kotaName + "(" + selectedKotaId + ")," +
+                kecamatanName + "(" + selectedKecamatanId + ")," +
+                kelurahanName + "(" + kelurahanCode + ")," +
+                alamatDetail;
 
-            // You now have:
-            // - selectedProvinsiId, selectedKotaId, selectedKecamatanId (for FHIR)
-            // - Complete address string
-            // - All user data ready for SATUSEHAT API or local database
+        // Convert date format
+        String tglFormatted;
+        if (tgl.contains("/")) {
+            String[] parts = tgl.split("/");
+            tglFormatted = parts[2] + "-" + parts[1] + "-" + parts[0];
+        } else {
+            tglFormatted = tgl;
+        }
 
-            Toast.makeText(this, "Registrasi berhasil!\n" +
-                            "NIK: " + nik + "\n" +
-                            "Nama: " + nama + "\n" +
-                            "Alamat: " + alamatLengkap + "\n" +
-                            "Kode Wilayah: " + selectedProvinsiId + "/" + selectedKotaId + "/" + selectedKecamatanId,
-                    Toast.LENGTH_LONG).show();
+        String genderDB = jk.equals("Laki-Laki") ? "Laki-laki" :
+                jk.equals("Perempuan") ? "Perempuan" :
+                        "Tidak Bisa Dijelaskan";
 
-            clearForm();
+        try {
+            JSONObject user = new JSONObject();
+            JSONObject pasienData = new JSONObject();
+            pasienData.put("nik", nik);
+            pasienData.put("nama", nama);
+            pasienData.put("jenis_kelamin", genderDB);
+            pasienData.put("tanggal_lahir", tglFormatted);
+            pasienData.put("no_telp", telp);
+            pasienData.put("alamat", formattedAlamat);
+            pasienData.put("password", password);
+            user.put("email", email);
+            user.put("password", password);
+            supabaseHelper.register(registeractivity.this, user, new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    android.util.Log.d("Register", "Response Body: " + e.getMessage());
+                }
 
-        }, 2000);
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    String result = response.body().string();
+                    Log.d("Register", "Response Body: " + result.toString());
+                    login(user, pasienData);
+                }
+            });
+        } catch (Exception e){}
+    }
+
+    private void login(JSONObject data, JSONObject userData) {
+        supabaseHelper.login(this, data, new Callback() {
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                android.util.Log.e("Login", "Failed: " + e.getMessage());
+            }
+
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                if (response.isSuccessful()) {
+                    String result = response.body().string();
+
+                    try {
+                        // Parse using JSONObject (not Gson)
+                        JSONObject jsonResponse = new JSONObject(result);
+
+                        // Get access token and user ID
+                        String accessToken = jsonResponse.getString("access_token");
+
+                        // Insert into Supabase
+                        supabaseHelper.insert(registeractivity.this, "pasien", userData, accessToken,
+                                new supabaseHelper.SupabaseCallback() {
+                                    @Override
+                                    public void onSuccess(String response) {
+                                        runOnUiThread(() -> {
+                                            progressBar.setVisibility(View.GONE);
+                                            btnRegister.setEnabled(true);
+                                            btnRegister.setText("Daftar");
+
+                                            try {
+                                                JSONObject userJson = new JSONObject(userData.toString());
+                                                Toast.makeText(registeractivity.this,
+                                                        "Registrasi berhasil!\nSelamat datang, " +
+                                                                userJson.getString("nama"),
+                                                        Toast.LENGTH_LONG).show();
+
+                                                Intent intent = new Intent(registeractivity.this, loginActivity.class);
+                                                intent.putExtra("registered_nik", userJson.getString("nik"));
+                                                startActivity(intent);
+                                                finish();
+                                            } catch (Exception e) {
+                                                Log.e("Register", "Parse error: " + e.getMessage());
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                        runOnUiThread(() -> {
+                                            progressBar.setVisibility(View.GONE);
+                                            btnRegister.setEnabled(true);
+                                            btnRegister.setText("Daftar");
+
+                                            Log.e("Register", "Insert error: " + error);
+                                            Toast.makeText(registeractivity.this,
+                                                    "Gagal mendaftar: " + error,
+                                                    Toast.LENGTH_LONG).show();
+                                        });
+                                    }
+                                });
+
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            progressBar.setVisibility(View.GONE);
+                            btnRegister.setEnabled(true);
+                            btnRegister.setText("Daftar");
+                            Toast.makeText(registeractivity.this,
+                                    "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                }
+            }
+        });
     }
 
     private void clearForm() {
@@ -445,6 +595,8 @@ public class registeractivity extends AppCompatActivity {
         etTanggalLahir.setText("");
         etNoTelp.setText("");
         etAlamat.setText("");
+        etPassword.setText("");
+        etConfirmPassword.setText("");
         spJenisKelamin.setSelection(0);
         spProvinsi.setSelection(0);
         selectedProvinsiId = selectedKotaId = selectedKecamatanId = "";

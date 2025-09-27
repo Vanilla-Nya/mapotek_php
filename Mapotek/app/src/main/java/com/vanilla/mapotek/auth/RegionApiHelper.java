@@ -1,4 +1,4 @@
-package com.vanilla.mapotek;
+package com.vanilla.mapotek.auth;
 
 import android.os.AsyncTask;
 import org.json.JSONArray;
