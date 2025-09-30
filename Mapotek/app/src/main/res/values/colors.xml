@@ -36,4 +36,10 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
+
+    <!-- QR Scanner Colors -->
+    <color name="zxing_custom_viewfinder_laser">#2196F3</color> <!-- Blue laser line, matches your primary color -->
+    <color name="zxing_custom_result_view">#b0000000</color> <!-- Semi-transparent black overlay when scan succeeds -->
+    <color name="zxing_custom_viewfinder_mask">#60000000</color> <!-- Dark mask around the scan area -->
+    <color name="zxing_custom_possible_result_points">#c0FF4081</color> <!-- Pink dots for detected points, matches your accent -->
 </resources>

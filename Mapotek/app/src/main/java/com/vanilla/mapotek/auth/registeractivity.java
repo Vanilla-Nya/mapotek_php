@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.vanilla.mapotek.R;
 import com.vanilla.mapotek.database.supabaseHelper;
+import com.vanilla.mapotek.splashScreenActivity;
 
 import org.json.JSONObject;
 
@@ -542,15 +543,19 @@ public class registeractivity extends AppCompatActivity {
                                             progressBar.setVisibility(View.GONE);
                                             btnRegister.setEnabled(true);
                                             btnRegister.setText("Daftar");
-
                                             try {
+                                                // Save auth state
+                                                String userId = jsonResponse.getJSONObject("user").getString("id");
+                                                AuthManager authManager = new AuthManager(registeractivity.this);
+                                                authManager.saveLoginState(accessToken, userId);
+
                                                 JSONObject userJson = new JSONObject(userData.toString());
                                                 Toast.makeText(registeractivity.this,
                                                         "Registrasi berhasil!\nSelamat datang, " +
                                                                 userJson.getString("nama"),
                                                         Toast.LENGTH_LONG).show();
 
-                                                Intent intent = new Intent(registeractivity.this, loginActivity.class);
+                                                Intent intent = new Intent(registeractivity.this, splashScreenActivity.class);
                                                 intent.putExtra("registered_nik", userJson.getString("nik"));
                                                 startActivity(intent);
                                                 finish();

@@ -3,6 +3,7 @@ package com.vanilla.mapotek;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,19 +16,24 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
+import com.vanilla.mapotek.auth.AuthManager;
+import com.vanilla.mapotek.database.supabaseHelper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FindDoctorFragment extends Fragment {
+    private static final String TAG = "FindDoctorFragment";
 
     private TextInputEditText etSearch;
     private MaterialButton btnQueue;
     private ChipGroup chipGroup;
     private LinearLayout doctorContainer;
 
-    // Sample doctor data
     private List<Doctor> doctorList;
     private List<Doctor> filteredDoctorList;
+    private AuthManager authManager;
 
     @Nullable
     @Override
@@ -41,11 +47,13 @@ public class FindDoctorFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         initializeViews(view);
-        setupSampleData();
+
+        // Load doctors from Supabase
+        loadDoctorsFromSupabase();
+
         setupSearchFunctionality();
         setupFilterChips();
         setupClickListeners();
-        displayDoctors(doctorList);
     }
 
     private void initializeViews(View view) {
@@ -56,54 +64,94 @@ public class FindDoctorFragment extends Fragment {
 
         doctorList = new ArrayList<>();
         filteredDoctorList = new ArrayList<>();
+        authManager = new AuthManager(requireContext());
     }
 
-    private void setupSampleData() {
-        // Create sample doctor data
-        doctorList.add(new Doctor(
-                "Dr. Ahmad Sutrisno, Sp.PD",
-                "Dokter Spesialis Penyakit Dalam",
-                "08:00 - 16:00",
-                "RS Umum Surabaya, Lt. 2",
-                "Dokter Umum",
-                true
-        ));
+    // NEW METHOD: Load doctors from Supabase
+    private void loadDoctorsFromSupabase() {
+        Log.d(TAG, "=== START: Loading doctors from Supabase ===");
 
-        doctorList.add(new Doctor(
-                "Dr. Sari Indrawati, Sp.A",
-                "Dokter Spesialis Anak",
-                "09:00 - 15:00",
-                "Klinik Anak Sehat, Lt. 1",
-                "Anak",
-                true
-        ));
+        String accessToken = authManager.getAccessToken();
+        Log.d(TAG, "Access token exists: " + (accessToken != null && !accessToken.isEmpty()));
 
-        doctorList.add(new Doctor(
-                "Dr. Budi Hartono, Sp.JP",
-                "Dokter Spesialis Jantung",
-                "10:00 - 14:00",
-                "RS Jantung Sehat, Lt. 3",
-                "Jantung",
-                true
-        ));
+        if (accessToken == null || accessToken.isEmpty()) {
+            Log.e(TAG, "No access token found!");
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(requireContext(), "Token tidak ditemukan, silakan login kembali", Toast.LENGTH_SHORT).show();
+            });
+            return;
+        }
 
-        doctorList.add(new Doctor(
-                "Dr. Maya Kusuma, Sp.M",
-                "Dokter Spesialis Mata",
-                "08:30 - 17:00",
-                "Klinik Mata Prima, Lt. 2",
-                "Mata",
-                false
-        ));
+        Log.d(TAG, "About to call supabaseHelper.select()");
 
-        doctorList.add(new Doctor(
-                "Dr. Andi Prasetyo",
-                "Dokter Umum",
-                "07:00 - 19:00",
-                "Puskesmas Wonokromo",
-                "Dokter Umum",
-                true
-        ));
+        String table = "dokter";
+        String params = "*";
+
+        supabaseHelper.select(requireContext(), table, params, accessToken,
+                new supabaseHelper.SupabaseCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        Log.d(TAG, "=== CALLBACK: onSuccess triggered ===");
+                        Log.d(TAG, "Response: " + response);
+
+                        requireActivity().runOnUiThread(() -> {
+                            Log.d(TAG, "Running on UI thread now");
+
+                            try {
+                                JSONArray jsonArray = new JSONArray(response);
+                                Log.d(TAG, "Number of doctors in response: " + jsonArray.length());
+
+                                doctorList.clear();
+
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject doctorJson = jsonArray.getJSONObject(i);
+                                    Log.d(TAG, "Doctor " + i + ": " + doctorJson.toString());
+
+                                    // Adjust these field names to match your actual database columns
+                                    Doctor doctor = new Doctor(
+                                            doctorJson.optString("nama_lengkap", ""), // or "nama"
+                                            "", // specialty removed
+                                            doctorJson.optString("jam_kerja", "08:00 - 16:00"), // or "jadwal"
+                                            doctorJson.optString("alamat", ""),
+                                            "", // category removed
+                                            true // always available
+                                    );
+
+                                    doctorList.add(doctor);
+                                    Log.d(TAG, "Added doctor: " + doctor.getName());
+                                }
+
+                                Log.d(TAG, "Total doctors loaded: " + doctorList.size());
+                                displayDoctors(doctorList);
+
+                                Toast.makeText(requireContext(),
+                                        doctorList.size() + " dokter ditemukan",
+                                        Toast.LENGTH_SHORT).show();
+
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error parsing doctors data: " + e.getMessage(), e);
+                                e.printStackTrace();
+                                Toast.makeText(requireContext(),
+                                        "Gagal memproses data dokter",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "=== CALLBACK: onError triggered ===");
+                        Log.e(TAG, "Error: " + error);
+
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(),
+                                    "Gagal memuat data dokter: " + error,
+                                    Toast.LENGTH_LONG).show();
+                        });
+                    }
+                });
+
+        Log.d(TAG, "supabaseHelper.select() called, waiting for callback...");
     }
 
     private void setupSearchFunctionality() {
@@ -122,9 +170,10 @@ public class FindDoctorFragment extends Fragment {
     }
 
     private void setupFilterChips() {
+        // Since category is removed, you might want to disable chips or remove them
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            String selectedFilter = getSelectedFilter();
-            filterBySpecialty(selectedFilter);
+            // Just show all doctors since we don't have categories
+            displayDoctors(doctorList);
         });
     }
 
@@ -148,28 +197,14 @@ public class FindDoctorFragment extends Fragment {
         filteredDoctorList.clear();
 
         for (Doctor doctor : doctorList) {
+            // Search only in name and location
             if (doctor.getName().toLowerCase().contains(searchQuery) ||
-                    doctor.getSpecialty().toLowerCase().contains(searchQuery) ||
                     doctor.getLocation().toLowerCase().contains(searchQuery)) {
                 filteredDoctorList.add(doctor);
             }
         }
 
         displayDoctors(filteredDoctorList);
-    }
-
-    private void filterBySpecialty(String specialty) {
-        if (specialty.equals("Semua")) {
-            displayDoctors(doctorList);
-        } else {
-            filteredDoctorList.clear();
-            for (Doctor doctor : doctorList) {
-                if (doctor.getCategory().equals(specialty)) {
-                    filteredDoctorList.add(doctor);
-                }
-            }
-            displayDoctors(filteredDoctorList);
-        }
     }
 
     private void displayDoctors(List<Doctor> doctors) {
@@ -197,11 +232,18 @@ public class FindDoctorFragment extends Fragment {
         MaterialButton btnBooking = cardView.findViewById(R.id.btnBooking);
 
         tvDoctorName.setText(doctor.getName());
-        tvSpecialty.setText(doctor.getSpecialty());
+
+        // Hide specialty if empty
+        if (doctor.getSpecialty().isEmpty()) {
+            tvSpecialty.setVisibility(View.GONE);
+        } else {
+            tvSpecialty.setText(doctor.getSpecialty());
+            tvSpecialty.setVisibility(View.VISIBLE);
+        }
+
         tvSchedule.setText(doctor.getSchedule());
         tvLocation.setText(doctor.getLocation());
 
-        // Set booking button state
         if (doctor.isAvailable()) {
             btnBooking.setEnabled(true);
             btnBooking.setText("Booking");
@@ -232,7 +274,6 @@ public class FindDoctorFragment extends Fragment {
         if (doctor.isAvailable()) {
             Toast.makeText(requireContext(), "Booking janji dengan " + doctor.getName(),
                     Toast.LENGTH_LONG).show();
-            // TODO: Implement actual booking logic
         } else {
             Toast.makeText(requireContext(), "Dokter sedang tidak tersedia",
                     Toast.LENGTH_SHORT).show();
@@ -240,7 +281,6 @@ public class FindDoctorFragment extends Fragment {
     }
 
     private void showDoctorDetails(Doctor doctor) {
-        // TODO: Show detailed doctor information
         Toast.makeText(requireContext(), "Detail dokter: " + doctor.getName(),
                 Toast.LENGTH_SHORT).show();
     }
@@ -248,10 +288,8 @@ public class FindDoctorFragment extends Fragment {
     private void openQueueManagement() {
         Toast.makeText(requireContext(), "Fitur manajemen antrian - Akan segera hadir",
                 Toast.LENGTH_SHORT).show();
-        // TODO: Implement queue management
     }
 
-    // Doctor model class
     public static class Doctor {
         private String name;
         private String specialty;
@@ -270,7 +308,6 @@ public class FindDoctorFragment extends Fragment {
             this.isAvailable = isAvailable;
         }
 
-        // Getters
         public String getName() { return name; }
         public String getSpecialty() { return specialty; }
         public String getSchedule() { return schedule; }

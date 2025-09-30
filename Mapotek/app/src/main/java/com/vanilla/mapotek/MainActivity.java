@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     private MaterialToolbar toolbar;
     private FloatingActionButton fabScanQR;
+    private static final int QR_SCAN_REQUEST = 200;
 
     // Fragments
     private DashboardFragment dashboardFragment;
@@ -37,37 +39,26 @@ public class MainActivity extends AppCompatActivity {
 
     // SharedPreferences for user data
     private SharedPreferences sharedPreferences;
-    private BroadcastReceiver authStateReceiver;
-    private AuthManager authManager;
     private static final String PREF_NAME = "UserPrefs";
+
+    // AuthManager for authentication
+    private AuthManager authManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
+        // Initialize AuthManager
         authManager = new AuthManager(this);
 
-        // Setup receiver
-        authStateReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                boolean isLoggedIn = intent.getBooleanExtra("isLoggedIn", false);
-
-                if (isLoggedIn) {
-                    // User logged in
-                    Toast.makeText(MainActivity.this, "Logged in!", Toast.LENGTH_SHORT).show();
-                    // Navigate to home or update UI
-                } else {
-                    // User logged out
-                    Toast.makeText(MainActivity.this, "Logged out!", Toast.LENGTH_SHORT).show();
-                    // Navigate to login
-                    Intent loginIntent = new Intent(MainActivity.this, loginActivity.class);
-                    startActivity(loginIntent);
-                    finish();
-                }
-            }
-        };
+        // Double check authentication
+        if (!authManager.isLoggedIn()) {
+            // User somehow got here without being logged in
+            redirectToLogin();
+            return;
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.appBarLayout), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -80,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         setupFragments();
         setupFAB();
         setupBackPressHandler();
+
         if (savedInstanceState == null) {
             selectNavItemInternal("dashboard");
         }
@@ -89,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         switch (navItem) {
             case "dashboard":
                 loadFragment(dashboardFragment, "Dashboard");
-                updateToolbarTitle("Dahboard");
+                updateToolbarTitle("Dashboard");
                 break;
             case "findDoctor":
                 loadFragment(findDoctorFragment, "Cari Dokter");
@@ -105,8 +97,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
-
-
 
     private void initializeViews() {
         toolbar = findViewById(R.id.toolbar);
@@ -132,23 +122,44 @@ public class MainActivity extends AppCompatActivity {
         historyFragment = new HistoryFragment();
         profileFragment = new ProfileFragment();
 
-        // Pass user data to fragments if needed
+        // Get user data from intent or AuthManager
         Bundle args = new Bundle();
+
+        // Try to get from intent first
+        String userId = getIntent().getStringExtra("USER_ID");
+        String userEmail = getIntent().getStringExtra("USER_EMAIL");
         String userName = getIntent().getStringExtra("USER_NAME");
-        if (userName == null || userName.isEmpty()) {
-            userName = sharedPreferences.getString("user_name", "Pengguna");
+
+        // If not in intent, get from AuthManager
+        if (userId == null) {
+            userId = authManager.getUserId();
         }
+        if (userEmail == null) {
+            userEmail = authManager.getUserEmail();
+        }
+        if (userName == null || userName.isEmpty()) {
+            userName = authManager.getUserName();
+            if (userName == null || userName.isEmpty()) {
+                userName = userEmail != null ? userEmail.split("@")[0] : "Pengguna";
+            }
+        }
+
+        // Add to bundle
+        args.putString("USER_ID", userId);
+        args.putString("USER_EMAIL", userEmail);
         args.putString("USER_NAME", userName);
 
         // Set arguments for fragments that need user data
         dashboardFragment.setArguments(args);
         profileFragment.setArguments(args);
 
-        // Also save user data to SharedPreferences for profile fragment to access
+        // Also save user data to SharedPreferences for easy access
         SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("user_id", userId);
+        editor.putString("user_email", userEmail);
         editor.putString("user_name", userName);
 
-        // User data for profile fragment
+        // Initialize default profile data if not exists
         if (!sharedPreferences.contains("nik")) {
             editor.putString("nik", "1234567890123456");
             editor.putString("nama_lengkap", userName);
@@ -157,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
         }
         editor.apply();
     }
-
 
     private void setupFAB() {
         fabScanQR.setOnClickListener(v -> openQRScanner());
@@ -198,8 +208,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openQRScanner() {
-        Toast.makeText(this, "Membuka Scanner QR", Toast.LENGTH_SHORT).show();
-        // TODO: Implement QR Scanner
+        Intent intent = new Intent(MainActivity.this, qrScannerActivity.class);
+        startActivityForResult(intent, QR_SCAN_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == QR_SCAN_REQUEST && resultCode == RESULT_OK) {
+            if (data != null) {
+                String qrData = data.getStringExtra("QR_DATA");
+
+                // Process the QR data
+                Toast.makeText(this, "QR Code: " + qrData, Toast.LENGTH_LONG).show();
+
+                // Do something with the data, like:
+                // - Navigate to a specific screen
+                // - Verify patient information
+                // - Check in for appointment
+                processQRCode(qrData);
+            }
+        }
+    }
+
+    private void processQRCode(String qrData) {
+        // Handle the scanned QR code data
+        // Example: if QR contains patient ID, show their info
+        Log.d("MainActivity", "Scanned QR: " + qrData);
+
+        // You could parse JSON from QR code:
+        // try {
+        //     JSONObject json = new JSONObject(qrData);
+        //     String patientId = json.getString("patient_id");
+        //     // ... do something
+        // } catch (JSONException e) {
+        //     e.printStackTrace();
+        // }
     }
 
     @Override
@@ -230,20 +275,47 @@ public class MainActivity extends AppCompatActivity {
         new AlertDialog.Builder(this)
                 .setTitle("Keluar")
                 .setMessage("Apakah Anda yakin ingin keluar dari aplikasi?")
-                .setPositiveButton("Ya", (dialog, which) -> {
-                    // Clear user session
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.clear();
-                    editor.apply();
-
-                    // Return to login
-                    Intent intent = new Intent(MainActivity.this, loginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                })
+                .setPositiveButton("Ya", (dialog, which) -> performLogout())
                 .setNegativeButton("Tidak", null)
                 .show();
+    }
+
+    private void performLogout() {
+        // Clear ALL stored data
+
+        // 1. Clear AuthManager (authentication data)
+        authManager.logout();
+
+        // 2. Clear UserPrefs (user preferences)
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.apply();
+
+        // 3. Clear any other app-specific preferences
+        SharedPreferences loginPrefs = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
+        loginPrefs.edit().clear().apply();
+
+        // Log the logout action
+        Log.d("MainActivity", "User logged out successfully");
+
+        // Show logout message
+        Toast.makeText(this, "Anda telah keluar", Toast.LENGTH_SHORT).show();
+
+        // Redirect to login
+        redirectToLogin();
+    }
+
+    private void redirectToLogin() {
+        // Go directly to login (not splash) to avoid auto-login check
+        Intent intent = new Intent(MainActivity.this, loginActivity.class);
+
+        // Clear the entire activity stack
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        startActivity(intent);
+
+        // Use finishAffinity() to close all activities in this task
+        finishAffinity();
     }
 
     // Method to get current fragment (useful for fragment communication)
@@ -276,5 +348,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Double-check authentication when activity resumes
+        if (!authManager.isLoggedIn()) {
+            redirectToLogin();
+        }
     }
 }

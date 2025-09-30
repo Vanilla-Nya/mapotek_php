@@ -2,6 +2,7 @@ package com.vanilla.mapotek;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,12 +13,17 @@ import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.button.MaterialButton;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.vanilla.mapotek.auth.AuthManager;
+import com.vanilla.mapotek.database.supabaseHelper;
 
 public class DashboardFragment extends Fragment {
 
     private TextView tvUserName;
     private CardView cardCariDokter, cardScanQR, cardHistory, cardProfile;
     private MaterialButton btnEmergency, btnAppointment;
+    private AuthManager authManager;
 
     @Nullable
     @Override
@@ -48,8 +54,24 @@ public class DashboardFragment extends Fragment {
     private void loadUserData() {
         Bundle args = getArguments();
         if (args != null) {
-            String userName = args.getString("USER_NAME", "Pengguna");
-            tvUserName.setText(userName);
+            // Auth Manager
+            authManager = new AuthManager(requireContext());
+            String userId = authManager.getUserId();
+            supabaseHelper.select(requireContext(), "pasien", "nama", authManager.getAccessToken(), new supabaseHelper.SupabaseCallback() {
+                @Override
+                public void onSuccess(String response) {
+                    String result = JsonParser.parseString(response).getAsJsonArray().get(0).getAsJsonObject().get("nama").getAsString();
+                    // Update UI on main thread
+                    requireActivity().runOnUiThread(() -> {
+                        tvUserName.setText(result);
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    Log.d("Data Name Error", error.toString());
+                }
+            });
         }
     }
 

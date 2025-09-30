@@ -1,54 +1,81 @@
 package com.vanilla.mapotek.auth;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 
 public class AuthManager {
-    private static final String PREFS_NAME = "auth_prefs";
+    private static final String PREF_NAME = "AuthPrefs";
     private static final String KEY_ACCESS_TOKEN = "access_token";
     private static final String KEY_USER_ID = "user_id";
     private static final String KEY_IS_LOGGED_IN = "is_logged_in";
+    private static final String KEY_USER_EMAIL = "user_email";
+    private static final String KEY_USER_NAME = "user_name";
 
-    public static final String ACTION_AUTH_STATE_CHANGED = "com.vanilla.mapotek.auth.AUTH_STATE_CHANGED";
-
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
     private Context context;
-    private SharedPreferences prefs;
 
     public AuthManager(Context context) {
         this.context = context;
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        this.editor = sharedPreferences.edit();
     }
 
-    // Save Login State
+    // Save login state
     public void saveLoginState(String accessToken, String userId) {
-        prefs.edit().putString(KEY_ACCESS_TOKEN, accessToken).putString(KEY_USER_ID, userId).putBoolean(KEY_IS_LOGGED_IN, true).apply();
-
-        // Broadcast Change
-        Intent intent = new Intent(ACTION_AUTH_STATE_CHANGED);
-        intent.putExtra("isLoggedIn", true);
-        context.sendBroadcast(intent);
-    }
-    // Clear login state
-    public void logout() {
-        prefs.edit().clear().apply();
-
-        // Broadcast change
-        Intent intent = new Intent(ACTION_AUTH_STATE_CHANGED);
-        intent.putExtra("isLoggedIn", false);
-        context.sendBroadcast(intent);
+        editor.putString(KEY_ACCESS_TOKEN, accessToken);
+        editor.putString(KEY_USER_ID, userId);
+        editor.putBoolean(KEY_IS_LOGGED_IN, true);
+        editor.apply();
     }
 
-    // Check if logged in
+    // Save additional user info
+    public void saveUserInfo(String email, String name) {
+        editor.putString(KEY_USER_EMAIL, email);
+        editor.putString(KEY_USER_NAME, name);
+        editor.apply();
+    }
+
+    // Check if user is logged in
     public boolean isLoggedIn() {
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false);
+        return sharedPreferences.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
+    // Get access token
     public String getAccessToken() {
-        return prefs.getString(KEY_ACCESS_TOKEN, null);
+        return sharedPreferences.getString(KEY_ACCESS_TOKEN, null);
     }
 
+    // Get user ID
     public String getUserId() {
-        return prefs.getString(KEY_USER_ID, null);
+        return sharedPreferences.getString(KEY_USER_ID, null);
+    }
+
+    // Get user email
+    public String getUserEmail() {
+        return sharedPreferences.getString(KEY_USER_EMAIL, null);
+    }
+
+    // Get user name
+    public String getUserName() {
+        return sharedPreferences.getString(KEY_USER_NAME, null);
+    }
+
+    // Clear all auth data (logout)
+    public void logout() {
+        editor.clear();
+        editor.apply();
+    }
+
+    // Check if token is still valid (basic check)
+    public boolean isTokenValid() {
+        String token = getAccessToken();
+        if (token == null || token.isEmpty()) {
+            return false;
+        }
+
+        // You can add more validation here like checking token expiry
+        // For now, we just check if token exists
+        return true;
     }
 }

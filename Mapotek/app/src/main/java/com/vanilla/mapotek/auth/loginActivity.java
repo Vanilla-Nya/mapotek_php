@@ -4,10 +4,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import android.view.ViewGroup;
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -17,7 +19,16 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.button.MaterialButton;
 import com.vanilla.mapotek.R;
+import com.vanilla.mapotek.database.supabaseHelper;
 import com.vanilla.mapotek.loadingActivity;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class loginActivity extends AppCompatActivity {
 
@@ -53,6 +64,9 @@ public class loginActivity extends AppCompatActivity {
         loadSavedCredentials();
         setupClickListeners();
         createLoadingOverlay();
+
+        // Check if user is already logged in
+        checkExistingLogin();
     }
 
     private void initializeViews() {
@@ -71,6 +85,15 @@ public class loginActivity extends AppCompatActivity {
 
     private void setupSharedPreferences() {
         sharedPreferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
+    }
+
+    private void checkExistingLogin() {
+        // Check if user has an active session
+        AuthManager authManager = new AuthManager(this);
+        if (authManager.isLoggedIn()) {
+            // User is already logged in, go to main activity
+            navigateToMain();
+        }
     }
 
     private void loadSavedCredentials() {
@@ -111,12 +134,12 @@ public class loginActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // Validate Email/NIK
+        // Validate Email
         if (TextUtils.isEmpty(email)) {
-            tilEmail.setError("Email atau NIK harus diisi");
+            tilEmail.setError("Email harus diisi");
             isValid = false;
-        } else if (email.length() < 3) {
-            tilEmail.setError("Email atau NIK tidak valid");
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            tilEmail.setError("Email tidak valid");
             isValid = false;
         }
 
@@ -191,7 +214,6 @@ public class loginActivity extends AppCompatActivity {
                 .start();
     }
 
-    // Modify your performLogin() method
     private void performLogin() {
         // Show progress
         progressBar.setVisibility(View.VISIBLE);
@@ -201,48 +223,143 @@ public class loginActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // Simulate network delay for login process
-        btnLogin.postDelayed(() -> {
+        try {
+            // Create login JSON object
+            JSONObject loginData = new JSONObject();
+            loginData.put("email", email);
+            loginData.put("password", password);
+
+            // Call Supabase login
+            supabaseHelper.login(this, loginData, new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    runOnUiThread(() -> {
+                        // Hide progress
+                        progressBar.setVisibility(View.GONE);
+                        btnLogin.setEnabled(true);
+                        btnLogin.setText("Masuk");
+
+                        Log.e("Login", "Network error: " + e.getMessage());
+                        Toast.makeText(loginActivity.this,
+                                "Koneksi gagal. Periksa internet Anda.",
+                                Toast.LENGTH_SHORT).show();
+                    });
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    String responseBody = response.body().string();
+
+                    runOnUiThread(() -> {
+                        // Hide progress
+                        progressBar.setVisibility(View.GONE);
+                        btnLogin.setEnabled(true);
+                        btnLogin.setText("Masuk");
+
+                        if (response.isSuccessful()) {
+                            handleLoginSuccess(responseBody, email);
+                        } else {
+                            handleLoginError(response.code(), responseBody);
+                        }
+                    });
+                }
+            });
+
+        } catch (Exception e) {
             // Hide progress
             progressBar.setVisibility(View.GONE);
             btnLogin.setEnabled(true);
             btnLogin.setText("Masuk");
 
-            if (isValidCredentials(email, password)) {
-                // Save credentials if remember me is checked
-                if (cbRememberMe.isChecked()) {
-                    saveCredentials(email);
-                } else {
-                    clearSavedCredentials();
-                }
-
-                // Login successful - go to LoadingActivity (not overlay!)
-                Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(loginActivity.this, loadingActivity.class);
-                intent.putExtra("USER_NAME", email);
-                intent.putExtra("NEXT_ACTIVITY", "MainActivity");
-                startActivity(intent);
-                finish();
-
-            } else {
-                // Login failed
-                tilEmail.setError("Email/NIK atau password salah");
-                tilPassword.setError("Email/NIK atau password salah");
-                Toast.makeText(this, "Login gagal. Periksa kembali data Anda.", Toast.LENGTH_SHORT).show();
-            }
-
-        }, 2000);
+            Log.e("Login", "Error creating login request: " + e.getMessage());
+            Toast.makeText(this, "Terjadi kesalahan", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private boolean isValidCredentials(String email, String password) {
-        // TODO: Replace this with actual authentication logic
-        // This is just for demo purposes
+    private void handleLoginSuccess(String responseBody, String email) {
+        try {
+            // Parse the response
+            JSONObject jsonResponse = new JSONObject(responseBody);
 
-        // Example: Accept any email/NIK with password "123456"
-        return password.equals("123456") ||
-                (email.equals("admin") && password.equals("admin")) ||
-                (email.equals("test@example.com") && password.equals("password"));
+            // Get access token and user ID
+            String accessToken = jsonResponse.getString("access_token");
+            JSONObject user = jsonResponse.getJSONObject("user");
+            String userId = user.getString("id");
+
+            // Save auth state
+            AuthManager authManager = new AuthManager(loginActivity.this);
+            authManager.saveLoginState(accessToken, userId);
+
+            // Save credentials if remember me is checked
+            if (cbRememberMe.isChecked()) {
+                saveCredentials(email);
+            } else {
+                clearSavedCredentials();
+            }
+
+            // Get user details from database (optional)
+            fetchUserDetails(userId, accessToken, email);
+
+        } catch (Exception e) {
+            Log.e("Login", "Error parsing response: " + e.getMessage());
+            Toast.makeText(this, "Login gagal. Coba lagi.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void fetchUserDetails(String userId, String accessToken, String email) {
+        // Optional: Fetch additional user details from your 'pasien' table
+        // For now, we'll just proceed to the main activity
+
+        Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show();
+
+        // Navigate to loading activity
+        Intent intent = new Intent(loginActivity.this, loadingActivity.class);
+        intent.putExtra("USER_NAME", email);
+        intent.putExtra("USER_ID", userId);
+        intent.putExtra("NEXT_ACTIVITY", "MainActivity");
+        startActivity(intent);
+        finish();
+    }
+
+    private void handleLoginError(int statusCode, String responseBody) {
+        String errorMessage;
+
+        try {
+            JSONObject errorJson = new JSONObject(responseBody);
+            String error = errorJson.optString("error", "");
+            String errorDescription = errorJson.optString("error_description", "");
+
+            if (statusCode == 400) {
+                if (error.equals("invalid_grant") || errorDescription.contains("Invalid login")) {
+                    errorMessage = "Email atau password salah";
+                    tilEmail.setError(" ");
+                    tilPassword.setError("Email atau password salah");
+                } else if (errorDescription.contains("Email not confirmed")) {
+                    errorMessage = "Email belum dikonfirmasi. Periksa email Anda.";
+                } else {
+                    errorMessage = "Data login tidak valid";
+                }
+            } else if (statusCode == 422) {
+                errorMessage = "Format email atau password tidak valid";
+            } else if (statusCode == 429) {
+                errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
+            } else {
+                errorMessage = "Login gagal. Silakan coba lagi.";
+            }
+
+        } catch (Exception e) {
+            errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
+        }
+
+        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+        Log.e("Login", "Login failed - Status: " + statusCode + ", Body: " + responseBody);
+    }
+
+    private void navigateToMain() {
+        Intent intent = new Intent(loginActivity.this, loadingActivity.class);
+        intent.putExtra("NEXT_ACTIVITY", "MainActivity");
+        startActivity(intent);
+        finish();
     }
 
     private void saveCredentials(String email) {
@@ -259,7 +376,6 @@ public class loginActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    // Optional: Clear form method
     private void clearForm() {
         etEmail.setText("");
         etPassword.setText("");

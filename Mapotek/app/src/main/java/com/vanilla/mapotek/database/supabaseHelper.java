@@ -72,7 +72,7 @@ public class supabaseHelper {
     public static void select(Context context, String table, String params, String accessToken, SupabaseCallback callback) {
         String url = SUPABASE_URL + "/rest/v1/" + table;
         if (params != null && !params.isEmpty()) {
-            url += "?" + params;
+            url += "?select=" + params;
         }
 
         Request request = new Request.Builder()
