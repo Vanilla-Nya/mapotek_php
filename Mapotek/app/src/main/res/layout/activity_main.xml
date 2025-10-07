@@ -3,199 +3,171 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_color"
     tools:context=".MainActivity">
 
-    <!-- Top App Bar -->
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/primary_color"
-            app:title="MapoTek"
-            app:titleTextColor="@color/white"
-            app:menu="@menu/top_menu" />
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <!-- Fragment Container - Full height without margin -->
+    <!-- Fragment Container -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/nav_host_fragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:layout_height="match_parent" />
 
-    <!-- Floating Bottom Navigation Container -->
+    <!-- QR Scanner FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScanQR"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="56dp"
+        android:src="@drawable/ic_qr_code_scanner"
+        android:contentDescription="Scan QR"
+        app:backgroundTint="@color/primary_color"
+        app:tint="@color/white"
+        app:borderWidth="0dp"
+        app:elevation="8dp"
+        app:fabSize="normal" />
+
+    <!-- Bottom Navigation -->
     <FrameLayout
+        android:id="@+id/bottomNavContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp">
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp">
 
-        <!-- Custom Bottom Navigation Card -->
         <androidx.cardview.widget.CardView
             android:id="@+id/bottomNavCard"
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            app:cardCornerRadius="25dp"
+            android:layout_height="68dp"
+            app:cardCornerRadius="34dp"
             app:cardElevation="12dp"
-            app:cardBackgroundColor="@color/white">
+            app:cardBackgroundColor="#2C2C2C">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
-                android:paddingVertical="8dp">
+                android:padding="8dp"
+                android:gravity="center">
 
                 <!-- Dashboard -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/navDashboard"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
                     android:clickable="true"
                     android:focusable="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless">
+
+                    <!-- Circle Background -->
+                    <View
+                        android:id="@+id/circleDashboard"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/nav_circle_background"
+                        android:visibility="visible" />
 
                     <ImageView
                         android:id="@+id/iconDashboard"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
+                        android:layout_gravity="center"
                         android:src="@drawable/ic_dashboard"
-                        app:tint="@color/text_secondary" />
-
-                    <TextView
-                        android:id="@+id/labelDashboard"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Dashboard"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
+                        app:tint="@color/white" />
+                </FrameLayout>
 
                 <!-- Find Doctor -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/navFindDoctor"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
                     android:clickable="true"
                     android:focusable="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless">
+
+                    <View
+                        android:id="@+id/circleFindDoctor"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/nav_circle_background"
+                        android:visibility="gone" />
 
                     <ImageView
                         android:id="@+id/iconFindDoctor"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/ic_doctor"
-                        app:tint="@color/text_secondary" />
-
-                    <TextView
-                        android:id="@+id/labelFindDoctor"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Cari Dokter"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
-
-                <!-- QR Scanner (Center - Elevated) -->
-                <FrameLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center">
-
-                    <com.google.android.material.floatingactionbutton.FloatingActionButton
-                        android:id="@+id/fabScanQR"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
                         android:layout_gravity="center"
-                        android:src="@drawable/ic_qr_code_scanner"
-                        android:contentDescription="Scan QR Code"
-                        app:backgroundTint="@color/primary_color"
-                        app:tint="@color/white"
-                        app:borderWidth="0dp"
-                        app:elevation="8dp"
-                        app:fabSize="normal" />
-
+                        android:src="@drawable/ic_doctor"
+                        app:tint="#808080" />
                 </FrameLayout>
 
+                <!-- Empty space for FAB -->
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
                 <!-- History -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/navHistory"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
                     android:clickable="true"
                     android:focusable="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless">
+
+                    <View
+                        android:id="@+id/circleHistory"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/nav_circle_background"
+                        android:visibility="gone" />
 
                     <ImageView
                         android:id="@+id/iconHistory"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
+                        android:layout_gravity="center"
                         android:src="@drawable/ic_history"
-                        app:tint="@color/text_secondary" />
-
-                    <TextView
-                        android:id="@+id/labelHistory"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Riwayat"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
+                        app:tint="#808080" />
+                </FrameLayout>
 
                 <!-- Profile -->
-                <LinearLayout
+                <FrameLayout
                     android:id="@+id/navProfile"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:gravity="center"
                     android:clickable="true"
                     android:focusable="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless">
+
+                    <View
+                        android:id="@+id/circleProfile"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/nav_circle_background"
+                        android:visibility="gone" />
 
                     <ImageView
                         android:id="@+id/iconProfile"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
+                        android:layout_gravity="center"
                         android:src="@drawable/ic_person_outline"
-                        app:tint="@color/text_secondary" />
-
-                    <TextView
-                        android:id="@+id/labelProfile"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Profil"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_secondary"
-                        android:layout_marginTop="4dp" />
-
-                </LinearLayout>
+                        app:tint="#808080" />
+                </FrameLayout>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

@@ -95,8 +95,8 @@ public class splashScreenActivity extends AppCompatActivity {
         // Update loading text based on auth status
         if (authManager.isLoggedIn()) {
             handler.postDelayed(() -> splashLoadingText.setText("Memuat data pengguna..."), 1000);
-            handler.postDelayed(() -> splashLoadingText.setText("Menyiapkan dashboard..."), 1800);
-            handler.postDelayed(() -> splashLoadingText.setText("Selamat datang kembali!"), 2500);
+            handler.postDelayed(() -> splashLoadingText.setText("Memverifikasi sesi..."), 1800);
+            handler.postDelayed(() -> splashLoadingText.setText("Menyiapkan dashboard..."), 2500);
         } else {
             handler.postDelayed(() -> splashLoadingText.setText("Menyiapkan komponen..."), 1000);
             handler.postDelayed(() -> splashLoadingText.setText("Memuat data..."), 1800);
@@ -114,18 +114,19 @@ public class splashScreenActivity extends AppCompatActivity {
         }
         isNavigating = true;
 
+        // Debug logs to track what's happening
+        Log.d("SplashScreen", "=== Authentication Check ===");
+        Log.d("SplashScreen", "isLoggedIn: " + authManager.isLoggedIn());
+        Log.d("SplashScreen", "isTokenValid: " + authManager.isTokenValid());
+        Log.d("SplashScreen", "Token exists: " + (authManager.getAccessToken() != null));
+        Log.d("SplashScreen", "UserId: " + authManager.getUserId());
+        Log.d("SplashScreen", "UserEmail: " + authManager.getUserEmail());
+
         // Check authentication status
         if (authManager.isLoggedIn() && authManager.isTokenValid()) {
-            // User is logged in with valid token
-            Log.d("SplashScreen", "User is logged in: " + authManager.getUserId());
-
-            // Optional: Show welcome message with user info
-            String userEmail = authManager.getUserEmail();
-            if (userEmail != null && !userEmail.isEmpty()) {
-                Toast.makeText(this, "Selamat datang kembali!", Toast.LENGTH_SHORT).show();
-            }
-
-            goToDashboard();
+            // User appears to be logged in, verify with server
+            Log.d("SplashScreen", "User appears logged in, verifying token with server...");
+            verifyTokenWithServer();
         } else {
             // User is not logged in or token is invalid
             Log.d("SplashScreen", "User is not logged in, redirecting to login");
@@ -139,6 +140,48 @@ public class splashScreenActivity extends AppCompatActivity {
 
             goToLogin();
         }
+    }
+
+    private void verifyTokenWithServer() {
+        // Update loading text to show verification
+        runOnUiThread(() -> splashLoadingText.setText("Memverifikasi sesi..."));
+
+        // Verify token with server
+        authManager.verifyToken(new AuthManager.AuthCallback() {
+            @Override
+            public void onSuccess() {
+                Log.d("SplashScreen", "Token verified successfully with server");
+                runOnUiThread(() -> {
+                    splashLoadingText.setText("Selamat datang kembali!");
+
+                    // Optional: Show welcome message
+                    String userEmail = authManager.getUserEmail();
+                    if (userEmail != null && !userEmail.isEmpty()) {
+                        Toast.makeText(splashScreenActivity.this,
+                                "Selamat datang kembali!",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    // Small delay for smooth transition
+                    handler.postDelayed(() -> goToDashboard(), 500);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e("SplashScreen", "Token verification failed: " + error);
+                runOnUiThread(() -> {
+                    // Token is invalid, clear auth data
+                    authManager.logout();
+
+                    Toast.makeText(splashScreenActivity.this,
+                            "Sesi tidak valid, silakan login kembali",
+                            Toast.LENGTH_LONG).show();
+
+                    goToLogin();
+                });
+            }
+        });
     }
 
     private void goToLogin() {

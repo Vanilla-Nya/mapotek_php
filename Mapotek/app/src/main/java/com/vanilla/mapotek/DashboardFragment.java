@@ -80,30 +80,23 @@ public class DashboardFragment extends Fragment {
 
         cardCariDokter.setOnClickListener(v -> {
             if (mainActivity != null) {
-                mainActivity.findViewById(R.id.bottomNavigation);
-                ((com.google.android.material.bottomnavigation.BottomNavigationView)
-                        mainActivity.findViewById(R.id.bottomNavigation))
-                        .setSelectedItemId(R.id.nav_find_doctor);
+                mainActivity.navigateToSection("findDoctor");
             }
         });
 
-        cardScanQR.setOnClickListener(v -> openQRScanner());
-
         cardHistory.setOnClickListener(v -> {
             if (mainActivity != null) {
-                ((com.google.android.material.bottomnavigation.BottomNavigationView)
-                        mainActivity.findViewById(R.id.bottomNavigation))
-                        .setSelectedItemId(R.id.nav_history);
+                mainActivity.navigateToSection("history");
             }
         });
 
         cardProfile.setOnClickListener(v -> {
             if (mainActivity != null) {
-                ((com.google.android.material.bottomnavigation.BottomNavigationView)
-                        mainActivity.findViewById(R.id.bottomNavigation))
-                        .setSelectedItemId(R.id.nav_profile);
+                mainActivity.navigateToSection("profile");
             }
         });
+
+        cardScanQR.setOnClickListener(v -> openQRScanner());
 
         btnEmergency.setOnClickListener(v -> handleEmergency());
         btnAppointment.setOnClickListener(v -> createAppointment());
@@ -112,9 +105,9 @@ public class DashboardFragment extends Fragment {
     private void openQRScanner() {
         MainActivity mainActivity = (MainActivity) getActivity();
         if (mainActivity != null) {
-            mainActivity.showToast("Membuka Scanner QR");
+            // Trigger the FAB click
+            mainActivity.findViewById(R.id.fabScanQR).performClick();
         }
-        // TODO: Implement QR Scanner
     }
 
     private void handleEmergency() {
@@ -133,4 +126,6 @@ public class DashboardFragment extends Fragment {
         Toast.makeText(requireContext(), "Fitur Buat Janji Temu - Akan segera hadir", Toast.LENGTH_SHORT).show();
         // TODO: Implement appointment booking
     }
+
+    
 }

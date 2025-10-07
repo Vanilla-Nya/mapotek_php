@@ -1,13 +1,14 @@
 package com.vanilla.mapotek;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -17,14 +18,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.vanilla.mapotek.auth.AuthManager;
 import com.vanilla.mapotek.auth.loginActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MaterialToolbar toolbar;
     private FloatingActionButton fabScanQR;
     private static final int QR_SCAN_REQUEST = 200;
 
@@ -47,27 +46,43 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Enable edge-to-edge
         EdgeToEdge.enable(this);
+
         setContentView(R.layout.activity_main);
 
         // Initialize AuthManager
         authManager = new AuthManager(this);
 
-        // Double check authentication
         if (!authManager.isLoggedIn()) {
-            // User somehow got here without being logged in
             redirectToLogin();
             return;
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.appBarLayout), (v, insets) -> {
+        // Apply window insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_coordinator), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
+
+            // Add bottom padding to fragment container
+            View fragmentContainer = findViewById(R.id.nav_host_fragment);
+            if (fragmentContainer != null) {
+                int navBarHeightPx = (int) (88 * getResources().getDisplayMetrics().density); // 72dp + 16dp margin
+                fragmentContainer.setPadding(0, systemBars.top, 0, navBarHeightPx + systemBars.bottom);
+            }
+
+            // Apply bottom margin to nav container
+            View bottomNavContainer = findViewById(R.id.bottomNavContainer);
+            if (bottomNavContainer != null) {
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) bottomNavContainer.getLayoutParams();
+                params.bottomMargin = systemBars.bottom + 16;
+                bottomNavContainer.setLayoutParams(params);
+            }
+
+            return WindowInsetsCompat.CONSUMED;
         });
 
         initializeViews();
-        setupToolbar();
         setupFragments();
         setupFAB();
         setupBackPressHandler();
@@ -78,28 +93,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void selectNavItemInternal(String navItem) {
+        resetNavIcons();
+
         switch (navItem) {
             case "dashboard":
                 loadFragment(dashboardFragment, "Dashboard");
-                updateToolbarTitle("Dashboard");
+                setNavSelected(R.id.navDashboard, R.id.iconDashboard, R.id.circleDashboard);
                 break;
             case "findDoctor":
                 loadFragment(findDoctorFragment, "Cari Dokter");
-                updateToolbarTitle("Cari Dokter");
+                setNavSelected(R.id.navFindDoctor, R.id.iconFindDoctor, R.id.circleFindDoctor);
                 break;
             case "history":
                 loadFragment(historyFragment, "Riwayat");
-                updateToolbarTitle("Riwayat");
+                setNavSelected(R.id.navHistory, R.id.iconHistory, R.id.circleHistory);
                 break;
             case "profile":
                 loadFragment(profileFragment, "Profil");
-                updateToolbarTitle("Profil");
+                setNavSelected(R.id.navProfile, R.id.iconProfile, R.id.circleProfile);
                 break;
         }
     }
 
+
+    public void navigateToSection(String section) {
+        selectNavItemInternal(section);
+    }
+
     private void initializeViews() {
-        toolbar = findViewById(R.id.toolbar);
         fabScanQR = findViewById(R.id.fabScanQR);
 
         // Custom navigation views
@@ -111,8 +132,37 @@ public class MainActivity extends AppCompatActivity {
         sharedPreferences = getSharedPreferences(PREF_NAME, MODE_PRIVATE);
     }
 
-    private void setupToolbar() {
-        setSupportActionBar(toolbar);
+    private void resetNavIcons() {
+        resetNavItem(R.id.iconDashboard, R.id.circleDashboard);
+        resetNavItem(R.id.iconFindDoctor, R.id.circleFindDoctor);
+        resetNavItem(R.id.iconHistory, R.id.circleHistory);
+        resetNavItem(R.id.iconProfile, R.id.circleProfile);
+    }
+
+    private void setNavSelected(int containerId, int iconId, int circleId) {
+        ImageView icon = findViewById(iconId);
+        View circle = findViewById(circleId);
+
+        // Show circle with animation
+        circle.setVisibility(View.VISIBLE);
+        circle.setScaleX(0f);
+        circle.setScaleY(0f);
+        circle.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(250)
+                .start();
+
+        // Change icon color to white
+        icon.setColorFilter(getColor(R.color.white));
+    }
+
+    private void resetNavItem(int iconId, int circleId) {
+        ImageView icon = findViewById(iconId);
+        View circle = findViewById(circleId);
+
+        icon.setColorFilter(getColor(R.color.text_secondary));
+        circle.setVisibility(View.GONE);
     }
 
     private void setupFragments() {
@@ -201,12 +251,6 @@ public class MainActivity extends AppCompatActivity {
         activeFragment = fragment;
     }
 
-    private void updateToolbarTitle(String title) {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(title);
-        }
-    }
-
     private void openQRScanner() {
         Intent intent = new Intent(MainActivity.this, qrScannerActivity.class);
         startActivityForResult(intent, QR_SCAN_REQUEST);
@@ -219,59 +263,18 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == QR_SCAN_REQUEST && resultCode == RESULT_OK) {
             if (data != null) {
                 String qrData = data.getStringExtra("QR_DATA");
-
-                // Process the QR data
                 Toast.makeText(this, "QR Code: " + qrData, Toast.LENGTH_LONG).show();
-
-                // Do something with the data, like:
-                // - Navigate to a specific screen
-                // - Verify patient information
-                // - Check in for appointment
                 processQRCode(qrData);
             }
         }
     }
 
     private void processQRCode(String qrData) {
-        // Handle the scanned QR code data
-        // Example: if QR contains patient ID, show their info
         Log.d("MainActivity", "Scanned QR: " + qrData);
-
-        // You could parse JSON from QR code:
-        // try {
-        //     JSONObject json = new JSONObject(qrData);
-        //     String patientId = json.getString("patient_id");
-        //     // ... do something
-        // } catch (JSONException e) {
-        //     e.printStackTrace();
-        // }
+        // Process QR data here
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.top_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_notifications) {
-            Toast.makeText(this, "Notifikasi", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if (id == R.id.action_settings) {
-            Toast.makeText(this, "Pengaturan", Toast.LENGTH_SHORT).show();
-            return true;
-        } else if (id == R.id.action_logout) {
-            showLogoutConfirmation();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void showLogoutConfirmation() {
+    public void showLogoutConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Keluar")
                 .setMessage("Apakah Anda yakin ingin keluar dari aplikasi?")
@@ -281,61 +284,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performLogout() {
-        // Clear ALL stored data
-
-        // 1. Clear AuthManager (authentication data)
         authManager.logout();
 
-        // 2. Clear UserPrefs (user preferences)
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.apply();
 
-        // 3. Clear any other app-specific preferences
         SharedPreferences loginPrefs = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         loginPrefs.edit().clear().apply();
 
-        // Log the logout action
         Log.d("MainActivity", "User logged out successfully");
-
-        // Show logout message
         Toast.makeText(this, "Anda telah keluar", Toast.LENGTH_SHORT).show();
 
-        // Redirect to login
         redirectToLogin();
     }
 
     private void redirectToLogin() {
-        // Go directly to login (not splash) to avoid auto-login check
         Intent intent = new Intent(MainActivity.this, loginActivity.class);
-
-        // Clear the entire activity stack
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
         startActivity(intent);
-
-        // Use finishAffinity() to close all activities in this task
         finishAffinity();
     }
 
-    // Method to get current fragment (useful for fragment communication)
     public Fragment getCurrentFragment() {
         return activeFragment;
     }
 
-    // Method for fragments to communicate with main activity
     public void showToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    // Modern way to handle back press
     private void setupBackPressHandler() {
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // Check if we're on dashboard
                 if (activeFragment == dashboardFragment) {
-                    // Show exit confirmation
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Keluar Aplikasi")
                             .setMessage("Apakah Anda yakin ingin keluar?")
@@ -343,7 +326,6 @@ public class MainActivity extends AppCompatActivity {
                             .setNegativeButton("Tidak", null)
                             .show();
                 } else {
-                    // Go back to dashboard
                     selectNavItemInternal("dashboard");
                 }
             }
@@ -354,7 +336,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        // Double-check authentication when activity resumes
         if (!authManager.isLoggedIn()) {
             redirectToLogin();
         }

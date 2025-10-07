@@ -2,6 +2,15 @@ package com.vanilla.mapotek.auth;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
+
+import com.vanilla.mapotek.UserApiService;
+import com.vanilla.mapotek.UserProfileResponse;
+import com.vanilla.mapotek.api.retrofitclient;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class AuthManager {
     private static final String PREF_NAME = "AuthPrefs";
@@ -19,6 +28,12 @@ public class AuthManager {
         this.context = context;
         this.sharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         this.editor = sharedPreferences.edit();
+    }
+
+    // Callback interface for async operations
+    public interface AuthCallback {
+        void onSuccess();
+        void onError(String error);
     }
 
     // Save login state
@@ -77,5 +92,59 @@ public class AuthManager {
         // You can add more validation here like checking token expiry
         // For now, we just check if token exists
         return true;
+    }
+
+    // Verify token with server by calling getUserProfile
+    public void verifyToken(AuthCallback callback) {
+        String token = getAccessToken();
+
+        if (token == null || token.isEmpty()) {
+            Log.e("AuthManager", "No token available for verification");
+            callback.onError("No token available");
+            return;
+        }
+
+        Log.d("AuthManager", "Verifying token with server...");
+
+        try {
+            // Use your existing UserApiService
+            UserApiService apiService = retrofitclient.getInstance().create(UserApiService.class);
+
+            // Call getUserProfile to verify the token
+            Call<UserProfileResponse> call = apiService.getUserProfile("Bearer " + token);
+
+            call.enqueue(new Callback<UserProfileResponse>() {
+                @Override
+                public void onResponse(Call<UserProfileResponse> call, Response<UserProfileResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        Log.d("AuthManager", "Token verification successful");
+
+                        // Optionally update user info from response
+                        UserProfileResponse userProfile = response.body();
+
+                        callback.onSuccess();
+                    } else {
+                        Log.e("AuthManager", "Token verification failed - Status: " + response.code());
+
+                        // Handle specific error codes
+                        if (response.code() == 401 || response.code() == 403) {
+                            callback.onError("Token expired or invalid");
+                        } else {
+                            callback.onError("Verification failed: " + response.code());
+                        }
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<UserProfileResponse> call, Throwable t) {
+                    Log.e("AuthManager", "Token verification network error: " + t.getMessage());
+                    callback.onError("Network error: " + t.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e("AuthManager", "Error during token verification: " + e.getMessage());
+            callback.onError("Verification error: " + e.getMessage());
+        }
     }
 }
