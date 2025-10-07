@@ -8,6 +8,44 @@ const registerForm = document.getElementById('registerForm');
 const toRegister = document.getElementById('toRegister');
 const toLogin = document.getElementById('toLogin');
 
+// Check if user is already logged in on page load
+window.addEventListener('DOMContentLoaded', () => {
+    checkLoginStatus();
+});
+
+function checkLoginStatus() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    const user = localStorage.getItem('user');
+    
+    if (isLoggedIn === 'true' && user) {
+        updateUIAfterLogin(JSON.parse(user));
+    }
+}
+
+function updateUIAfterLogin(user) {
+    // Hide login/register links
+    const authLinks = document.querySelector('.auth-links');
+    authLinks.innerHTML = `
+        <li><span style="color: #333; font-weight: 500;">Halo, ${user.nama_lengkap}</span></li>
+        <li><a href="#" id="btnLogout">Logout</a></li>
+    `;
+    
+    // Setup logout handler
+    document.getElementById('btnLogout').addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+    });
+}
+
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('isLoggedIn');
+    
+    alert('Logout berhasil');
+    location.reload();
+}
+
 // Open login modal
 openLogin.addEventListener('click', (e) => {
     e.preventDefault();
@@ -60,7 +98,7 @@ loginForm.querySelector('form').addEventListener('submit', async (e) => {
     };
 
     try {
-        const response = await fetch('../../API/auth/auth.php', {  // ← Updated path
+        const response = await fetch('../../API/auth/auth.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -71,11 +109,14 @@ loginForm.querySelector('form').addEventListener('submit', async (e) => {
         const result = await response.json();
         
         if (result.success) {
-            alert(result.message);
             localStorage.setItem('access_token', result.access_token);
             localStorage.setItem('user', JSON.stringify(result.user));
-            modal.style.display = 'none';
-            location.reload();
+            localStorage.setItem('isLoggedIn', 'true');
+            
+            alert('Login berhasil!');
+            
+            // Redirect to dashboard    
+            window.location.href = '/MAPOTEK_PHP/WEB/Dashboard/index.html';
         } else {
             alert(result.message);
         }
@@ -108,7 +149,7 @@ registerForm.querySelector('form').addEventListener('submit', async (e) => {
     };
 
     try {
-        const response = await fetch('../../API/auth/auth.php', {  // ← Updated path
+        const response = await fetch('../../API/auth/auth.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -119,15 +160,15 @@ registerForm.querySelector('form').addEventListener('submit', async (e) => {
         const result = await response.json();
         
         if (result.success) {
-            localStorage.setItem('access_token', result.access_token);
-            localStorage.setItem('user', JSON.stringify(result.user));
-            
-            alert('Registrasi berhasil! Selamat datang, ' + result.user.nama_lengkap);
-            
-            modal.style.display = 'none';
-            form.reset();
-            location.reload();
-        } else {
+        localStorage.setItem('access_token', result.access_token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        alert('Registrasi berhasil! Selamat datang, ' + result.user.nama_lengkap);
+        
+        // Redirect to dashboard
+        window.location.href = '/MAPOTEK_PHP/WEB/Dashboard/index.html';
+    } else {
             alert('Gagal registrasi: ' + result.message);
         }
     } catch (error) {

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Mapotek</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <!-- Sidebar (same as dashboard) -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header text-center py-4 border-bottom border-white border-opacity-10">
+            <img src="../LandingPage/booksaw-1.0.0/images/mapotekTxt.png" alt="Mapotek" class="sidebar-logo">
+        </div>
+        
+        <nav class="sidebar-nav flex-grow-1 py-3">
+            <a href="dashboard.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-house-door fs-4"></i>
+                <span class="nav-text ms-3">Dashboard</span>
+            </a>
+            <a href="pasien.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-people fs-4"></i>
+                <span class="nav-text ms-3">Pasien</span>
+            </a>
+            <a href="obat.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-capsule fs-4"></i>
+                <span class="nav-text ms-3">Obat</span>
+            </a>
+            <a href="antrian.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-clock-history fs-4"></i>
+                <span class="nav-text ms-3">Antrian</span>
+            </a>
+            <a href="pemeriksaan.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-heart-pulse fs-4"></i>
+                <span class="nav-text ms-3">Pemeriksaan</span>
+            </a>
+            <a href="pembukuan.html" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-journal-text fs-4"></i>
+                <span class="nav-text ms-3">Pembukuan</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer border-top border-white border-opacity-10 py-3">
+            <a href="profile.html" class="nav-item active d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-person-circle fs-4"></i>
+                <span class="nav-text ms-3">Profile</span>
+            </a>
+            <a href="#" id="btnLogoutSidebar" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
+                <i class="bi bi-box-arrow-right fs-4"></i>
+                <span class="nav-text ms-3">Logout</span>
+            </a>
+        </div>
+        
+        <button class="sidebar-toggle btn btn-light rounded-circle shadow position-absolute" id="sidebarToggle">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-bar bg-white shadow-sm p-3 d-flex align-items-center">
+            <button class="btn d-md-none me-3" id="menuToggle">
+                <i class="bi bi-list fs-3"></i>
+            </button>
+            <h1 class="fs-4 mb-0 flex-grow-1">Profile</h1>
+            <div class="d-flex align-items-center gap-3">
+                <span id="userName">Loading...</span>
+                <img src="../LandingPage/booksaw-1.0.0/images/default-avatar.png" alt="User" class="avatar rounded-circle" width="40" height="40">
+            </div>
+        </header>
+
+        <div class="content-area p-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Informasi Profile</h5>
+                            <button class="btn btn-sm btn-light" id="btnEditToggle">
+                                <i class="bi bi-pencil-square"></i> Edit Profile
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <!-- Email -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" readonly>
+                                    </div>
+
+                                    <!-- Nama Faskes -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Nama Faskes</label>
+                                        <input type="text" class="form-control" id="nama_faskes" name="nama_faskes" disabled>
+                                    </div>
+
+                                    <!-- Nama Lengkap -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Nama Lengkap</label>
+                                        <input type="text" class="form-control" id="nama_lengkap" name="nama_lengkap" disabled>
+                                    </div>
+
+                                    <!-- Username -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" disabled>
+                                    </div>
+
+                                    <!-- Jenis Kelamin -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Jenis Kelamin</label>
+                                        <select class="form-select" id="jenis_kelamin" name="jenis_kelamin" disabled>
+                                            <option value="">Pilih Jenis Kelamin</option>
+                                            <option value="Laki-laki">Laki-laki</option>
+                                            <option value="Perempuan">Perempuan</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- No. Telepon -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">No. Telepon</label>
+                                        <input type="text" class="form-control" id="no_telp" name="no_telp" disabled>
+                                    </div>
+
+                                    <!-- RFID -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">RFID</label>
+                                        <input type="text" class="form-control" id="rfid" name="rfid" disabled>
+                                    </div>
+
+                                    <!-- Jam Kerja -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Jam Kerja</label>
+                                        <input type="text" class="form-control" id="jam_kerja" name="jam_kerja" placeholder="Contoh: 08:00 - 17:00" disabled>
+                                    </div>
+
+                                    <!-- Alamat -->
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label fw-bold">Alamat</label>
+                                        <textarea class="form-control" id="alamat" name="alamat" rows="3" disabled></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex gap-2 justify-content-end" id="actionButtons" style="display: none !important;">
+                                    <button type="button" class="btn btn-secondary" id="btnCancel">
+                                        <i class="bi bi-x-circle"></i> Batal
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="btnSave">
+                                        <i class="bi bi-save"></i> Simpan Perubahan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Created/Updated Info -->
+                    <div class="card shadow-sm mt-3">
+                        <div class="card-body">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar-check"></i> Dibuat: <span id="created_at">-</span><br>
+                                <i class="bi bi-clock-history"></i> Terakhir diupdate: <span id="updated_at">-</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="profile.js"></script>
+</body>
+</html>

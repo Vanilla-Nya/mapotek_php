@@ -26,29 +26,46 @@ function supabase($method, $table, $params = "", $data = null, $token = null) {
         $headers[] = "Authorization: Bearer $SUPABASE_KEY";
     }
 
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
     // Method
     switch (strtoupper($method)) {
         case "POST":
             curl_setopt($ch, CURLOPT_POST, true);
             if ($data) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge($headers, ["Prefer: return=representation"]));
+            // Add Prefer header for POST
+            $headers[] = "Prefer: return=representation";
             break;
+            
         case "PATCH":
         case "PUT":
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+            if ($data) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            // Add Prefer header for PATCH/PUT too!
+            $headers[] = "Prefer: return=representation";
+            break;
+            
         case "DELETE":
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
             if ($data) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
             break;
+            
         default: // GET
             break;
     }
 
+    // Set headers AFTER adding Prefer header
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
     $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    return json_decode($response, true);
+    // Decode response
+    $decoded = json_decode($response, true);
+    
+    // Log for debugging (optional)
+    error_log("Supabase $method response (HTTP $httpCode): " . $response);
+    
+    return $decoded;
 }
 
 function console_log($data) {

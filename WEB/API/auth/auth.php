@@ -61,33 +61,34 @@ if ($requestMethod === 'POST') {
             }
         }
         break;
-
         case 'login':
-            $authData = [
-                'email' => $input['email'],
-                'password' => $input['password']
-            ];
+        $authData = [
+            'email' => $input['email'],
+            'password' => $input['password']
+        ];
+        
+        $loginResult = supabaseAuthLogin($authData);
+        
+        if ($loginResult['success']) {
+            // Use ilike for case-insensitive search
+            $email = $input['email'];
+            $dokterData = supabase('GET', 'dokter', "email=ilike." . $email, null, $loginResult['access_token']);
             
-            $loginResult = supabaseAuthLogin($authData);
-            
-            if ($loginResult['success']) {
-                $dokterData = supabase('GET', 'dokter', "email=eq." . $input['email']);
-                
-                if (!empty($dokterData)) {
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'Login berhasil',
-                        'access_token' => $loginResult['access_token'],
-                        'user' => $dokterData[0]
-                    ]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Data dokter tidak ditemukan']);
-                }
+            if (!empty($dokterData) && !isset($dokterData['code'])) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Login berhasil',
+                    'access_token' => $loginResult['access_token'],
+                    'user' => $dokterData[0]
+                ]);
             } else {
-                echo json_encode(['success' => false, 'message' => $loginResult['message']]);
+                echo json_encode(['success' => false, 'message' => 'Data dokter tidak ditemukan']);
             }
-            break;
-
+        } else {
+            echo json_encode(['success' => false, 'message' => $loginResult['message']]);
+        }
+        break;
+        
         default:
             echo json_encode(['success' => false, 'message' => 'Action tidak valid']);
     }
