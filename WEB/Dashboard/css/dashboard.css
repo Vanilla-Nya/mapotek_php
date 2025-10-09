@@ -208,3 +208,146 @@
         display: none;
     }
 }
+
+/* Modal fullscreen styling */
+#cropModal .modal-fullscreen {
+    width: 100vw;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+}
+
+#cropModal .modal-content {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+}
+
+#cropModal .modal-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-container {
+    background: #000 !important;
+}
+
+.cropper-crop-box {
+    border: 2px solid #fff !important;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;
+}
+
+.cropper-face {
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
+.cropper-view-box {
+    outline: 2px solid rgba(255, 255, 255, 0.9) !important;
+    outline-offset: -2px !important;
+}
+
+.cropper-modal {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    opacity: 1 !important;
+}
+
+.cropper-point {
+    display: none !important;
+}
+
+.cropper-line {
+    display: none !important;
+}
+
+.cropper-center {
+    opacity: 0 !important;
+}
+
+.cropper-canvas {
+    cursor: move !important;
+}
+
+.cropper-drag-box {
+    cursor: move !important;
+}
+
+.cropper-bg {
+    background: none !important;
+}
+
+.cropper-crop-box,
+.cropper-view-box {
+    visibility: visible !important;
+    display: block !important;
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
+#cropModal {
+    z-index: 9999 !important;
+}
+
+/* ========================================
+   AVATAR CARD - Dynamic Blurred Background from Photo
+   ======================================== */
+
+/* Container for the blurred background */
+.row.justify-content-center > .col-lg-9 > .card:first-child {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.5s ease; /* 🎨 Smooth color changes */
+}
+
+/* Create blurred background from avatar image */
+.row.justify-content-center > .col-lg-9 > .card:first-child::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    background-image: var(--avatar-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(10px) brightness(0.95) saturate(1);
+    opacity: 0.7;
+    z-index: 0;
+    transition: opacity 0.5s ease, filter 0.5s ease; /* 🎨 Smooth background changes */
+}
+
+/* Overlay to lighten and make text readable */
+.row.justify-content-center > .col-lg-9 > .card:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    z-index: 1;
+    transition: background 0.5s ease; /* 🎨 Smooth overlay changes */
+}
+
+/* Make card content appear above the background */
+.row.justify-content-center > .col-lg-9 > .card:first-child .card-body {
+    position: relative;
+    z-index: 2;
+}
+
+/* Make sure avatar and buttons are on top */
+.row.justify-content-center > .col-lg-9 > .card:first-child #avatarContainer,
+.row.justify-content-center > .col-lg-9 > .card:first-child button,
+.row.justify-content-center > .col-lg-9 > .card:first-child h3,
+.row.justify-content-center > .col-lg-9 > .card:first-child p {
+    position: relative;
+    z-index: 3;
+}
