@@ -16,8 +16,8 @@ if ($requestMethod === 'POST') {
     switch ($action) {
         case 'get':
             // Use regular supabase() for reading
-            // $email = $input['email'];
-            $result = supabase('GET', 'dokter');
+            $email = $input['email'];
+            $result = supabase('GET', 'dokter', "email=ilike." . $email);
             
             if (!empty($result) && !isset($result['code'])) {
                 echo json_encode([

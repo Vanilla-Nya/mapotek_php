@@ -308,8 +308,7 @@ class AntrianFragment {
     try {
       // Get email from session storage (set during login)
       const token = localStorage.getItem("access_token");
-
-      console.log("📧 Token:", token);
+      const data = JSON.parse(localStorage.getItem("user")).email;
 
       if (!token) {
         console.error("❌ No user email found in session");
@@ -328,6 +327,7 @@ class AntrianFragment {
         },
         body: JSON.stringify({
           action: "get",
+          email: data,
         }),
       });
 
