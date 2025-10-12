@@ -1,4 +1,4 @@
-// ProfileFragment.js - Stacked layout with purple cards + Avatar Upload with Preview
+// ProfileFragment.js - Complete version with profile sync
 class ProfileFragment {
     constructor() {
         this.title = 'Profile';
@@ -9,6 +9,16 @@ class ProfileFragment {
         this.originalAvatarVisible = false;
         this.cropper = null;
         this.croppedBlob = null;
+        this.qrCode = null;
+    }
+
+    // ⭐ NEW: Helper to dispatch profile updates to top bar
+    dispatchProfileUpdate(name = null, email = null, avatarUrl = undefined) {
+        console.log('📢 Dispatching profile update event:', { name, email, avatarUrl });
+        const event = new CustomEvent('profileUpdated', {
+            detail: { name, email, avatarUrl }
+        });
+        window.dispatchEvent(event);
     }
 
     render() {
@@ -98,7 +108,7 @@ class ProfileFragment {
                         </div>
                     </div>
 
-                    <!-- Profile Form Card - Purple Style -->
+                    <!-- Profile Form Card -->
                     <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <div class="card-body p-4">
                             <h5 class="card-title mb-4 pb-3 border-bottom border-white border-opacity-25 text-white">
@@ -107,35 +117,26 @@ class ProfileFragment {
                             
                             <form id="profileForm">
                                 <div class="row g-3">
-                                    <!-- Email -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Email</label>
                                         <input type="email" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="email" readonly style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Nama Faskes -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Nama Faskes</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="nama_faskes" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Nama Lengkap -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Nama Lengkap</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="nama_lengkap" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Username -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Username</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="username" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Jenis Kelamin -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Jenis Kelamin</label>
                                         <select class="form-select bg-white bg-opacity-10 text-white border-white border-opacity-25" 
@@ -145,29 +146,21 @@ class ProfileFragment {
                                             <option value="Perempuan">Perempuan</option>
                                         </select>
                                     </div>
-
-                                    <!-- No. Telepon -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">No. Telepon</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="no_telp" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- RFID -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">RFID</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="rfid" placeholder="Belum diatur" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Jam Kerja -->
                                     <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Jam Kerja</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="jam_kerja" placeholder="Contoh: 08:00 - 17:00" disabled style="backdrop-filter: blur(10px);">
                                     </div>
-
-                                    <!-- Alamat -->
                                     <div class="col-12">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Alamat</label>
                                         <textarea class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
@@ -175,7 +168,6 @@ class ProfileFragment {
                                     </div>
                                 </div>
 
-                                <!-- Action Buttons -->
                                 <div class="d-none gap-2 justify-content-end mt-4 pt-3 border-top border-white border-opacity-25" id="actionButtons">
                                     <button type="button" class="btn btn-light" id="btnCancel">
                                         <i class="bi bi-x-circle me-1"></i> Batal
@@ -188,7 +180,44 @@ class ProfileFragment {
                         </div>
                     </div>
 
-                    <!-- Subscription Card - Below Profile -->
+                    <!-- QR Code Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="card-body text-center text-white p-5">
+                            <h4 class="mb-4 fw-bold">
+                                <i class="bi bi-qr-code me-2"></i>QR Code Antrian
+                            </h4>
+                            
+                            <div id="qrSection">
+                                <div id="qrDisplayArea" class="d-none">
+                                    <div class="bg-white p-4 rounded mb-3 d-inline-block">
+                                        <div id="qrCanvas"></div>
+                                    </div>
+                                    <p class="small mb-3">Pasien scan QR ini untuk daftar antrian</p>
+                                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                                        <button class="btn btn-light" id="btnDownloadQR">
+                                            <i class="bi bi-download me-2"></i>Download QR
+                                        </button>
+                                        <button class="btn btn-light" id="btnPrintQR">
+                                            <i class="bi bi-printer me-2"></i>Print QR
+                                        </button>
+                                        <button class="btn btn-outline-light" id="btnRegenerateQR">
+                                            <i class="bi bi-arrow-repeat me-2"></i>Generate Ulang
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="qrGenerateArea">
+                                    <i class="bi bi-qr-code mb-3" style="font-size: 80px; opacity: 0.5;"></i>
+                                    <p class="mb-4">QR Code belum dibuat. Klik tombol di bawah untuk generate QR Code antrian Anda.</p>
+                                    <button class="btn btn-light btn-lg" id="btnGenerateQR">
+                                        <i class="bi bi-qr-code-scan me-2"></i>Generate QR Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Card -->
                     <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
                         <div class="card-body text-center text-white p-5">
                             <h4 class="mb-4 fw-bold">
@@ -218,7 +247,6 @@ class ProfileFragment {
                                 <i class="bi bi-check-circle me-2"></i>Cek Status Pembayaran
                             </button>
 
-                            <!-- VA Display -->
                             <div id="vaNumberDisplay" class="mt-4 p-3 bg-white bg-opacity-25 rounded d-none">
                                 <p class="small mb-2">Virtual Account:</p>
                                 <h5 class="mb-2" id="vaNumber">-</h5>
@@ -262,6 +290,7 @@ class ProfileFragment {
 
         await this.loadProfile();
         await this.initializeSubscription(user.email);
+        await this.loadQRCode();
         this.attachEventListeners();
     }
 
@@ -296,7 +325,6 @@ class ProfileFragment {
     }
 
     attachEventListeners() {
-        // Profile edit
         document.getElementById('btnEditToggle').addEventListener('click', () => {
             this.enableEdit();
         });
@@ -310,7 +338,6 @@ class ProfileFragment {
             this.saveProfile();
         });
 
-        // Avatar listeners
         document.getElementById('btnChangeAvatar').addEventListener('click', () => {
             this.showAvatarUpload();
         });
@@ -324,12 +351,10 @@ class ProfileFragment {
             this.saveAvatar();
         });
         
-        // Preview image when file is selected
         document.getElementById('avatarFile').addEventListener('change', (e) => {
             this.showCropModal(e.target.files[0]);
         });
         
-        // Crop modal buttons
         document.getElementById('btnCloseCrop').addEventListener('click', () => {
             this.closeCropModal();
         });
@@ -342,7 +367,6 @@ class ProfileFragment {
             this.applyCrop();
         });
         
-        // Toggle upload/link option
         document.getElementById('optionUpload').addEventListener('change', () => {
             document.getElementById('uploadOption').classList.remove('d-none');
             document.getElementById('linkOption').classList.add('d-none');
@@ -353,7 +377,24 @@ class ProfileFragment {
             document.getElementById('linkOption').classList.remove('d-none');
         });
 
-        // Subscription
+        const btnGenerateQR = document.getElementById('btnGenerateQR');
+        const btnDownloadQR = document.getElementById('btnDownloadQR');
+        const btnPrintQR = document.getElementById('btnPrintQR');
+        const btnRegenerateQR = document.getElementById('btnRegenerateQR');
+
+        if (btnGenerateQR) {
+            btnGenerateQR.addEventListener('click', () => this.generateQRCode());
+        }
+        if (btnDownloadQR) {
+            btnDownloadQR.addEventListener('click', () => this.downloadQRCode());
+        }
+        if (btnPrintQR) {
+            btnPrintQR.addEventListener('click', () => this.printQRCode());
+        }
+        if (btnRegenerateQR) {
+            btnRegenerateQR.addEventListener('click', () => this.generateQRCode(true));
+        }
+
         const btnPerpanjang = document.getElementById('btnPerpanjang');
         const btnCekStatus = document.getElementById('btnCekStatus');
         const btnCopyVA = document.getElementById('btnCopyVA');
@@ -373,7 +414,244 @@ class ProfileFragment {
         console.log('🟢 All event listeners attached');
     }
 
-    // Avatar methods
+    async loadQRCode() {
+        if (!this.currentDokterId) {
+            console.warn('⚠️ No doctor ID, waiting...');
+            setTimeout(() => this.loadQRCode(), 500);
+            return;
+        }
+
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('dokter')
+                .select('qr_code_data')
+                .eq('id_dokter', this.currentDokterId)
+                .single();
+
+            if (error) throw error;
+
+            if (data && data.qr_code_data) {
+                console.log('✅ QR exists:', data.qr_code_data);
+                this.displayQRCode(data.qr_code_data);
+            } else {
+                console.log('❌ No QR found, showing generate button');
+                document.getElementById('qrGenerateArea').classList.remove('d-none');
+                document.getElementById('qrDisplayArea').classList.add('d-none');
+            }
+        } catch (error) {
+            console.error('❌ Error loading QR:', error);
+        }
+    }
+
+    async generateQRCode(regenerate = false) {
+        if (!this.currentDokterId) {
+            alert('Doctor ID tidak ditemukan');
+            return;
+        }
+
+        const btnGenerate = document.getElementById('btnGenerateQR');
+        const btnRegenerate = document.getElementById('btnRegenerateQR');
+        const activeBtn = regenerate ? btnRegenerate : btnGenerate;
+        
+        activeBtn.disabled = true;
+        activeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+
+        try {
+            // ✅ Get doctor info first
+            const { data: dokter, error: fetchError } = await window.supabaseClient
+                .from('dokter')
+                .select('id_dokter, nama_lengkap')
+                .eq('id_dokter', this.currentDokterId)
+                .single();
+
+            if (fetchError || !dokter) {
+                throw new Error('Gagal mengambil data dokter');
+            }
+
+            // ✅ Generate QR data in the format Android expects (JSON)
+            const qrData = JSON.stringify({
+                doctor_id: dokter.id_dokter,
+                doctor_name: dokter.nama_lengkap
+            });
+            
+            console.log('🟢 Generating QR with data:', qrData);
+            
+            // Save to database
+            const { error } = await window.supabaseClient
+                .from('dokter')
+                .update({ 
+                    qr_code_data: qrData,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id_dokter', this.currentDokterId);
+
+            if (error) throw error;
+
+            console.log('✅ QR data saved to database');
+
+            this.displayQRCode(qrData);
+            
+            this.showToast('QR Code berhasil di-generate!', 'success');
+
+        } catch (error) {
+            console.error('❌ Error generating QR:', error);
+            alert('Gagal generate QR Code: ' + error.message);
+        } finally {
+            activeBtn.disabled = false;
+            activeBtn.innerHTML = regenerate 
+                ? '<i class="bi bi-arrow-repeat me-2"></i>Generate Ulang'
+                : '<i class="bi bi-qr-code-scan me-2"></i>Generate QR Code';
+        }
+    }
+
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    displayQRCode(qrData) {
+        const canvas = document.getElementById('qrCanvas');
+        canvas.innerHTML = '';
+        
+        if (this.qrCode) {
+            this.qrCode = null;
+        }
+        
+        this.qrCode = new QRCode(canvas, {
+            text: qrData,
+            width: 250,
+            height: 250,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        console.log('✅ QR Code displayed');
+
+        document.getElementById('qrDisplayArea').classList.remove('d-none');
+        document.getElementById('qrGenerateArea').classList.add('d-none');
+    }
+
+    downloadQRCode() {
+        const canvas = document.querySelector('#qrCanvas canvas');
+        
+        if (!canvas) {
+            alert('QR Code tidak ditemukan');
+            return;
+        }
+
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `QR_Doctor_${this.currentDokterId}.png`;
+        link.href = url;
+        link.click();
+        
+        this.showToast('QR Code berhasil didownload!', 'success');
+    }
+
+    printQRCode() {
+        const canvas = document.querySelector('#qrCanvas canvas');
+        
+        if (!canvas) {
+            alert('QR Code tidak ditemukan');
+            return;
+        }
+
+        const doctorName = document.getElementById('profileDisplayName').textContent;
+        const doctorFaskes = document.getElementById('nama_faskes').value;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Print QR Code - ${doctorName}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    .container {
+                        text-align: center;
+                        border: 2px solid #667eea;
+                        padding: 30px;
+                        border-radius: 15px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    }
+                    h1 {
+                        color: #667eea;
+                        margin-bottom: 10px;
+                        font-size: 28px;
+                    }
+                    h2 {
+                        color: #764ba2;
+                        margin-bottom: 20px;
+                        font-size: 20px;
+                    }
+                    .qr-container {
+                        margin: 20px 0;
+                    }
+                    img {
+                        border: 3px solid #667eea;
+                        padding: 10px;
+                        background: white;
+                        border-radius: 10px;
+                    }
+                    p {
+                        color: #666;
+                        font-size: 16px;
+                        margin-top: 20px;
+                    }
+                    .footer {
+                        margin-top: 20px;
+                        font-size: 14px;
+                        color: #999;
+                    }
+                    @media print {
+                        body {
+                            padding: 0;
+                        }
+                        .container {
+                            border: none;
+                            box-shadow: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>${doctorName}</h1>
+                    <h2>${doctorFaskes}</h2>
+                    <div class="qr-container">
+                        <img src="${canvas.toDataURL('image/png')}" alt="QR Code">
+                    </div>
+                    <p><strong>Scan QR Code untuk daftar antrian</strong></p>
+                    <div class="footer">
+                        ID: ${this.currentDokterId} | Generated: ${new Date().toLocaleString('id-ID')}
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+        
+        setTimeout(() => {
+            printWindow.print();
+        }, 250);
+        
+        this.showToast('Membuka jendela print...', 'info');
+    }
+
     showAvatarUpload() {
         this.storeOriginalAvatar();
         document.getElementById('avatarUploadSection').classList.remove('d-none');
@@ -399,45 +677,15 @@ class ProfileFragment {
         }
     }
 
-    previewImage(file) {
-        if (!file) return;
-        
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('File harus berupa gambar!');
-            document.getElementById('avatarFile').value = '';
-            return;
-        }
-        
-        // Validate file size (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran file terlalu besar. Maksimal 2MB');
-            document.getElementById('avatarFile').value = '';
-            return;
-        }
-        
-        // Read file and show preview
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            // Show preview in avatar circle
-            document.getElementById('avatarImage').src = e.target.result;
-            document.getElementById('avatarImage').classList.remove('d-none');
-            document.getElementById('avatarIcon').classList.add('d-none');
-        };
-        reader.readAsDataURL(file);
-    }
-
     showCropModal(file) {
         if (!file) return;
         
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             alert('File harus berupa gambar!');
             document.getElementById('avatarFile').value = '';
             return;
         }
         
-        // Validate file size (max 2MB)
         if (file.size > 2 * 1024 * 1024) {
             alert('Ukuran file terlalu besar. Maksimal 2MB');
             document.getElementById('avatarFile').value = '';
@@ -449,42 +697,38 @@ class ProfileFragment {
             const cropImage = document.getElementById('cropImage');
             cropImage.src = e.target.result;
             
-            // Show modal
             const modal = document.getElementById('cropModal');
             modal.style.display = 'block';
             modal.classList.add('show');
             document.body.classList.add('modal-open');
             
-            // Destroy previous cropper if exists
             if (this.cropper) {
                 this.cropper.destroy();
                 this.cropper = null;
             }
             
-            // Wait for image to fully load
             cropImage.onload = () => {
-                // Initialize Cropper.js with WhatsApp-style settings
                 this.cropper = new Cropper(cropImage, {
-                    aspectRatio: 1, // Square crop
-                    viewMode: 0, // No restrictions
-                    dragMode: 'move', // Move the image, not the crop box
-                    autoCropArea: 0.65, // Crop box size (65% of container)
+                    aspectRatio: 1,
+                    viewMode: 0,
+                    dragMode: 'move',
+                    autoCropArea: 0.65,
                     restore: false,
-                    guides: false, // No grid lines
+                    guides: false,
                     center: true,
                     highlight: false,
-                    cropBoxMovable: false, // Crop box stays fixed!
-                    cropBoxResizable: false, // Crop box size is fixed!
+                    cropBoxMovable: false,
+                    cropBoxResizable: false,
                     toggleDragModeOnDblclick: false,
                     background: true,
                     responsive: true,
-                    modal: true, // Dark area outside crop box
+                    modal: true,
                     checkOrientation: true,
                     zoomable: true,
                     zoomOnWheel: true,
                     wheelZoomRatio: 0.1,
                     ready: function() {
-                        console.log('✅ Cropper ready! Drag to move image.');
+                        console.log('✅ Cropper ready!');
                     }
                 });
             };
@@ -503,31 +747,26 @@ class ProfileFragment {
             this.cropper = null;
         }
         
-        // Clear file input
         document.getElementById('avatarFile').value = '';
     }
 
     applyCrop() {
         if (!this.cropper) return;
         
-        // Get cropped canvas
         const canvas = this.cropper.getCroppedCanvas({
             width: 300,
             height: 300,
             imageSmoothingQuality: 'high'
         });
         
-        // Convert to blob
         canvas.toBlob((blob) => {
             this.croppedBlob = blob;
             
-            // Show preview in avatar circle
             const url = URL.createObjectURL(blob);
             document.getElementById('avatarImage').src = url;
             document.getElementById('avatarImage').classList.remove('d-none');
             document.getElementById('avatarIcon').classList.add('d-none');
             
-            // Close modal
             this.closeCropModal();
         }, 'image/jpeg', 0.9);
     }
@@ -542,7 +781,6 @@ class ProfileFragment {
         
         try {
             if (isUpload) {
-                // Check if we have cropped image
                 if (!this.croppedBlob) {
                     alert('Pilih dan crop foto terlebih dahulu');
                     btnSave.disabled = false;
@@ -550,11 +788,9 @@ class ProfileFragment {
                     return;
                 }
                 
-                // Upload cropped image
                 avatarUrl = await this.uploadToSupabase(this.croppedBlob);
                 
             } else {
-                // Use link directly
                 avatarUrl = document.getElementById('avatarLink').value;
                 
                 if (!avatarUrl) {
@@ -564,31 +800,28 @@ class ProfileFragment {
                     return;
                 }
                 
-                // Validate URL format
                 if (!avatarUrl.match(/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i)) {
-                    alert('URL harus berupa link gambar yang valid (jpg, jpeg, png, gif, webp)');
+                    alert('URL harus berupa link gambar yang valid');
                     btnSave.disabled = false;
                     btnSave.innerHTML = '<i class="bi bi-check-circle me-1"></i>Simpan';
                     return;
                 }
             }
             
-            // Save to database via PHP
             await this.updateAvatarInDatabase(avatarUrl);
             
-            // Update display (already showing preview, just keep it)
             this.displayAvatar(avatarUrl);
             this.hideAvatarUpload();
-            
-            // Clear cropped blob
             this.croppedBlob = null;
+            
+            // ⭐ UPDATE TOP BAR
+            this.dispatchProfileUpdate(null, null, avatarUrl);
             
             this.showToast('Foto profil berhasil diupdate!', 'success');
             
         } catch (error) {
             console.error('Error saving avatar:', error);
             alert('Gagal menyimpan foto: ' + error.message);
-            // Restore original on error
             this.restoreOriginalAvatar();
         } finally {
             btnSave.disabled = false;
@@ -597,13 +830,11 @@ class ProfileFragment {
     }
 
     async uploadToSupabase(fileOrBlob) {
-        // Create unique filename
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(7);
         const fileName = `${timestamp}_${random}.jpg`;
         const filePath = `avatars/${fileName}`;
         
-        // Upload to Supabase Storage
         const { data, error } = await window.supabaseClient.storage
             .from('avatars')
             .upload(filePath, fileOrBlob, {
@@ -616,7 +847,6 @@ class ProfileFragment {
             throw new Error('Upload failed: ' + error.message);
         }
         
-        // Get public URL
         const { data: urlData } = window.supabaseClient.storage
             .from('avatars')
             .getPublicUrl(filePath);
@@ -653,19 +883,14 @@ class ProfileFragment {
             avatarImage.src = avatarUrl;
             avatarImage.classList.remove('d-none');
             avatarIcon.classList.add('d-none');
-            
-            // 🎨 Set the blurred background!
             avatarCard.style.setProperty('--avatar-bg-image', `url('${avatarUrl}')`);
         } else {
             avatarImage.classList.add('d-none');
             avatarIcon.classList.remove('d-none');
-            
-            // Remove blurred background when no avatar
             avatarCard.style.setProperty('--avatar-bg-image', 'none');
         }
     }
 
-    // Profile methods
     enableEdit() {
         this.formFields.forEach(field => {
             document.getElementById(field).disabled = false;
@@ -700,8 +925,6 @@ class ProfileFragment {
 
             const result = await response.json();
             
-            console.log('🔍 Profile data from DB:', result);
-            
             if (result.success) {
                 const profile = result.data;
                 
@@ -718,14 +941,18 @@ class ProfileFragment {
                 document.getElementById('jam_kerja').value = profile.jam_kerja || '';
                 document.getElementById('alamat').value = profile.alamat || '';
                 
-                // Display avatar if exists
                 if (profile.avatar_url) {
-                    console.log('✅ Loading avatar:', profile.avatar_url);
                     this.displayAvatar(profile.avatar_url);
                 } else {
-                    console.log('❌ No avatar_url found in profile');
                     this.displayAvatar(null);
                 }
+                
+                // ⭐ UPDATE TOP BAR
+                this.dispatchProfileUpdate(
+                    profile.nama_lengkap,
+                    profile.email,
+                    profile.avatar_url || null
+                );
                 
                 if (profile.created_at) {
                     document.getElementById('created_at').textContent = new Date(profile.created_at).toLocaleString('id-ID');
@@ -769,7 +996,10 @@ class ProfileFragment {
                 user.nama_lengkap = formData.nama_lengkap;
                 user.nama_faskes = formData.nama_faskes;
                 localStorage.setItem('user', JSON.stringify(user));
-                document.getElementById('userName').textContent = formData.nama_lengkap;
+                
+                // ⭐ UPDATE TOP BAR
+                this.dispatchProfileUpdate(formData.nama_lengkap, formData.email, undefined);
+                
                 this.cancelEdit();
             } else {
                 alert('Gagal mengupdate profil: ' + result.message);
@@ -780,7 +1010,6 @@ class ProfileFragment {
         }
     }
 
-    // Subscription methods
     async loadSubscriptionStatus() {
         if (!this.currentDokterId) {
             console.warn('⚠️ No doctor ID available');

@@ -126,6 +126,8 @@ public class supabaseHelper {
         executeRequest(request, callback);
     }
 
+
+
     // Helper method to execute requests
     private static void executeRequest(Request request, SupabaseCallback callback) {
         client.newCall(request).enqueue(new Callback() {
