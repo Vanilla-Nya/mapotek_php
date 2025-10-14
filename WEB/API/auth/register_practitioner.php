@@ -183,7 +183,7 @@ function savePractitioner($input) {
         // ✅ Step 4: Normalize gender to match EXACT enum values
         $genderInput = strtolower(trim($data['gender'] ?? ''));
         
-        if (in_array($genderInput, ['laki-laki', 'laki', 'male', 'l'])) {
+        if (in_array($genderInput, ['Laki-Laki', 'laki-laki', 'laki', 'male', 'l'])) {
             $gender = 'Laki-Laki';
         } elseif (in_array($genderInput, ['perempuan', 'female', 'p'])) {
             $gender = 'Perempuan';
@@ -333,7 +333,7 @@ function savePractitioner($input) {
             'username' => $username,
             'jenis_kelamin' => $gender,
             'email' => $data['email'],
-            'password' => password_hash($data['password'], PASSWORD_BCRYPT)
+            // 'password' => password_hash($data['password'], PASSWORD_BCRYPT)
         ];
         
         // Add optional fields
