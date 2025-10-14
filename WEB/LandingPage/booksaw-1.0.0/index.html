@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<title>BookSaw - Free Book Store HTML CSS Template</title>
+	<title>Mapotek - Sistem Manajemen Praktik Dokter</title>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +14,7 @@
 
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
 		integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 	<link rel="stylesheet" type="text/css" href="css/normalize.css">
 	<link rel="stylesheet" type="text/css" href="icomoon/icomoon.css">
@@ -47,85 +48,139 @@
 							</ul>
 						</div><!--social-links-->
 					</div>
-				<div class="col-md-6 text-end">
-        <ul class="auth-links">
-          <li><a href="#" id="openLogin">Login</a></li>
-          <li><a href="#" id="openRegister">Register</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
+					<div class="col-md-6 text-end">
+						<ul class="auth-links">
+							<li><a href="#" id="openLogin">Login</a></li>
+							<li><a href="#" id="openRegister">Register</a></li>
+						</ul>
+					</div>
+				</div>
+			</div>
 		</div><!--top-content-->
+
+		<!-- Auth Modal -->
 		<div id="authModal" class="auth-modal">
-  <div class="auth-modal-content">
-    <span class="close">&times;</span>
+			<div class="auth-modal-content">
+				<span class="close">&times;</span>
 
-    <!-- Login Form -->
-    <div id="loginForm">
-      <h2 class="text-center mb-4">Login</h2>
-      <form>
-        <div class="mb-3">
-          <label>Email</label>
-          <input type="email" class="form-control" placeholder="Masukkan Email">
+				<!-- Login Form -->
+				<div id="loginForm">
+					<h2 class="text-center mb-4">Login</h2>
+					<form>
+						<div class="mb-3">
+							<label>Email</label>
+							<input type="email" class="form-control" placeholder="Masukkan Email" required>
+						</div>
+						<div class="mb-3">
+							<label>Password</label>
+							<input type="password" class="form-control" placeholder="Masukkan Password" required>
+						</div>
+						<button type="submit" class="btn btn-primary w-100">Login</button>
+						<p class="text-center mt-3">
+							Belum punya akun? <a href="#" id="toRegister">Register</a>
+						</p>
+					</form>
+				</div>
+
+				<!-- Register Form -->
+<div id="registerForm" style="display:none;">
+    <h2 class="text-center mb-4">Registrasi Dokter</h2>
+    
+    <!-- Step 1: Search Doctor -->
+    <div id="searchStep">
+        <div class="alert alert-info mb-3">
+            <i class="bi bi-info-circle"></i> Cari data dokter dari SatuSehat terlebih dahulu
         </div>
+        
         <div class="mb-3">
-          <label>Password</label>
-          <input type="password" class="form-control" placeholder="Masukkan Password">
+            <label class="form-label fw-bold">Metode Pencarian:</label>
+            <select class="form-select" id="searchMethod">
+                <option value="">-- Pilih Metode --</option>
+                <option value="nik">Cari dengan NIK</option>
+                <option value="detail">Cari dengan Nama + Tanggal Lahir + Gender</option>
+            </select>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Login</button>
-        <p class="text-center mt-3">
-          Belum punya akun? <a href="#" id="toRegister">Register</a>
-        </p>
-      </form>
+
+        <!-- Dynamic Search Inputs -->
+        <div id="dynamicSearchInputs" class="mb-3"></div>
+
+        <!-- Search Button -->
+        <button type="button" class="btn btn-primary w-100 mb-3" id="btnSearchPractitioner" style="display:none;">
+            <i class="bi bi-search"></i> Cari Data Dokter
+        </button>
+
+        <!-- Search Result Display -->
+        <div id="searchResult" class="result-display" style="display:none;"></div>
     </div>
 
-    <div id="registerForm" style="display:none;">
-  <h2 class="text-center mb-4">Register</h2>
-  <form>
-    <div class="mb-3">
-      <label>Nama Faskes</label>
-      <input type="text" class="form-control" name="nama_faskes" placeholder="Masukkan Nama Faskes">
-    </div>
-    <div class="mb-3">
-      <label>Nama Lengkap</label>
-      <input type="text" class="form-control" name="nama_lengkap" placeholder="Masukkan Nama Lengkap">
-    </div>
-    <div class="mb-3">
-      <label>Username</label>
-      <input type="text" class="form-control" name="username" placeholder="Masukkan Username">
-    </div>
-    <div class="mb-3">
-      <label>Jenis Kelamin</label>
-      <select class="form-control" name="jenis_kelamin">
-        <option value="">-- Pilih Jenis Kelamin --</option>
-        <option value="Laki-laki">Laki-laki</option>
-        <option value="Perempuan">Perempuan</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label>Alamat</label>
-      <textarea class="form-control" name="alamat" placeholder="Masukkan Alamat"></textarea>
-    </div>
-    <div class="mb-3">
-      <label>No. Telepon</label>
-      <input type="text" class="form-control" name="no_telp" placeholder="Masukkan No. Telepon">
-    </div>
-    <div class="mb-3">
-      <label>Email</label>
-      <input type="email" class="form-control" name="email" placeholder="Masukkan Email">
-    </div>
-    <div class="mb-3">
-      <label>Password</label>
-      <input type="password" class="form-control" name="password" placeholder="Masukkan Password">
-    </div>
-    <button type="submit" class="btn btn-success w-100">Register</button>
+    <!-- Step 2: Complete Registration Form (hidden until search complete) -->
+    <form id="dokterCompleteForm" style="display:none;">
+        <div class="alert alert-success mb-3">
+            <i class="bi bi-check-circle"></i> Data ditemukan! Lengkapi form registrasi
+        </div>
+        
+        <input type="hidden" id="dokterIdSatusehat" name="id_satusehat">
+        
+        <!-- Auto-filled from SatuSehat (readonly) -->
+        <div class="mb-3">
+            <label>Nama Lengkap <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dokterNama" name="nama_lengkap" readonly>
+            <small class="text-muted">Dari SatuSehat</small>
+        </div>
+        
+        <div class="mb-3">
+            <label>Jenis Kelamin <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dokterGender" name="jenis_kelamin" readonly>
+            <small class="text-muted">Dari SatuSehat</small>
+        </div>
+        
+        <!-- Fields to complete (editable) -->
+        <div class="mb-3">
+            <label>Username <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dokterUsername" name="username" placeholder="Masukkan Username" required>
+        </div>
+        
+        <div class="mb-3">
+            <label>Alamat <span class="text-danger">*</span></label>
+            <textarea class="form-control" id="dokterAlamat" name="alamat" rows="2" placeholder="Masukkan Alamat Lengkap" required></textarea>
+        </div>
+        
+        <div class="mb-3">
+            <label>No. Telepon <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" id="dokterPhone" name="no_telp" placeholder="Contoh: 081234567890" required>
+        </div>
+        
+        <div class="mb-3">
+            <label>Email <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" id="dokterEmail" name="email" placeholder="Masukkan Email" required>
+        </div>
+        
+        <div class="mb-3">
+            <label>Password <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="dokterPassword" name="password" placeholder="Minimal 6 karakter" required minlength="6">
+        </div>
+        
+        <div class="mb-3">
+            <label>Konfirmasi Password <span class="text-danger">*</span></label>
+            <input type="password" class="form-control" id="dokterPasswordConfirm" placeholder="Masukkan ulang password" required minlength="6">
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-secondary flex-fill" id="btnBackToSearch">
+                <i class="bi bi-arrow-left"></i> Cari Lagi
+            </button>
+            <button type="submit" class="btn btn-success flex-fill">
+                <i class="bi bi-check-circle"></i> Daftar
+            </button>
+        </div>
+    </form>
+
     <p class="text-center mt-3">
-      Sudah punya akun? <a href="#" id="toLogin">Login</a>
+        Sudah punya akun? <a href="#" id="toLogin">Login</a>
     </p>
-  </form>
 </div>
-  </div>
-</div>
+			</div>
+		</div>
 
 		<header id="header">
 			<div class="container-fluid">
@@ -135,21 +190,15 @@
 						<div class="main-logo">
 							<a href="index.html"><img src="images/mapotekTxt.png" alt="logo"></a>
 						</div>
-
 					</div>
 
 					<div class="col-md-10">
-
 						<nav id="navbar">
 							<div class="main-menu stellarnav">
 								<ul class="menu-list">
 									<li class="menu-item active"><a href="#home">Home</a></li>
-									<li class="menu-item has-sub">
-									
-
-									</li>
 									<li class="menu-item"><a href="#featured-books" class="nav-link">List Harga </a></li>
-									<li class="menu-item"><a href="#fitur-utama" class="nav-link">fitur</a></li>
+									<li class="menu-item"><a href="#fitur-utama" class="nav-link">Fitur</a></li>
 									<li class="menu-item"><a href="#latest-blog" class="nav-link">Ulasan Pelanggan</a></li>
 									<li class="menu-item"><a href="#download-app" class="nav-link">Download App</a></li>
 								</ul>
@@ -159,10 +208,8 @@
 									<span class="bar"></span>
 									<span class="bar"></span>
 								</div>
-
 							</div>
 						</nav>
-
 					</div>
 
 				</div>
@@ -172,54 +219,25 @@
 	</div><!--header-wrap-->
 
 	<section id="billboard">
-
 		<div class="container">
 			<div class="row">
 				<div class="col-md-12">
-
-				
-
 					<div class="main-slider pattern-overlay">
 						<div class="slider-item">
 							<div class="banner-content">
 								<h2 class="banner-title">MAPOTEK</h2>
-								<p> Sistem informasi yang dirancang khusus untuk mempermudah manajemen praktik pribadi dokter.
-									mempermudah dokter dalam mengelola data pasien, jadwal praktek, rekam medis, dan administrasi dan lainnya.
-									Simpel, intuitif,dan efisen - sesuai kebutuhan praktik </p>
-								<div class="btn-wrap">
-									
-								</div>
+								<p>Sistem informasi yang dirancang khusus untuk mempermudah manajemen praktik pribadi dokter.
+									Mempermudah dokter dalam mengelola data pasien, jadwal praktek, rekam medis, dan administrasi dan lainnya.
+									Simpel, intuitif, dan efisien - sesuai kebutuhan praktik</p>
+								<div class="btn-wrap"></div>
 							</div><!--banner-content-->
 							<img src="images/mapotekLogoo.png" alt="banner" class="banner-image">
-						
+						</div><!--slider-item-->
 					</div><!--slider-->
-
-					
-					
-
 				</div>
 			</div>
 		</div>
-
 	</section>
-
-	<!-- <section id="client-holder" data-aos="fade-up">
-		<div class="container">
-			<div class="row">
-				<div class="inner-content">
-					<div class="logo-wrap">
-						<div class="grid">
-							<a href="#"><img src="images/.png" alt="client">
-						\
-							<a href="#"><img src="images/amanBgr.png" alt="client"></a>
-							<a href="#"><img src="images/.png" alt="client"></a>
-							
-						</div>
-					</div><!--image-holder-->
-				</div>
-			</div>
-		</div>
-	</section> -->
 
 	<section id="featured-books" class="py-5 my-5">
 		<div class="container">
@@ -244,7 +262,7 @@
 									</figure>
 									<figcaption>
 										<h3>Gratis</h3>
-										<span>Trial 7 hari </span>
+										<span>Trial 7 hari</span>
 										<div class="item-price">Rp 0</div>
 									</figcaption>
 								</div>
@@ -254,8 +272,7 @@
 								<div class="product-item">
 									<figure class="product-style">
 										<img src="images/berlangganan.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="Beli">Beli
-											sekarang</button>
+										<button type="button" class="add-to-cart" data-product-tile="Beli">Beli sekarang</button>
 									</figure>
 									<figcaption>
 										<h3>1 bulan</h3>
@@ -269,8 +286,7 @@
 								<div class="product-item">
 									<figure class="product-style">
 										<img src="images/abi.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="beli">Beli
-											sekarang</button>
+										<button type="button" class="add-to-cart" data-product-tile="beli">Beli sekarang</button>
 									</figure>
 									<figcaption>
 										<h3>3 bulan</h3>
@@ -284,7 +300,7 @@
 								<div class="product-item">
 									<figure class="product-style">
 										<img src="images/ummi.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="beli">beli sekarang</button>
+										<button type="button" class="add-to-cart" data-product-tile="beli">Beli sekarang</button>
 									</figure>
 									<figcaption>
 										<h3>1 tahun</h3>
@@ -297,158 +313,121 @@
 						</div><!--ft-books-slider-->
 					</div><!--grid-->
 
-
 				</div><!--inner-content-->
-				
 			</div>
-<section id="fitur-utama"></section>
+
+			<section id="fitur-utama"></section>
 			<div class="row">
 				<div class="col-md-12">
+					<div class="feature-text"></div>
+					<h4 class="section-title divider">Fitur Utama</h4>
 
-					
+					<div class="feature-list">
+						<div class="feature-item">
+							<i class="icon icon-login"></i>
+							<div class="feature-text">
+								<h4>Login Multi-Role</h4>
+								<p>Owner, Admin, dan Dokter dengan hak akses berbeda</p>
+							</div>
+						</div>
+
+						<div class="feature-item">
+							<i class="icon icon-users"></i>
+							<div class="feature-text">
+								<h4>Manajemen Data Pasien</h4>
+								<p>Pencatatan pasien digital yang praktis dan aman</p>
+							</div>
+						</div>
+
+						<div class="feature-item">
+							<i class="icon icon-medicine"></i>
+							<div class="feature-text">
+								<h4>Pemantauan Stok Obat</h4>
+								<p>Monitoring stok obat otomatis dengan alert</p>
+							</div>
+						</div>
+
+						<div class="feature-item">
+							<i class="icon icon-clock"></i>
+							<div class="feature-text">
+								<h4>Absensi Staf Digital</h4>
+								<p>Sistem absensi yang efisien dan akurat</p>
+							</div>
+						</div>
+
+						<div class="feature-item">
+							<i class="icon icon-finance"></i>
+							<div class="feature-text">
+								<h4>Pencatatan Keuangan</h4>
+								<p>Laporan keuangan rapi dan terstruktur</p>
+							</div>
+						</div>
+
+						<div class="feature-item">
+							<i class="icon icon-ui"></i>
+							<div class="feature-text">
+								<h4>Antarmuka User-Friendly</h4>
+								<p>Desain simpel, clean, dan mudah digunakan</p>
+							</div>
+						</div>
 					</div>
-
 				</div>
-			</div>
-		</div>
-		
-		
-<div class="row">
-   <div class="feature-text"></div>
-    <h4 class="section-title divider">Fitur Utama</h4>
-
-    <div class="feature-list">
-      <div class="feature-item">
-        <i class="icon icon-login"></i>
-        <div class="feature-text">
-          <h4>Login Multi-Role</h4>
-          <p>Owner, Admin, dan Dokter dengan hak akses berbeda</p>
-        </div>
-      </div>
-
-      <div class="feature-item">
-        <i class="icon icon-users"></i>
-        <div class="feature-text">
-          <h4>Manajemen Data Pasien</h4>
-          <p>Pencatatan pasien digital yang praktis dan aman</p>
-        </div>
-      </div>
-
-      <div class="feature-item">
-        <i class="icon icon-medicine"></i>
-        <div class="feature-text">
-          <h4>Pemantauan Stok Obat</h4>
-          <p>Monitoring stok obat otomatis dengan alert</p>
-        </div>
-      </div>
-
-      <div class="feature-item">
-        <i class="icon icon-clock"></i>
-        <div class="feature-text">
-          <h4>Absensi Staf Digital</h4>
-          <p>Sistem absensi yang efisien dan akurat</p>
-        </div>
-      </div>
-
-      <div class="feature-item">
-        <i class="icon icon-finance"></i>
-        <div class="feature-text">
-          <h4>Pencatatan Keuangan</h4>
-          <p>Laporan keuangan rapi dan terstruktur</p>
-        </div>
-      </div>
-
-      <div class="feature-item">
-        <i class="icon icon-ui"></i>
-        <div class="feature-text">
-          <h4>Antarmuka User-Friendly</h4>
-          <p>Desain simpel, clean, dan mudah digunakan</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-				</div>
-
 			</div>
 		</div>
 	</section>
 
-	
-
-
 	<section id="latest-blog" class="py-5 my-5">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
 
-        <div class="section-header align-center">
-          <div class="title">
-            <span>What our clients say</span>
-          </div>
-
+					<div class="section-header align-center">
+						<div class="title">
+							<span>What our clients say</span>
+						</div>
 						<h2 class="section-title">Ulasan Pelanggan</h2>
 					</div>
 
 					<div class="row">
-
 						<div class="col-md-4">
-
 							<article class="column" data-aos="fade-up">
-
 								<figure>
 									<a href="#" class="image-hvr-effect">
 										<img src="images/errrr.jpeg" alt="post" class="post-image">
 									</a>
 								</figure>
-
-								<div class="post-item">
-									
-									
-
-								</div>
+								<div class="post-item"></div>
 							</article>
-
 						</div>
-						<div class="col-md-4">
 
+						<div class="col-md-4">
 							<article class="column" data-aos="fade-up" data-aos-delay="200">
 								<figure>
 									<a href="#" class="image-hvr-effect">
 										<img src="images/errrr.jpeg" alt="post" class="post-image">
 									</a>
 								</figure>
-								<div class="post-item">
-									
-									
-								</div>
+								<div class="post-item"></div>
 							</article>
-
 						</div>
-						<div class="col-md-4">
 
+						<div class="col-md-4">
 							<article class="column" data-aos="fade-up" data-aos-delay="400">
 								<figure>
 									<a href="#" class="image-hvr-effect">
 										<img src="images/errrr.jpeg" alt="post" class="post-image">
 									</a>
 								</figure>
-								<div class="post-item">
-								
-								
-								</div>
+								<div class="post-item"></div>
 							</article>
-
 						</div>
-
 					</div>
 
 					<div class="row">
-
 						<div class="btn-wrap align-center">
-							<a href="#" class="btn btn-outline-accent btn-accent-arrow" tabindex="0">Lihat Ulasan Lainnya<i
-									class="icon icon-ns-arrow-right"></i></a>
+							<a href="#" class="btn btn-outline-accent btn-accent-arrow" tabindex="0">Lihat Ulasan Lainnya
+								<i class="icon icon-ns-arrow-right"></i>
+							</a>
 						</div>
 					</div>
 
@@ -474,11 +453,9 @@
 							<div class="app-info">
 								<h2 class="section-title divider">Download aplikasi!</h2>
 								<p>Aplikasi mobile kami tersedia di Android yang diperuntukkan untuk pasien
-									yang akan berkonsultasi dengan dokter yang berlangganan di Mapotek.
-								</p>
+									yang akan berkonsultasi dengan dokter yang berlangganan di Mapotek.</p>
 								<div class="google-app">
 									<img src="images/google-play.jpg" alt="google play">
-									
 								</div>
 							</div>
 						</div>
@@ -494,110 +471,65 @@
 			<div class="row">
 
 				<div class="col-md-4">
-
 					<div class="footer-item">
 						<div class="company-brand">
 							<img src="images/mapotekTxt.png" alt="logo" class="footer-logo">
-							<p>Kemenagan bersama kesabaran</p>
+							<p>Kemenangan bersama kesabaran</p>
 						</div>
 					</div>
-
 				</div>
 
 				<div class="col-md-2">
-
 					<div class="footer-menu">
 						<h5>About Us</h5>
 						<ul class="menu-list">
-							<li class="menu-item">
-								<a href="#">vision</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">articles </a>
-							</li>
-							<li class="menu-item">
-								<a href="#">careers</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">service terms</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">donate</a>
-							</li>
+							<li class="menu-item"><a href="#">Vision</a></li>
+							<li class="menu-item"><a href="#">Articles</a></li>
+							<li class="menu-item"><a href="#">Careers</a></li>
+							<li class="menu-item"><a href="#">Service Terms</a></li>
+							<li class="menu-item"><a href="#">Donate</a></li>
 						</ul>
 					</div>
-
 				</div>
-				<div class="col-md-2">
 
+				<div class="col-md-2">
 					<div class="footer-menu">
 						<h5>Discover</h5>
 						<ul class="menu-list">
-							<li class="menu-item">
-								<a href="#">Home</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Books</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Authors</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Subjects</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Advanced Search</a>
-							</li>
+							<li class="menu-item"><a href="#">Home</a></li>
+							<li class="menu-item"><a href="#">Books</a></li>
+							<li class="menu-item"><a href="#">Authors</a></li>
+							<li class="menu-item"><a href="#">Subjects</a></li>
+							<li class="menu-item"><a href="#">Advanced Search</a></li>
 						</ul>
 					</div>
-
 				</div>
-				<div class="col-md-2">
 
+				<div class="col-md-2">
 					<div class="footer-menu">
-						<h5>My account</h5>
+						<h5>My Account</h5>
 						<ul class="menu-list">
-							<li class="menu-item">
-								<a href="#">Sign In</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">View Cart</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">My Wishtlist</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Track My Order</a>
-							</li>
+							<li class="menu-item"><a href="#">Sign In</a></li>
+							<li class="menu-item"><a href="#">View Cart</a></li>
+							<li class="menu-item"><a href="#">My Wishlist</a></li>
+							<li class="menu-item"><a href="#">Track My Order</a></li>
 						</ul>
 					</div>
-
 				</div>
-				<div class="col-md-2">
 
+				<div class="col-md-2">
 					<div class="footer-menu">
 						<h5>Help</h5>
 						<ul class="menu-list">
-							<li class="menu-item">
-								<a href="#">Help center</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Report a problem</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Suggesting edits</a>
-							</li>
-							<li class="menu-item">
-								<a href="#">Contact us</a>
-							</li>
+							<li class="menu-item"><a href="#">Help Center</a></li>
+							<li class="menu-item"><a href="#">Report a Problem</a></li>
+							<li class="menu-item"><a href="#">Suggesting Edits</a></li>
+							<li class="menu-item"><a href="#">Contact Us</a></li>
 						</ul>
 					</div>
-
 				</div>
 
 			</div>
-			<!-- / row -->
-
 		</div>
 	</footer>
 
@@ -605,36 +537,21 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-md-12">
-
 					<div class="copyright">
 						<div class="row">
-
-							<div class="col-md-6">
-								
-							</div>
-
+							<div class="col-md-6"></div>
 							<div class="col-md-6">
 								<div class="social-links align-right">
 									<ul>
-										<li>
-											<a href="#"><i class="icon icon-facebook"></i></a>
-										</li>
-										<li>
-											<a href="#"><i class="icon icon-twitter"></i></a>
-										</li>
-										<li>
-											<a href="#"><i class="icon icon-youtube-play"></i></a>
-										</li>
-										<li>
-											<a href="#"><i class="icon icon-behance-square"></i></a>
-										</li>
+										<li><a href="#"><i class="icon icon-facebook"></i></a></li>
+										<li><a href="#"><i class="icon icon-twitter"></i></a></li>
+										<li><a href="#"><i class="icon icon-youtube-play"></i></a></li>
+										<li><a href="#"><i class="icon icon-behance-square"></i></a></li>
 									</ul>
 								</div>
 							</div>
-
 						</div>
 					</div><!--grid-->
-
 				</div><!--footer-bottom-content-->
 			</div>
 		</div>
@@ -646,7 +563,7 @@
 		crossorigin="anonymous"></script>
 	<script src="js/plugins.js"></script>
 	<script src="js/script.js"></script>
-	
+	<script src="js/auth.js"></script>
 
 </body>
 

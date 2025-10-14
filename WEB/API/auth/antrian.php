@@ -239,43 +239,99 @@ function createAntrian() {
     
     error_log("🧪 Input received: " . json_encode($input));
     
+    // Validate required fields
     if (!isset($input['no_antrian']) || !isset($input['tanggal_antrian']) || 
         !isset($input['jam_antrian']) || !isset($input['id_pasien']) || 
         !isset($input['id_dokter'])) {
-        echo json_encode(['error' => 'Missing required fields', 'input' => $input]);
+        echo json_encode([
+            'error' => 'Missing required fields',
+            'required' => ['no_antrian', 'tanggal_antrian', 'jam_antrian', 'id_pasien', 'id_dokter'],
+            'received' => array_keys($input)
+        ]);
         return;
     }
     
-    // TEST 1: Try WITHOUT blockchain fields first
-    $testData = [
+    // STEP 1: Verify patient exists
+    error_log("🔍 Checking if patient exists: " . $input['id_pasien']);
+    $patientCheck = supabase('GET', 'pasien', "select=id_pasien&id_pasien=eq." . $input['id_pasien']);
+    
+    if (empty($patientCheck)) {
+        echo json_encode([
+            'error' => 'Patient not found',
+            'id_pasien' => $input['id_pasien'],
+            'hint' => 'This patient ID does not exist in the database'
+        ]);
+        return;
+    }
+    
+    // STEP 2: Verify doctor exists
+    error_log("🔍 Checking if doctor exists: " . $input['id_dokter']);
+    $doctorCheck = supabase('GET', 'dokter', "select=id_dokter&id_dokter=eq." . $input['id_dokter']);
+    
+    if (empty($doctorCheck)) {
+        echo json_encode([
+            'error' => 'Doctor not found',
+            'id_dokter' => $input['id_dokter'],
+            'hint' => 'This doctor ID does not exist in the database'
+        ]);
+        return;
+    }
+    
+    // STEP 3: Get blockchain data
+    $prevHash = getLastHash();
+    error_log("🔗 Previous hash: " . $prevHash);
+    
+    // STEP 4: Prepare data
+    $data = [
         'no_antrian' => $input['no_antrian'],
         'tanggal_antrian' => $input['tanggal_antrian'],
         'jam_antrian' => $input['jam_antrian'],
         'status_antrian' => 'Belum Periksa',
         'id_pasien' => $input['id_pasien'],
         'id_dokter' => $input['id_dokter'],
-        'is_deleted' => 0
-        // NO prev_hash or current_hash yet
+        'is_deleted' => 0,
+        'prev_hash' => $prevHash
     ];
     
-    error_log("🧪 Test data (without hashes): " . json_encode($testData));
+    // Generate hash
+    $currentHash = generateHash($data, $prevHash);
+    $data['current_hash'] = $currentHash;
     
-    $result = supabase('POST', 'antrian', '', $testData);
+    error_log("🧪 Data to insert: " . json_encode($data));
+    
+    // STEP 5: Insert
+    $result = supabase('POST', 'antrian', '', $data);
     
     error_log("🧪 Supabase response: " . json_encode($result));
     
-    if (is_array($result) && !empty($result) && !isset($result['error'])) {
+    // STEP 6: Check result
+    if (isset($result['error'])) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Supabase error',
+            'message' => $result['message'] ?? 'Unknown error',
+            'details' => $result['details'] ?? 'No details',
+            'hint' => $result['hint'] ?? 'No hint',
+            'code' => $result['code'] ?? 'No code',
+            'full_response' => $result,
+            'data_sent' => $data
+        ]);
+        return;
+    }
+    
+    if (is_array($result) && !empty($result)) {
         echo json_encode([
             'success' => true,
-            'message' => 'Test insert worked!',
-            'data' => $result
+            'message' => 'Queue created successfully',
+            'data' => $result,
+            'hash' => $currentHash
         ]);
     } else {
         echo json_encode([
             'success' => false,
-            'error' => 'Supabase insert failed',
-            'supabase_error' => $result,
-            'data_sent' => $testData
+            'error' => 'Unexpected response format',
+            'response' => $result,
+            'data_sent' => $data
         ]);
     }
 }
@@ -305,7 +361,7 @@ function acceptAntrian() {
         'no_antrian' => $currentRecord['no_antrian'],
         'tanggal_antrian' => $currentRecord['tanggal_antrian'],
         'jam_antrian' => $currentRecord['jam_antrian'],
-        'status_antrian' => 'Di Terima',  // ← Only change this
+        'status_antrian' => 'Di Terima',
         'id_pasien' => $currentRecord['id_pasien'],
         'id_dokter' => $currentRecord['id_dokter'],
         'is_deleted' => 0,
@@ -315,12 +371,26 @@ function acceptAntrian() {
     $currentHash = generateHash($newData, $prevHash);
     $newData['current_hash'] = $currentHash;
     
+    error_log("🔍 Accept - Inserting data: " . json_encode($newData));
+    
     $result = supabase('POST', 'antrian', '', $newData);
+    
+    error_log("🔍 Accept - Supabase result: " . json_encode($result));
+    
+    if (isset($result['error'])) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to accept antrian',
+            'details' => $result
+        ]);
+        return;
+    }
     
     if (is_array($result) && !empty($result)) {
         echo json_encode([
             'success' => true,
-            'message' => '✅ NEW RECORD INSERTED (ACCEPT)',
+            'message' => 'Queue accepted successfully',
+            'data' => $result,
             'hash' => $currentHash
         ]);
     } else {
@@ -356,30 +426,37 @@ function deleteAntrian() {
         'no_antrian' => $currentRecord['no_antrian'],
         'tanggal_antrian' => $currentRecord['tanggal_antrian'],
         'jam_antrian' => $currentRecord['jam_antrian'],
-        'status_antrian' => $currentRecord['status_antrian'],  // Keep same status
+        'status_antrian' => $currentRecord['status_antrian'],
         'id_pasien' => $currentRecord['id_pasien'],
         'id_dokter' => $currentRecord['id_dokter'],
-        'is_deleted' => 1,  // ← Mark as deleted
+        'is_deleted' => 1,
         'prev_hash' => $prevHash
     ];
     
     $currentHash = generateHash($newData, $prevHash);
     $newData['current_hash'] = $currentHash;
     
-    // 🐛 Debug
-    error_log("🔍 Inserting data: " . json_encode($newData));
+    error_log("🔍 Delete - Inserting data: " . json_encode($newData));
     
     $result = supabase('POST', 'antrian', '', $newData);
     
-    // 🐛 Debug
-    error_log("🔍 Supabase result: " . json_encode($result));
+    error_log("🔍 Delete - Supabase result: " . json_encode($result));
+    
+    if (isset($result['error'])) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to insert delete record',
+            'details' => $result
+        ]);
+        return;
+    }
     
     if (is_array($result) && !empty($result)) {
         echo json_encode([
             'success' => true,
-            'message' => '✅ NEW RECORD INSERTED (DELETE)',
-            'hash' => $currentHash,
-            'inserted_data' => $result
+            'message' => 'Queue deleted successfully',
+            'data' => $result,
+            'hash' => $currentHash
         ]);
     } else {
         echo json_encode([

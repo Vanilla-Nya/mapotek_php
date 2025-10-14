@@ -7,12 +7,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.MultiTransformation;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -22,6 +27,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class FindDoctorFragment extends Fragment {
     private static final String TAG = "FindDoctorFragment";
@@ -111,7 +118,8 @@ public class FindDoctorFragment extends Fragment {
                                             doctorJson.optString("jam_kerja", "08:00 - 16:00"),
                                             doctorJson.optString("alamat", ""),
                                             "", // category removed
-                                            true // always available
+                                            true, // always available
+                                            doctorJson.optString("avatar_url", "")
                                     );
 
                                     doctorList.add(doctor);
@@ -210,8 +218,36 @@ public class FindDoctorFragment extends Fragment {
         TextView tvSchedule = cardView.findViewById(R.id.tvSchedule);
         TextView tvLocation = cardView.findViewById(R.id.tvLocation);
         MaterialButton btnBooking = cardView.findViewById(R.id.btnBooking);
+        ImageView ivDoctorPhoto = cardView.findViewById(R.id.ivDoctorPhoto);
+        ImageView ivDoctorBackground = cardView.findViewById(R.id.ivDoctorBackground);
 
         tvDoctorName.setText(doctor.getName());
+
+        // 👇 Load blurred background using Glide transformation
+        Glide.with(requireContext())
+                .load(doctor.getPhotoUrl())
+                .transform(new MultiTransformation<>(new CenterCrop(), new BlurTransformation(25, 3)))
+                .placeholder(R.drawable.ic_doctor_placeholder)
+                .into(ivDoctorBackground);
+
+        // 👇 Load main circular doctor photo
+        Glide.with(requireContext())
+                .load(doctor.getPhotoUrl())
+                .placeholder(R.drawable.ic_doctor_placeholder)
+                .error(R.drawable.ic_doctor_placeholder)
+                .circleCrop()
+                .into(ivDoctorPhoto);
+
+        if (doctor.getPhotoUrl() != null && !doctor.getPhotoUrl().isEmpty()) {
+            Glide.with(requireContext())
+                    .load(doctor.getPhotoUrl())
+                    .placeholder(R.drawable.ic_doctor_placeholder)  // Show this while loading
+                    .error(R.drawable.ic_doctor_placeholder)        // Show this if load fails
+                    .circleCrop()                                    // Makes it circular
+                    .into(ivDoctorPhoto);
+        } else {
+            ivDoctorPhoto.setImageResource(R.drawable.ic_doctor_placeholder);
+        }
 
         // Hide specialty if empty
         if (doctor.getSpecialty().isEmpty()) {
@@ -291,9 +327,10 @@ public class FindDoctorFragment extends Fragment {
         private String location;
         private String category;
         private boolean isAvailable;
+        private String photoUrl;
 
         public Doctor(String id, String name, String specialty, String schedule,
-                      String location, String category, boolean isAvailable) {
+                      String location, String category, boolean isAvailable, String photoUrl) {
             this.id = id;
             this.name = name;
             this.specialty = specialty;
@@ -301,6 +338,7 @@ public class FindDoctorFragment extends Fragment {
             this.location = location;
             this.category = category;
             this.isAvailable = isAvailable;
+            this.photoUrl = photoUrl;
         }
 
         public String getId() { return id; }                    // NEW
@@ -310,5 +348,6 @@ public class FindDoctorFragment extends Fragment {
         public String getLocation() { return location; }
         public String getCategory() { return category; }
         public boolean isAvailable() { return isAvailable; }
+        public String getPhotoUrl() { return photoUrl; }
     }
 }
