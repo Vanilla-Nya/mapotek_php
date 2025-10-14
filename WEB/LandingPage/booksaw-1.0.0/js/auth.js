@@ -110,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
           alert("Login berhasil! Selamat datang, " + result.user.nama_lengkap);
 
           modal.style.display = "none";
-          window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
+          window.location.replace("/mapotek_php/WEB/Dashboard/index.html");
         } else {
           alert(
             "Login gagal: " + (result.message || "Email atau password salah")
