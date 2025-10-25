@@ -295,6 +295,16 @@ class ProfileFragment {
     }
 
     async initializeSubscription(email) {
+        const access_token = localStorage.getItem('access_token');
+        
+        const { data: { user }, error } = await supabaseClient.auth.getUser(access_token)
+        
+        if (error || !user) {
+            localStorage.removeItem("access_token");
+            alert('Session expired. Please login again.');
+            window.location.replace("http://localhost/mapotek_php/WEB/LandingPage/booksaw-1.0.0/index.html");
+        }
+        
         try {
             if (!window.supabaseClient) {
                 console.error('❌ Supabase not initialized');
@@ -306,6 +316,7 @@ class ProfileFragment {
                 .select('id_dokter')
                 .eq('email', email)
                 .single();
+        
 
             if (error || !dokter) {
                 console.error('❌ Could not get doctor ID:', error);

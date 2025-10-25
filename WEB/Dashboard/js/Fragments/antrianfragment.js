@@ -1,4 +1,4 @@
-console.log("🔥 ANTRIAN FRAGMENT - TRUE BLOCKCHAIN VERSION 🔥");
+console.log("🔥 ANTRIAN FRAGMENT - WITH SATUSEHAT & BPJS/UMUM INTEGRATION 🔥");
 
 class AntrianFragment {
   constructor() {
@@ -10,6 +10,8 @@ class AntrianFragment {
     this.currentDoctorName = "";
     this.apiUrl = "../API/auth/antrian.php";
     this.profileApiUrl = "../API/auth/profile.php";
+    this.selectedPatientId = null;
+    this.satusehatChecked = false;
   }
 
   render() {
@@ -73,13 +75,15 @@ class AntrianFragment {
                     <th class="text-success">JAM</th>
                     <th class="text-success">NAMA PASIEN</th>
                     <th class="text-success">NIK</th>
+                    <th class="text-success">JENIS</th>
+                    <th class="text-success">SATUSEHAT</th>
                     <th class="text-success">STATUS</th>
                     <th class="text-success">AKSI</th>
                   </tr>
                 </thead>
                 <tbody id="queueTableBody">
                   <tr>
-                    <td colspan="7" class="text-center py-4">
+                    <td colspan="9" class="text-center py-4">
                       <div class="spinner-border text-primary" role="status"></div>
                       <p class="mt-2">Loading data...</p>
                     </td>
@@ -122,6 +126,47 @@ class AntrianFragment {
                 <div class="alert alert-info" id="selectedPatientInfo" style="display: none;">
                   <strong><i class="bi bi-person-check me-2"></i>Pasien Terpilih:</strong>
                   <div id="patientInfoText" class="mt-2"></div>
+                </div>
+
+                <!-- JENIS PASIEN (BPJS/UMUM) -->
+                <div class="mb-4" id="jenisPatienContainer" style="display: none;">
+                  <label class="form-label fw-bold">Jenis Pasien <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-4">
+                    <div class="form-check form-check-custom">
+                      <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisBPJS" value="BPJS" required>
+                      <label class="form-check-label" for="jenisBPJS">
+                        <i class="bi bi-shield-check text-primary me-1"></i>
+                        <strong>BPJS</strong>
+                      </label>
+                    </div>
+                    <div class="form-check form-check-custom">
+                      <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisUMUM" value="UMUM" required>
+                      <label class="form-check-label" for="jenisUMUM">
+                        <i class="bi bi-wallet2 text-success me-1"></i>
+                        <strong>UMUM</strong>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SATUSEHAT Check Status -->
+                <div class="alert alert-warning" id="satusehatCheckStatus" style="display: none;">
+                  <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Memeriksa SATUSEHAT...</span>
+                  </div>
+                </div>
+
+                <div class="alert alert-success" id="satusehatFoundAlert" style="display: none;">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  <strong>Pasien terdaftar di SATUSEHAT</strong>
+                  <div id="satusehatIdText" class="mt-2"></div>
+                </div>
+
+                <div class="alert alert-info" id="satusehatNotFoundAlert" style="display: none;">
+                  <i class="bi bi-info-circle-fill me-2"></i>
+                  <strong>Pasien belum terdaftar di SATUSEHAT</strong>
+                  <p class="mb-0 mt-2">Antrian tetap dapat dibuat tanpa ID SATUSEHAT</p>
                 </div>
 
                 <hr>
@@ -178,6 +223,14 @@ class AntrianFragment {
         .status-batal { background-color: #dc3545; color: white; }
         .table thead th { font-weight: 600; font-size: 0.85rem; padding: 1rem; }
         .table tbody td { padding: 1rem; vertical-align: middle; }
+        .badge-satusehat { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; }
+        .satusehat-registered { background-color: #28a745; color: white; }
+        .satusehat-not-registered { background-color: #6c757d; color: white; }
+        .badge-jenis { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .jenis-bpjs { background-color: #0d6efd; color: white; }
+        .jenis-umum { background-color: #198754; color: white; }
+        .form-check-custom .form-check-input { width: 20px; height: 20px; margin-top: 2px; }
+        .form-check-custom .form-check-label { font-size: 1.1rem; cursor: pointer; }
       </style>
     `;
   }
@@ -186,7 +239,7 @@ class AntrianFragment {
     if (this.queues.length === 0) {
       return `
         <tr>
-          <td colspan="7" class="text-center py-5">
+          <td colspan="9" class="text-center py-5">
             <i class="bi bi-inbox fs-1 text-muted"></i>
             <p class="text-muted mt-3">Belum ada antrian hari ini</p>
             <small class="text-muted">Klik "Tambah Antrian Baru" untuk menambahkan pasien</small>
@@ -197,10 +250,20 @@ class AntrianFragment {
 
     return this.queues.map((queue) => {
       const statusClass = `status-${queue.status_antrian.toLowerCase().replace(" ", "-")}`;
-      const patientName = queue.pasien ? queue.pasien.nama : "-";
-      const patientNik = queue.pasien ? queue.pasien.nik : "-";
+      const patientName = queue.nama ?? "-";
+      const patientNik = queue.nik ?? "-";
+      
+      // JENIS PASIEN Badge
+      const jenisPasien = queue.jenis_pasien || "UMUM";
+      const jenisBadgeClass = jenisPasien === "BPJS" ? "jenis-bpjs" : "jenis-umum";
+      const jenisIcon = jenisPasien === "BPJS" ? "bi-shield-check" : "bi-wallet2";
+      const jenisBadge = `<span class="badge badge-jenis ${jenisBadgeClass}"><i class="bi ${jenisIcon} me-1"></i>${jenisPasien}</span>`;
+      
+      // SATUSEHAT Badge
+      const satusehatBadge = queue.id_satusehat 
+        ? `<span class="badge badge-satusehat satusehat-registered"><i class="bi bi-check-circle me-1"></i>Terdaftar</span>`
+        : `<span class="badge badge-satusehat satusehat-not-registered"><i class="bi bi-x-circle me-1"></i>Belum</span>`;
 
-      // IMPORTANT: Single quotes around UUID IDs + single line for onclick
       const actionButtons = queue.status_antrian.toLowerCase() === "belum periksa" 
         ? `<button class="btn btn-accept btn-sm" onclick="window.currentFragment.acceptQueue('${queue.id_antrian}')">TERIMA</button> <button class="btn btn-delete btn-sm" onclick="window.currentFragment.deleteQueue('${queue.id_antrian}')">HAPUS</button>`
         : `<button class="btn btn-delete btn-sm" onclick="window.currentFragment.deleteQueue('${queue.id_antrian}')">HAPUS</button>`;
@@ -212,6 +275,8 @@ class AntrianFragment {
           <td><strong>${queue.jam_antrian}</strong></td>
           <td>${patientName}</td>
           <td><small>${patientNik}</small></td>
+          <td>${jenisBadge}</td>
+          <td>${satusehatBadge}</td>
           <td><span class="badge badge-status ${statusClass}">${queue.status_antrian}</span></td>
           <td>${actionButtons}</td>
         </tr>
@@ -220,7 +285,7 @@ class AntrianFragment {
   }
 
   async onInit() {
-    console.log("🎬 Antrian Fragment Initialized");
+    console.log("🎬 Antrian Fragment Initialized with SATUSEHAT & BPJS/UMUM");
     window.currentFragment = this;
 
     await this.loadCurrentDoctor();
@@ -290,6 +355,11 @@ class AntrianFragment {
           alert("Error: Doctor ID tidak ditemukan. Silakan refresh halaman.");
           return;
         }
+        
+        this.satusehatChecked = false;
+        this.hideAllSatusehatAlerts();
+        document.getElementById("jenisPatienContainer").style.display = "none";
+        
         await this.generateQueueNumber();
         const modal = new bootstrap.Modal(document.getElementById("addQueueModal"));
         modal.show();
@@ -310,7 +380,17 @@ class AntrianFragment {
     }
 
     const patientSelect = document.getElementById("patientSelect");
-    if (patientSelect) patientSelect.addEventListener("change", (e) => this.showPatientInfo(e.target.value));
+    if (patientSelect) {
+      patientSelect.addEventListener("change", (e) => {
+        this.showPatientInfo(e.target.value);
+        if (e.target.value) {
+          document.getElementById("jenisPatienContainer").style.display = "block";
+          this.checkSatusehat(e.target.value);
+        } else {
+          document.getElementById("jenisPatienContainer").style.display = "none";
+        }
+      });
+    }
 
     const saveBtn = document.getElementById("saveQueueBtn");
     if (saveBtn) saveBtn.addEventListener("click", () => this.saveQueue());
@@ -320,6 +400,55 @@ class AntrianFragment {
 
     const refreshBtn = document.getElementById("refreshBtn");
     if (refreshBtn) refreshBtn.addEventListener("click", () => this.loadQueues());
+  }
+
+  hideAllSatusehatAlerts() {
+    document.getElementById("satusehatCheckStatus").style.display = "none";
+    document.getElementById("satusehatFoundAlert").style.display = "none";
+    document.getElementById("satusehatNotFoundAlert").style.display = "none";
+  }
+
+  async checkSatusehat(patientId) {
+    console.log("🔍 Checking SATUSEHAT for patient:", patientId);
+    
+    this.hideAllSatusehatAlerts();
+    document.getElementById("satusehatCheckStatus").style.display = "block";
+    
+    try {
+      const url = `${this.apiUrl}?action=check_satusehat&patient_id=${patientId}`;
+      const response = await fetch(url);
+      const result = await response.json();
+      
+      console.log("📥 SATUSEHAT Check Result:", result);
+      
+      document.getElementById("satusehatCheckStatus").style.display = "none";
+      
+      if (result.success) {
+        this.satusehatChecked = true;
+        
+        if (result.has_satusehat_id) {
+          const foundAlert = document.getElementById("satusehatFoundAlert");
+          const idText = document.getElementById("satusehatIdText");
+          
+          idText.innerHTML = `<strong>SATUSEHAT ID:</strong> ${result.id_satusehat}`;
+          foundAlert.style.display = "block";
+          
+          console.log("✅ Patient registered in SATUSEHAT:", result.id_satusehat);
+        } else {
+          document.getElementById("satusehatNotFoundAlert").style.display = "block";
+          console.log("⚠️ Patient not found in SATUSEHAT");
+        }
+      } else {
+        console.error("❌ SATUSEHAT Check Failed:", result.error);
+        alert("Peringatan: Gagal memeriksa SATUSEHAT. Antrian tetap dapat dibuat.");
+        this.satusehatChecked = true;
+      }
+    } catch (error) {
+      console.error("❌ Error checking SATUSEHAT:", error);
+      document.getElementById("satusehatCheckStatus").style.display = "none";
+      alert("Peringatan: Error memeriksa SATUSEHAT. Antrian tetap dapat dibuat.");
+      this.satusehatChecked = true;
+    }
   }
 
   async generateQueueNumber() {
@@ -393,9 +522,11 @@ class AntrianFragment {
       `;
       infoDiv.style.display = "block";
       hiddenInput.value = patientId;
+      this.selectedPatientId = patientId;
     } else {
       infoDiv.style.display = "none";
       hiddenInput.value = "";
+      this.selectedPatientId = null;
     }
   }
 
@@ -406,9 +537,7 @@ class AntrianFragment {
     }
 
     try {
-      const url = `${this.apiUrl}?action=list_by_doctor&dokter_id=${this.currentDoctorId}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      let { data, error } = await window.supabaseClient.rpc('get_latest_antrian_for_dokter', { p_dokter: this.currentDoctorId });
 
       if (Array.isArray(data)) {
         this.queues = data;
@@ -466,9 +595,22 @@ class AntrianFragment {
     const time = document.getElementById("queueTime").value;
     const number = document.getElementById("queueNumber").value;
     const patientId = document.getElementById("selectedPatientId").value;
-
+    
+    // Get selected jenis_pasien
+    const jenisPasienRadio = document.querySelector('input[name="jenis_pasien"]:checked');
+    
     if (!date || !time || !number || !patientId) {
       alert("Mohon lengkapi semua field dan pilih pasien!");
+      return;
+    }
+    
+    if (!jenisPasienRadio) {
+      alert("Mohon pilih jenis pasien (BPJS atau UMUM)!");
+      return;
+    }
+
+    if (!this.satusehatChecked) {
+      alert("Mohon tunggu, sedang memeriksa SATUSEHAT...");
       return;
     }
 
@@ -478,7 +620,10 @@ class AntrianFragment {
       no_antrian: number,
       id_pasien: patientId,
       id_dokter: this.currentDoctorId,
+      jenis_pasien: jenisPasienRadio.value
     };
+
+    console.log("📤 Creating queue with BPJS/UMUM:", newQueue);
 
     try {
       const response = await fetch(`${this.apiUrl}?action=create`, {
@@ -489,18 +634,21 @@ class AntrianFragment {
 
       const result = await response.json();
 
-      if (result && !result.error) {
+      if (result.success) {
         const modal = bootstrap.Modal.getInstance(document.getElementById("addQueueModal"));
         modal.hide();
 
         document.getElementById("addQueueForm").reset();
         document.getElementById("patientSelectContainer").style.display = "none";
         document.getElementById("selectedPatientInfo").style.display = "none";
+        document.getElementById("jenisPatienContainer").style.display = "none";
+        this.hideAllSatusehatAlerts();
+        this.satusehatChecked = false;
 
         await this.loadQueues();
         alert("✓ Antrian berhasil ditambahkan!");
       } else {
-        alert("✗ Gagal menambahkan antrian: " + (result.error || "Unknown error"));
+        alert("✗ Gagal menambahkan antrian: " + (result.error || result.message || "Unknown error"));
       }
     } catch (error) {
       console.error("❌ Error saving queue:", error);
@@ -511,12 +659,7 @@ class AntrianFragment {
   async acceptQueue(id) {
     if (!confirm("Terima antrian pasien ini?")) return;
 
-    console.log("=".repeat(50));
-    console.log("🔗 BLOCKCHAIN MODE: INSERT ONLY");
-    console.log("=".repeat(50));
     console.log("✅ Accepting queue ID:", id);
-    console.log("📝 This will INSERT a new blockchain record, not update!");
-    console.log("=".repeat(50));
 
     try {
       const response = await fetch(`${this.apiUrl}?action=accept&id=${id}`, {
@@ -525,16 +668,10 @@ class AntrianFragment {
       });
 
       const result = await response.json();
-      console.log("📥 Server Response:", result);
 
       if (result.success) {
-        console.log("✅ SUCCESS! New blockchain record created!");
-        console.log("🔗 Hash:", result.hash);
-        console.log("📎 References original ID:", result.reference_id);
-        console.log("=".repeat(50));
-        
         await this.loadQueues();
-        alert("✓ Antrian berhasil diterima\n🔗 Hash: " + result.hash.substring(0, 16) + "...");
+        alert("✓ Antrian berhasil diterima");
       } else {
         alert("✗ Gagal menerima antrian: " + (result.message || ""));
       }
@@ -547,34 +684,20 @@ class AntrianFragment {
   async deleteQueue(id) {
     if (!confirm("Apakah Anda yakin ingin menghapus antrian ini?")) return;
 
-    console.log("=".repeat(50));
-    console.log("🔗 BLOCKCHAIN MODE: INSERT ONLY");
-    console.log("=".repeat(50));
     console.log("🗑️ Deleting queue ID:", id);
-    console.log("📝 This will CREATE A NEW ROW marked as deleted");
-    console.log("📝 HTTP Method: POST (not DELETE)");
-    console.log("=".repeat(50));
 
     try {
-      // FIX: Send action in URL, just like acceptQueue does!
       const response = await fetch(`${this.apiUrl}?action=delete&id=${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
 
       const result = await response.json();
-      console.log("📥 Server Response:", result);
 
       if (result.success) {
-        console.log("✅ SUCCESS! New blockchain record created (marked as deleted)");
-        console.log("🔗 Hash:", result.hash);
-        console.log("📎 References original ID:", result.reference_id);
-        console.log("=".repeat(50));
-        
         await this.loadQueues();
-        alert("✓ Antrian berhasil dihapus!\n🔗 Hash: " + result.hash.substring(0, 16) + "...");
+        alert("✓ Antrian berhasil dihapus!");
       } else {
-        console.error("❌ Failed:", result.message);
         alert("✗ Gagal menghapus antrian");
       }
     } catch (error) {
@@ -595,4 +718,4 @@ class AntrianFragment {
   }
 }
 
-console.log("✅ AntrianFragment class loaded successfully");
+console.log("✅ AntrianFragment with SATUSEHAT & BPJS/UMUM integration loaded successfully");

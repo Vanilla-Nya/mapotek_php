@@ -92,13 +92,18 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("📤 Attempting login...");
 
       try {
-        const response = await fetch("../../API/auth/auth.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+        const {data, error} = await supabaseClient.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
         });
+        // const response = await fetch("../../API/auth/auth.php", {
+        //   method: "POST",
+        //   headers: { "Content-Type": "application/json" },
+        //   body: JSON.stringify(formData),
+        // });
+        if (error) throw error;
 
-        const result = await response.json();
+        const result = await data;
         console.log("📥 Login response:", result);
 
         if (result.success) {

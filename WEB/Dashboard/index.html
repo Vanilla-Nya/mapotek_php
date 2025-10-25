@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/animations.css">
     
+    <!-- ⭐ NEW: Pasien Form Styles -->
+    <link rel="stylesheet" href="css/pasien-styles.css">
+    
     <!-- ========================================== -->
     <!-- TOP BAR PROFILE CARD STYLES 🎨 -->
     <!-- ========================================== -->
@@ -272,10 +275,13 @@
     <!-- 5. QRCode.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
-    <!-- ⭐ 6. USER PROFILE UPDATER - Must load BEFORE app.js! -->
+    <!-- ⭐ 6. Address Format Utility (NEW) -->
+    <script src="js/utils/addressFormat.js"></script>
+    
+    <!-- 7. USER PROFILE UPDATER - Must load BEFORE app.js! -->
     <script src="js/user-profile-updater.js"></script>
     
-    <!-- 7. Load All Fragment Files -->
+    <!-- 8. Load All Fragment Files -->
     <script src="js/Fragments/dashboardfragment.js"></script>
     <script src="js/Fragments/pasienfragment.js"></script>
     <script src="js/Fragments/obatfragment.js"></script>
@@ -284,10 +290,10 @@
     <script src="js/Fragments/pembukuanfragment.js"></script>
     <script src="js/Fragments/profilefragment.js"></script>
     
-    <!-- 8. Load Fragment Manager -->
+    <!-- 9. Load Fragment Manager -->
     <script src="js/fragmentmanager.js"></script>
     
-    <!-- 9. Load Main App - LAST! -->
+    <!-- 10. Load Main App - LAST! -->
     <script src="js/app.js"></script>
 </body>
 </html>

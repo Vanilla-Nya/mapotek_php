@@ -1,13 +1,6 @@
 package com.vanilla.mapotek.auth;
 
 public class addressFormat {
-
-    /**
-     * Formats address according to your specification:
-     * Provinsi nama(code),Kota nama(code),Kecamatan nama(code),Kelurahan nama(code),detail address
-     *
-     * Example output: "Jawa Timur(35),Surabaya(3578),Gubeng(357805),Airlangga(3578051001),Jl. Airlangga No. 123"
-     */
     public static String formatAddress(
             String provinsiName, String provinsiCode,
             String kotaName, String kotaCode,

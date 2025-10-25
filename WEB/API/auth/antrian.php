@@ -1,287 +1,267 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// API/auth/antrian.php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once __DIR__ . '/../config/supabase.php';
+require_once __DIR__ . '/encounter_satusehat_api.php';
 
-/* ======================================================
-   UNIVERSAL INPUT HANDLING (JSON + x-www-form-urlencoded)
-   ====================================================== */
-
-// Read raw body once
-$raw = file_get_contents('php://input');
-
-// Try to decode JSON
-$input = json_decode($raw, true);
-
-// Merge JSON body into $_POST if valid
-if (is_array($input)) {
-    $_POST = array_merge($_POST, $input);
-}
-// If JSON failed but data looks like a query string, parse it too
-elseif (!empty($raw) && strpos($raw, '=') !== false) {
-    parse_str($raw, $formData);
-    $_POST = array_merge($_POST, $formData);
-}
-
-// Detect HTTP method and parameters
 $method = $_SERVER['REQUEST_METHOD'];
-$action = $_GET['action'] ?? ($_POST['action'] ?? '');
-$id     = $_GET['id'] ?? ($_POST['id'] ?? '');
+$action = $_GET['action'] ?? '';
 
-// Debug logs (optional)
-error_log("🧩 METHOD = $method");
-error_log("🧩 ACTION = $action");
-error_log("🧩 GET = " . json_encode($_GET));
-error_log("🧩 POST = " . json_encode($_POST));
-error_log("🧩 RAW = $raw");
-
-/* ======================================================
-   ROUTING
-   ====================================================== */
-switch ($method) {
-    case 'GET':
-        if ($action === 'list_by_doctor') {
-            getAntrianByDoctor();
-        } elseif ($action === 'filter_by_hour') {
-            filterByHour();
-        } elseif ($action === 'generate_number') {
-            generateQueueNumber();
-        } elseif ($action === 'search_pasien') {
-            searchPasien();
-        } elseif ($action === 'history') {
-            getAntrianHistory();
-        } else {
-            echo json_encode(['error' => 'Invalid action for GET: ' . $action]);
-        }
+// Router
+switch ($action) {
+    case 'list_by_doctor':
+        listByDoctor();
         break;
-
-    case 'POST':
-        if ($action === 'create') {
-            createAntrian();
-        } elseif ($action === 'accept') {
-            acceptAntrian();
-        } elseif ($action === 'delete') {
-            deleteAntrian();
-        } else {
-            echo json_encode(['error' => 'Invalid action for POST: ' . $action]);
-        }
+    case 'search_pasien':
+        searchPasien();
         break;
-
+    case 'generate_number':
+        generateQueueNumber();
+        break;
+    case 'filter_by_hour':
+        filterByHour();
+        break;
+    case 'create':
+        createAntrian();
+        break;
+    case 'accept':
+        acceptQueue();
+        break;
+    case 'delete':
+        deleteQueue();
+        break;
+    case 'check_satusehat':
+        checkSatusehat();
+        break;
     default:
-        echo json_encode(['error' => 'Method not allowed: ' . $method]);
+        echo json_encode(['error' => 'Invalid action']);
         break;
 }
 
-// ============================================
-// BLOCKCHAIN HELPER FUNCTIONS
-// ============================================
-
-function generateHash($data, $prevHash = '') {
-    $dataString = json_encode($data) . time() . rand(1000, 9999);
-    return hash('sha256', $prevHash . $dataString);
-}
-
-function getLastHash() {
-    // Get the absolute last hash in the chain (don't filter by is_deleted!)
-    $params = "select=current_hash&order=id_antrian.desc&limit=1";
-    $result = supabase('GET', 'antrian', $params);
+/**
+ * Check if patient has SATUSEHAT ID
+ * GET: ?action=check_satusehat&patient_id=xxx
+ */
+function checkSatusehat() {
+    $patientId = $_GET['patient_id'] ?? null;
     
-    if (!empty($result) && isset($result[0]['current_hash'])) {
-        return $result[0]['current_hash'];
+    if (!$patientId) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'patient_id required'
+        ]);
+        return;
     }
     
-    return 'GENESIS';
+    try {
+        // Get patient data including id_satusehat
+        $params = "select=id_pasien,nama,nik,id_satusehat&id_pasien=eq.$patientId&limit=1";
+        $result = supabase('GET', 'pasien', $params);
+        
+        if (!empty($result) && !isset($result['error'])) {
+            $patient = $result[0];
+            $hasSatusehatId = !empty($patient['id_satusehat']);
+            
+            echo json_encode([
+                'success' => true,
+                'has_satusehat_id' => $hasSatusehatId,
+                'id_satusehat' => $patient['id_satusehat'] ?? null,
+                'patient_name' => $patient['nama'] ?? null
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Patient not found'
+            ]);
+        }
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => $e->getMessage()
+        ]);
+    }
 }
 
-// ============================================
-// GET FUNCTIONS
-// ============================================
-
-function getAntrianByDoctor() {
-    $dokterId = $_GET['dokter_id'] ?? '';
+/**
+ * List all queues for a specific doctor
+ * GET: ?action=list_by_doctor&dokter_id=xxx
+ */
+function listByDoctor() {
+    $dokterId = $_GET['dokter_id'] ?? null;
     
     if (!$dokterId) {
-        echo json_encode(['error' => 'Doctor ID required']);
+        echo json_encode(['error' => 'dokter_id required']);
         return;
     }
     
-    // Get all records, ordered by no_antrian, then newest first
-    $params = "select=*&id_dokter=eq.$dokterId&order=no_antrian,id_antrian.desc";
-    $result = supabase('GET', 'antrian', $params);
-    
-    // NEW LOGIC: Get ONLY the absolute latest for each no_antrian
-    $latest = [];
-    $seen = [];
-    
-    foreach ($result as $row) {
-        // If we haven't seen this no_antrian yet, this is the LATEST
-        if (!isset($seen[$row['no_antrian']])) {
-            $seen[$row['no_antrian']] = true;
-            
-            // ONLY add if the LATEST record is NOT deleted
-            if ($row['is_deleted'] == 0) {
-                // Get patient data
-                if ($row['id_pasien']) {
-                    $pasienParams = "select=nama,nik,no_telp&id_pasien=eq." . $row['id_pasien'];
-                    $pasienData = supabase('GET', 'pasien', $pasienParams);
-                    $row['pasien'] = !empty($pasienData) ? $pasienData[0] : null;
-                }
-                
-                $latest[] = $row;
-            }
-            // If latest is deleted, skip this no_antrian completely
-        }
-    }
-    
-    echo json_encode($latest);
-}
+    $supabaseUrl = "https://brhaksondhloibpwtrdo.supabase.co";
+    $apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyaGFrc29uZGhsb2licHd0cmRvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjU0MjE0OSwiZXhwIjoyMDcyMTE4MTQ5fQ.lZd5xM790I9kocIVJtqqlilFBasmWcXvPFLpFPZgQV4";
 
-function filterByHour() {
-    $jamMulai = $_GET['jam_mulai'] ?? '00:00';
-    $jamAkhir = $_GET['jam_akhir'] ?? '23:59';
-    $tanggal = $_GET['tanggal'] ?? date('Y-m-d');
-    $dokterId = $_GET['dokter_id'] ?? '';
-    
-    $params = "select=*&tanggal_antrian=eq.$tanggal&jam_antrian=gte.$jamMulai&jam_antrian=lte.$jamAkhir&order=no_antrian,id_antrian.desc";
-    
-    if ($dokterId) {
-        $params .= "&id_dokter=eq.$dokterId";
-    }
-    
-    $result = supabase('GET', 'antrian', $params);
-    
-    // Same logic as above
-    $latest = [];
-    $seen = [];
-    
-    foreach ($result as $row) {
-        if (!isset($seen[$row['no_antrian']])) {
-            $seen[$row['no_antrian']] = true;
-            
-            // ONLY add if latest is NOT deleted
-            if ($row['is_deleted'] == 0) {
-                if ($row['id_pasien']) {
-                    $pasienParams = "select=nama,nik,no_telp&id_pasien=eq." . $row['id_pasien'];
-                    $pasienData = supabase('GET', 'pasien', $pasienParams);
-                    $row['pasien'] = !empty($pasienData) ? $pasienData[0] : null;
-                }
-                
-                $latest[] = $row;
-            }
-        }
-    }
-    
-    echo json_encode($latest);
-}
+    $endpoint = $supabaseUrl . '/rest/v1/rpc/get_latest_antrian_for_dokter';
+    $payload = json_encode([$dokterId]);
 
-function getAntrianHistory() {
-    $noAntrian = $_GET['no_antrian'] ?? '';
-    
-    if (!$noAntrian) {
-        echo json_encode(['error' => 'Queue number required']);
+    $ch = curl_init($endpoint);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'apikey: ' . $apiKey,
+        'Authorization: Bearer ' . $apiKey
+    ]);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+
+    $response = curl_exec($ch);
+    $err = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($err) {
+        echo json_encode(['error' => 'cURL Error', 'message' => $err]);
+        return;
+    }
+
+    if ($httpCode < 200 || $httpCode >= 300) {
+        echo json_encode(['error' => 'HTTP Error', 'code' => $httpCode, 'response' => $response]);
         return;
     }
     
-    $params = "select=*&no_antrian=eq.$noAntrian&order=id_antrian.asc";
-    $result = supabase('GET', 'antrian', $params);
-    
-    echo json_encode($result);
+    echo $response;
 }
 
-function generateQueueNumber() {
-    $today = date('dmy');
-    
-    // Get latest queue for today
-    $params = "select=no_antrian&tanggal_antrian=eq." . date('Y-m-d') . "&order=id_antrian.desc&limit=100";
-    $result = supabase('GET', 'antrian', $params);
-    
-    $maxNumber = 0;
-    foreach ($result as $row) {
-        $numberPart = (int)substr($row['no_antrian'], 0, -6);
-        if ($numberPart > $maxNumber) {
-            $maxNumber = $numberPart;
-        }
-    }
-    
-    $nextNumber = $maxNumber + 1;
-    $queueNumber = $nextNumber . $today;
-    
-    echo json_encode(['no_antrian' => $queueNumber]);
-}
-
+/**
+ * Search patients by name or NIK
+ * GET: ?action=search_pasien&keyword=xxx
+ */
 function searchPasien() {
     $keyword = $_GET['keyword'] ?? '';
     
     if (strlen($keyword) < 3) {
-        echo json_encode(['error' => 'Keyword must be at least 3 characters']);
+        echo json_encode([]);
         return;
     }
     
-    $params = "select=*&or=(nama.ilike.*$keyword*,nik.ilike.*$keyword*)&limit=20";
+    $params = "select=id_pasien,nama,nik,no_telp,id_satusehat&or=(nama.ilike.*$keyword*,nik.ilike.*$keyword*)&limit=20";
+    
     $result = supabase('GET', 'pasien', $params);
     echo json_encode($result);
 }
 
-// ============================================
-// POST FUNCTIONS (INSERT ONLY!)
-// ============================================
+/**
+ * Generate unique queue number for today
+ * Format: [Number][DDMMYY]
+ * Example: 1251025 = Queue #1 on 25 October 2025
+ * GET: ?action=generate_number
+ */
+function generateQueueNumber() {
+    $today = date('dmy');
+    $tanggal = date('Y-m-d');
 
+    try {
+        $params = "select=no_antrian&tanggal_antrian=eq.$tanggal&order=no_antrian.desc&limit=1";
+        $result = supabase('GET', 'antrian', $params);
+
+        $lastNumber = 0;
+        if (!empty($result) && isset($result[0]['no_antrian'])) {
+            preg_match('/^(\d+)/', $result[0]['no_antrian'], $matches);
+            $lastNumber = isset($matches[1]) ? intval($matches[1]) : 0;
+        }
+
+        $newNumber = $lastNumber + 1;
+        $queueNumber = $newNumber . $today;
+
+        echo json_encode([
+            'success' => true,
+            'no_antrian' => $queueNumber,
+            'tanggal' => $tanggal
+        ]);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to generate queue number',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * Filter queues by hour range
+ * GET: ?action=filter_by_hour&tanggal=2025-10-25&jam_mulai=08:00&jam_akhir=12:00&dokter_id=xxx
+ */
+function filterByHour() {
+    $tanggal = $_GET['tanggal'] ?? date('Y-m-d');
+    $jamMulai = $_GET['jam_mulai'] ?? '00:00';
+    $jamAkhir = $_GET['jam_akhir'] ?? '23:59';
+    $dokterId = $_GET['dokter_id'] ?? null;
+    
+    if (!$dokterId) {
+        echo json_encode(['error' => 'dokter_id required']);
+        return;
+    }
+    
+    $params = "select=*,pasien:id_pasien(nama,nik,no_telp,id_satusehat)&id_dokter=eq.$dokterId&tanggal_antrian=eq.$tanggal&jam_antrian=gte.$jamMulai&jam_antrian=lte.$jamAkhir&order=jam_antrian.asc";
+    
+    $result = supabase('GET', 'antrian', $params);
+    echo json_encode($result);
+}
+
+/**
+ * ✅ CREATE QUEUE WITH JENIS_PASIEN (BPJS/UMUM)
+ * POST: ?action=create
+ * Body: {
+ *   "no_antrian": "1251025",
+ *   "tanggal_antrian": "2025-10-25",
+ *   "jam_antrian": "10:00",
+ *   "id_pasien": "xxx",
+ *   "id_dokter": "xxx",
+ *   "jenis_pasien": "BPJS" or "UMUM"
+ * }
+ */
 function createAntrian() {
     $input = json_decode(file_get_contents('php://input'), true);
     
-    error_log("🧪 Input received: " . json_encode($input));
+    error_log("📥 CREATE ANTRIAN REQUEST: " . json_encode($input, JSON_PRETTY_PRINT));
     
-    // Validate required fields
     if (!isset($input['no_antrian']) || !isset($input['tanggal_antrian']) || 
         !isset($input['jam_antrian']) || !isset($input['id_pasien']) || 
-        !isset($input['id_dokter'])) {
+        !isset($input['id_dokter']) || !isset($input['jenis_pasien'])) {
         echo json_encode([
             'error' => 'Missing required fields',
-            'required' => ['no_antrian', 'tanggal_antrian', 'jam_antrian', 'id_pasien', 'id_dokter'],
-            'received' => array_keys($input)
+            'required' => ['no_antrian', 'tanggal_antrian', 'jam_antrian', 'id_pasien', 'id_dokter', 'jenis_pasien']
         ]);
         return;
     }
     
-    // STEP 1: Verify patient exists
-    error_log("🔍 Checking if patient exists: " . $input['id_pasien']);
-    $patientCheck = supabase('GET', 'pasien', "select=id_pasien&id_pasien=eq." . $input['id_pasien']);
-    
-    if (empty($patientCheck)) {
+    // Validate jenis_pasien
+    $jenisPasien = strtoupper($input['jenis_pasien']);
+    if (!in_array($jenisPasien, ['BPJS', 'UMUM'])) {
         echo json_encode([
-            'error' => 'Patient not found',
-            'id_pasien' => $input['id_pasien'],
-            'hint' => 'This patient ID does not exist in the database'
+            'error' => 'Invalid jenis_pasien',
+            'message' => 'jenis_pasien must be BPJS or UMUM',
+            'received' => $input['jenis_pasien']
         ]);
         return;
     }
     
-    // STEP 2: Verify doctor exists
-    error_log("🔍 Checking if doctor exists: " . $input['id_dokter']);
-    $doctorCheck = supabase('GET', 'dokter', "select=id_dokter&id_dokter=eq." . $input['id_dokter']);
+    // Check if queue number already exists
+    $checkParams = "select=id_antrian&no_antrian=eq." . $input['no_antrian'];
+    $existing = supabase('GET', 'antrian', $checkParams);
     
-    if (empty($doctorCheck)) {
+    if (!empty($existing) && !isset($existing['error'])) {
         echo json_encode([
-            'error' => 'Doctor not found',
-            'id_dokter' => $input['id_dokter'],
-            'hint' => 'This doctor ID does not exist in the database'
+            'error' => 'Queue number already exists',
+            'message' => 'Nomor antrian sudah digunakan'
         ]);
         return;
     }
     
-    // STEP 3: Get blockchain data
-    $prevHash = getLastHash();
-    error_log("🔗 Previous hash: " . $prevHash);
-    
-    // STEP 4: Prepare data
+    // Prepare data with jenis_pasien
     $data = [
         'no_antrian' => $input['no_antrian'],
         'tanggal_antrian' => $input['tanggal_antrian'],
@@ -289,54 +269,37 @@ function createAntrian() {
         'status_antrian' => 'Belum Periksa',
         'id_pasien' => $input['id_pasien'],
         'id_dokter' => $input['id_dokter'],
-        'is_deleted' => 0,
-        'prev_hash' => $prevHash
+        'jenis_pasien' => $jenisPasien,  // ✅ ADD JENIS_PASIEN
+        'created_at' => date('Y-m-d H:i:s')
     ];
     
-    // Generate hash
-    $currentHash = generateHash($data, $prevHash);
-    $data['current_hash'] = $currentHash;
+    error_log("📤 INSERTING TO DATABASE: " . json_encode($data, JSON_PRETTY_PRINT));
     
-    error_log("🧪 Data to insert: " . json_encode($data));
-    
-    // STEP 5: Insert
     $result = supabase('POST', 'antrian', '', $data);
     
-    error_log("🧪 Supabase response: " . json_encode($result));
+    error_log("📥 DATABASE RESPONSE: " . json_encode($result, JSON_PRETTY_PRINT));
     
-    // STEP 6: Check result
     if (isset($result['error'])) {
         echo json_encode([
             'success' => false,
-            'error' => 'Supabase error',
-            'message' => $result['message'] ?? 'Unknown error',
-            'details' => $result['details'] ?? 'No details',
-            'hint' => $result['hint'] ?? 'No hint',
-            'code' => $result['code'] ?? 'No code',
-            'full_response' => $result,
-            'data_sent' => $data
+            'error' => 'Failed to create queue',
+            'details' => $result
         ]);
-        return;
-    }
-    
-    if (is_array($result) && !empty($result)) {
+    } else {
         echo json_encode([
             'success' => true,
             'message' => 'Queue created successfully',
             'data' => $result,
-            'hash' => $currentHash
-        ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Unexpected response format',
-            'response' => $result,
-            'data_sent' => $data
+            'jenis_pasien' => $jenisPasien
         ]);
     }
 }
 
-function acceptAntrian() {
+/**
+ * 🔥 ACCEPT QUEUE + CREATE SATUSEHAT ENCOUNTER
+ * POST: ?action=accept&id=xxx
+ */
+function acceptQueue() {
     $id = $_GET['id'] ?? null;
     
     if (!$id) {
@@ -344,125 +307,154 @@ function acceptAntrian() {
         return;
     }
     
-    // Get the current record
-    $params = "id_antrian=eq.$id&select=*";
-    $current = supabase('GET', 'antrian', $params);
-    
-    if (empty($current)) {
-        echo json_encode(['error' => 'Record not found']);
-        return;
-    }
-    
-    $currentRecord = $current[0];
-    $prevHash = getLastHash();
-    
-    // CREATE NEW RECORD - just copy everything and change status
-    $newData = [
-        'no_antrian' => $currentRecord['no_antrian'],
-        'tanggal_antrian' => $currentRecord['tanggal_antrian'],
-        'jam_antrian' => $currentRecord['jam_antrian'],
-        'status_antrian' => 'Di Terima',
-        'id_pasien' => $currentRecord['id_pasien'],
-        'id_dokter' => $currentRecord['id_dokter'],
-        'is_deleted' => 0,
-        'prev_hash' => $prevHash
-    ];
-    
-    $currentHash = generateHash($newData, $prevHash);
-    $newData['current_hash'] = $currentHash;
-    
-    error_log("🔍 Accept - Inserting data: " . json_encode($newData));
-    
-    $result = supabase('POST', 'antrian', '', $newData);
-    
-    error_log("🔍 Accept - Supabase result: " . json_encode($result));
-    
-    if (isset($result['error'])) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to accept antrian',
-            'details' => $result
-        ]);
-        return;
-    }
-    
-    if (is_array($result) && !empty($result)) {
+    try {
+        // Get queue data with patient and doctor info
+        $params = "select=*,pasien:id_pasien(nama,id_satusehat),dokter:id_dokter(nama_lengkap,id_satusehat)&id_antrian=eq.$id&limit=1";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        $queueData = $queue[0];
+        
+        error_log("📋 ACCEPTING QUEUE: " . json_encode($queueData, JSON_PRETTY_PRINT));
+        
+        // Check if already processed
+        if ($queueData['status_antrian'] !== 'Belum Periksa') {
+            echo json_encode([
+                'error' => 'Queue already processed',
+                'message' => 'Antrian sudah diproses sebelumnya',
+                'current_status' => $queueData['status_antrian']
+            ]);
+            return;
+        }
+        
+        $patientSatusehatId = $queueData['pasien']['id_satusehat'] ?? null;
+        $doctorSatusehatId = $queueData['dokter']['id_satusehat'] ?? null;
+        
+        // Validate SATUSEHAT IDs
+        if (!$patientSatusehatId) {
+            echo json_encode([
+                'error' => 'Patient missing SatuSehat ID',
+                'message' => 'Pasien belum memiliki ID SatuSehat. Harap daftarkan pasien ke SatuSehat terlebih dahulu.',
+                'patient_name' => $queueData['pasien']['nama']
+            ]);
+            return;
+        }
+        
+        if (!$doctorSatusehatId) {
+            echo json_encode([
+                'error' => 'Doctor missing SatuSehat ID',
+                'message' => 'Dokter belum memiliki ID SatuSehat. Harap daftarkan dokter ke SatuSehat terlebih dahulu.',
+                'doctor_name' => $queueData['dokter']['nama_lengkap']
+            ]);
+            return;
+        }
+        
+        // Create encounter in SATUSEHAT
+        error_log("🏥 Creating SATUSEHAT Encounter...");
+        
+        $encounterId = EncounterSatusehatApi::createEncounter(
+            $patientSatusehatId,
+            $queueData['pasien']['nama'],
+            $doctorSatusehatId,
+            $queueData['dokter']['nama_lengkap']
+        );
+        
+        if (!$encounterId) {
+            echo json_encode([
+                'error' => 'SatuSehat API Error',
+                'message' => 'Gagal membuat encounter di SatuSehat. Silakan coba lagi.',
+                'details' => 'Check server logs for more information'
+            ]);
+            return;
+        }
+        
+        error_log("✅ SATUSEHAT Encounter created: $encounterId");
+        
+        // Update queue status
+        $updateData = [
+            'status_antrian' => 'Di Terima',
+            'id_encounter_satusehat' => $encounterId,
+            'waktu_diterima' => date('Y-m-d H:i:s')
+        ];
+        
+        $updateParams = "id_antrian=eq.$id";
+        $updateResult = supabase('PATCH', 'antrian', $updateParams, $updateData);
+        
+        error_log("✅ Queue updated: " . json_encode($updateResult, JSON_PRETTY_PRINT));
+        
         echo json_encode([
             'success' => true,
-            'message' => 'Queue accepted successfully',
-            'data' => $result,
-            'hash' => $currentHash
+            'message' => 'Queue accepted and SatuSehat encounter created successfully',
+            'encounter_id' => $encounterId,
+            'queue_number' => $queueData['no_antrian'],
+            'patient_name' => $queueData['pasien']['nama'],
+            'jenis_pasien' => $queueData['jenis_pasien'] ?? 'UMUM',
+            'hash' => substr(md5($encounterId . time()), 0, 32)
         ]);
-    } else {
+        
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in acceptQueue: " . $e->getMessage());
+        error_log("   Trace: " . $e->getTraceAsString());
+        
         echo json_encode([
-            'error' => 'Failed to accept antrian',
-            'debug' => $result
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
         ]);
     }
 }
 
-function deleteAntrian() {
-    $id = $_GET['id'] ?? ($_POST['id'] ?? null);
+/**
+ * Delete queue (soft delete - mark as cancelled)
+ * POST: ?action=delete&id=xxx
+ */
+function deleteQueue() {
+    $id = $_GET['id'] ?? null;
     
     if (!$id) {
         echo json_encode(['error' => 'ID required']);
         return;
     }
     
-    // Get the current record
-    $params = "id_antrian=eq.$id&select=*";
-    $current = supabase('GET', 'antrian', $params);
-    
-    if (empty($current)) {
-        echo json_encode(['error' => 'Record not found']);
-        return;
-    }
-    
-    $currentRecord = $current[0];
-    $prevHash = getLastHash();
-    
-    // CREATE NEW RECORD - just copy everything and set is_deleted = 1
-    $newData = [
-        'no_antrian' => $currentRecord['no_antrian'],
-        'tanggal_antrian' => $currentRecord['tanggal_antrian'],
-        'jam_antrian' => $currentRecord['jam_antrian'],
-        'status_antrian' => $currentRecord['status_antrian'],
-        'id_pasien' => $currentRecord['id_pasien'],
-        'id_dokter' => $currentRecord['id_dokter'],
-        'is_deleted' => 1,
-        'prev_hash' => $prevHash
-    ];
-    
-    $currentHash = generateHash($newData, $prevHash);
-    $newData['current_hash'] = $currentHash;
-    
-    error_log("🔍 Delete - Inserting data: " . json_encode($newData));
-    
-    $result = supabase('POST', 'antrian', '', $newData);
-    
-    error_log("🔍 Delete - Supabase result: " . json_encode($result));
-    
-    if (isset($result['error'])) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Failed to insert delete record',
-            'details' => $result
-        ]);
-        return;
-    }
-    
-    if (is_array($result) && !empty($result)) {
+    try {
+        // Check if queue exists
+        $params = "select=*&id_antrian=eq.$id&limit=1";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        // Update status to cancelled
+        $updateData = [
+            'status_antrian' => 'Batal',
+            'waktu_dibatalkan' => date('Y-m-d H:i:s')
+        ];
+        
+        $updateParams = "id_antrian=eq.$id";
+        $result = supabase('PATCH', 'antrian', $updateParams, $updateData);
+        
         echo json_encode([
             'success' => true,
-            'message' => 'Queue deleted successfully',
-            'data' => $result,
-            'hash' => $currentHash
+            'message' => 'Queue cancelled successfully',
+            'hash' => substr(md5($id . time()), 0, 32)
         ]);
-    } else {
+        
+    } catch (Exception $e) {
         echo json_encode([
-            'error' => 'Failed to insert delete record',
-            'supabase_response' => $result,
-            'data_attempted' => $newData
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
         ]);
     }
 }
