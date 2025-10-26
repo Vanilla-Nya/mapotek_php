@@ -218,8 +218,8 @@ class ModalHelper {
    * Initialize modal styles (call once when app loads)
    */
   initializeStyles() {
-    if (!document.getElementById('global-modal-styles')) {
-      document.head.insertAdjacentHTML('beforeend', this.getModalStyles());
+    if (!document.getElementById("global-modal-styles")) {
+      document.head.insertAdjacentHTML("beforeend", this.getModalStyles());
       console.log("✅ Modal styles initialized");
     }
   }
@@ -235,17 +235,21 @@ class ModalHelper {
     }
 
     const modal = new bootstrap.Modal(modalEl, {
-      backdrop: options.backdrop || 'static',
+      backdrop: options.backdrop || "static",
       keyboard: options.keyboard !== false,
-      ...options
+      ...options,
     });
 
     modal.show();
     this.activeModals.add(modalId);
 
-    modalEl.addEventListener('hidden.bs.modal', () => {
-      this.activeModals.delete(modalId);
-    }, { once: true });
+    modalEl.addEventListener(
+      "hidden.bs.modal",
+      () => {
+        this.activeModals.delete(modalId);
+      },
+      { once: true }
+    );
 
     return modal;
   }
@@ -268,14 +272,7 @@ class ModalHelper {
    * Create a custom modal (non-Bootstrap)
    */
   createCustomModal(config) {
-    const {
-      id,
-      title,
-      body,
-      footer,
-      onClose,
-      width = '800px'
-    } = config;
+    const { id, title, body, footer, onClose, width = "800px" } = config;
 
     const existingModal = document.getElementById(id);
     if (existingModal) existingModal.remove();
@@ -292,18 +289,18 @@ class ModalHelper {
           <div class="custom-modal-body">
             ${body}
           </div>
-          ${footer ? `<div class="custom-modal-footer">${footer}</div>` : ''}
+          ${footer ? `<div class="custom-modal-footer">${footer}</div>` : ""}
         </div>
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
     this.activeModals.add(id);
 
     // Add close handler
     if (onClose) {
       const modalEl = document.getElementById(id);
-      modalEl.addEventListener('click', (e) => {
+      modalEl.addEventListener("click", (e) => {
         if (e.target === modalEl) {
           this.closeCustomModal(id);
           onClose();
@@ -320,7 +317,7 @@ class ModalHelper {
   closeCustomModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-      modal.style.animation = 'fadeOut 0.15s';
+      modal.style.animation = "fadeOut 0.15s";
       setTimeout(() => {
         modal.remove();
         this.activeModals.delete(modalId);
@@ -332,7 +329,7 @@ class ModalHelper {
    * Close all modals
    */
   closeAll() {
-    this.activeModals.forEach(modalId => {
+    this.activeModals.forEach((modalId) => {
       this.closeCustomModal(modalId);
       this.hideBootstrapModal(modalId);
     });

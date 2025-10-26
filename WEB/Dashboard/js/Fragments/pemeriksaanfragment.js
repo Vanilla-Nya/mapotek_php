@@ -21,7 +21,7 @@ class PemeriksaanModal {
   }
 
   createModal() {
-    const existingModal = document.getElementById('pemeriksaanModal');
+    const existingModal = document.getElementById("pemeriksaanModal");
     if (existingModal) existingModal.remove();
 
     const modalHTML = `
@@ -63,7 +63,7 @@ class PemeriksaanModal {
             </div>
           </div>
 
-          <div class="modal-content" id="modalContent"></div>
+          <div class="modal-content modal-content-pemeriksaan" id="modalContent"></div>
 
           <div class="modal-footer">
             <button class="btn-secondary" id="prevBtn" onclick="pemeriksaanModal.previousStep()">
@@ -236,7 +236,7 @@ class PemeriksaanModal {
         background: #10b981;
       }
 
-      .modal-content {
+      .modal-content-pemeriksaan {
         padding: 30px;
         overflow-y: auto;
         flex: 1;
@@ -487,7 +487,7 @@ class PemeriksaanModal {
     </style>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
   }
 
   initializeStep(step) {
@@ -498,20 +498,20 @@ class PemeriksaanModal {
   }
 
   updateStepper() {
-    const steps = document.querySelectorAll('.step');
+    const steps = document.querySelectorAll(".step");
     steps.forEach((stepEl, index) => {
-      stepEl.classList.remove('active', 'completed');
+      stepEl.classList.remove("active", "completed");
       if (index < this.currentStep) {
-        stepEl.classList.add('completed');
+        stepEl.classList.add("completed");
       } else if (index === this.currentStep) {
-        stepEl.classList.add('active');
+        stepEl.classList.add("active");
       }
     });
   }
 
   renderStepContent() {
-    const contentDiv = document.getElementById('modalContent');
-    
+    const contentDiv = document.getElementById("modalContent");
+
     switch (this.currentStep) {
       case 0:
         contentDiv.innerHTML = this.renderPatientInfo();
@@ -539,27 +539,31 @@ class PemeriksaanModal {
         <div class="info-card">
           <div class="info-row">
             <div class="info-label">👤 Nama:</div>
-            <div class="info-value">${this.queueData.nama || '-'}</div>
+            <div class="info-value">${this.queueData.nama || "-"}</div>
           </div>
           <div class="info-row">
             <div class="info-label">🆔 NIK:</div>
-            <div class="info-value">${this.queueData.nik || '-'}</div>
+            <div class="info-value">${this.queueData.nik || "-"}</div>
           </div>
           <div class="info-row">
             <div class="info-label">🎫 No. Antrian:</div>
-            <div class="info-value"><strong>${this.queueData.no_antrian || '-'}</strong></div>
+            <div class="info-value"><strong>${
+              this.queueData.no_antrian || "-"
+            }</strong></div>
           </div>
           <div class="info-row">
             <div class="info-label">📅 Tanggal:</div>
-            <div class="info-value">${this.queueData.tanggal_antrian || '-'}</div>
+            <div class="info-value">${
+              this.queueData.tanggal_antrian || "-"
+            }</div>
           </div>
           <div class="info-row">
             <div class="info-label">🕐 Jam:</div>
-            <div class="info-value">${this.queueData.jam_antrian || '-'}</div>
+            <div class="info-value">${this.queueData.jam_antrian || "-"}</div>
           </div>
           <div class="info-row">
             <div class="info-label">💳 Jenis Pasien:</div>
-            <div class="info-value">${this.queueData.jenis_pasien || '-'}</div>
+            <div class="info-value">${this.queueData.jenis_pasien || "-"}</div>
           </div>
         </div>
       </div>
@@ -743,7 +747,10 @@ class PemeriksaanModal {
   }
 
   renderDrugs() {
-    const totalHargaObat = this.drugTableData.reduce((sum, drug) => sum + (drug.harga * drug.jumlah), 0);
+    const totalHargaObat = this.drugTableData.reduce(
+      (sum, drug) => sum + drug.harga * drug.jumlah,
+      0
+    );
     const total = totalHargaObat + this.hargaJasa;
 
     return `
@@ -767,14 +774,17 @@ class PemeriksaanModal {
               </tr>
             </thead>
             <tbody>
-              ${this.drugTableData.length === 0 ? 
-                '<tr><td colspan="6" style="text-align: center; color: #999; padding: 30px;">Belum ada obat ditambahkan</td></tr>' :
-                this.drugTableData.map((drug, index) => `
+              ${
+                this.drugTableData.length === 0
+                  ? '<tr><td colspan="6" style="text-align: center; color: #999; padding: 30px;">Belum ada obat ditambahkan</td></tr>'
+                  : this.drugTableData
+                      .map(
+                        (drug, index) => `
                   <tr>
                     <td><strong>${drug.nama}</strong></td>
                     <td>${drug.jenis}</td>
                     <td style="text-align: center;">${drug.jumlah}</td>
-                    <td>Rp ${drug.harga.toLocaleString('id-ID')}</td>
+                    <td>Rp ${drug.harga.toLocaleString("id-ID")}</td>
                     <td><em>${drug.signa}</em></td>
                     <td>
                       <button class="btn-danger" onclick="pemeriksaanModal.removeDrug(${index})">
@@ -782,7 +792,9 @@ class PemeriksaanModal {
                       </button>
                     </td>
                   </tr>
-                `).join('')
+                `
+                      )
+                      .join("")
               }
             </tbody>
           </table>
@@ -799,9 +811,11 @@ class PemeriksaanModal {
           </div>
           <div style="text-align: right;">
             <div class="total-label">Total Keseluruhan:</div>
-            <div class="total-value">Rp ${total.toLocaleString('id-ID')}</div>
+            <div class="total-value">Rp ${total.toLocaleString("id-ID")}</div>
             <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-              (Obat: Rp ${totalHargaObat.toLocaleString('id-ID')} + Jasa: Rp ${this.hargaJasa.toLocaleString('id-ID')})
+              (Obat: Rp ${totalHargaObat.toLocaleString(
+                "id-ID"
+              )} + Jasa: Rp ${this.hargaJasa.toLocaleString("id-ID")})
             </div>
           </div>
         </div>
@@ -815,11 +829,14 @@ class PemeriksaanModal {
   }
 
   renderICDXTable() {
-    const tbody = document.querySelector('#icdxTable tbody');
+    const tbody = document.querySelector("#icdxTable tbody");
     if (this.icdxTableData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">Belum ada data ICDX</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">Belum ada data ICDX</td></tr>';
     } else {
-      tbody.innerHTML = this.icdxTableData.map((item, index) => `
+      tbody.innerHTML = this.icdxTableData
+        .map(
+          (item, index) => `
         <tr>
           <td><strong>${item.kode}</strong></td>
           <td>${item.deskripsi}</td>
@@ -829,16 +846,21 @@ class PemeriksaanModal {
             </button>
           </td>
         </tr>
-      `).join('');
+      `
+        )
+        .join("");
     }
   }
 
   renderICDIXTable() {
-    const tbody = document.querySelector('#icdixTable tbody');
+    const tbody = document.querySelector("#icdixTable tbody");
     if (this.icdixTableData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">Belum ada data ICDIX</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="3" style="text-align: center; color: #999; padding: 30px;">Belum ada data ICDIX</td></tr>';
     } else {
-      tbody.innerHTML = this.icdixTableData.map((item, index) => `
+      tbody.innerHTML = this.icdixTableData
+        .map(
+          (item, index) => `
         <tr>
           <td><strong>${item.kode}</strong></td>
           <td>${item.deskripsi}</td>
@@ -848,14 +870,16 @@ class PemeriksaanModal {
             </button>
           </td>
         </tr>
-      `).join('');
+      `
+        )
+        .join("");
     }
   }
 
   addICDX() {
-    const kode = prompt('Masukkan Kode ICDX (contoh: A00.0):');
+    const kode = prompt("Masukkan Kode ICDX (contoh: A00.0):");
     if (!kode) return;
-    const deskripsi = prompt('Masukkan Deskripsi Diagnosa:');
+    const deskripsi = prompt("Masukkan Deskripsi Diagnosa:");
     if (!deskripsi) return;
 
     this.icdxTableData.push({ kode: kode.trim(), deskripsi: deskripsi.trim() });
@@ -863,59 +887,62 @@ class PemeriksaanModal {
   }
 
   removeICDX(index) {
-    if (confirm('Hapus data ICDX ini?')) {
+    if (confirm("Hapus data ICDX ini?")) {
       this.icdxTableData.splice(index, 1);
       this.renderICDXTable();
     }
   }
 
   addICDIX() {
-    const kode = prompt('Masukkan Kode ICDIX (contoh: 01.00):');
+    const kode = prompt("Masukkan Kode ICDIX (contoh: 01.00):");
     if (!kode) return;
-    const deskripsi = prompt('Masukkan Deskripsi Prosedur:');
+    const deskripsi = prompt("Masukkan Deskripsi Prosedur:");
     if (!deskripsi) return;
 
-    this.icdixTableData.push({ kode: kode.trim(), deskripsi: deskripsi.trim() });
+    this.icdixTableData.push({
+      kode: kode.trim(),
+      deskripsi: deskripsi.trim(),
+    });
     this.renderICDIXTable();
   }
 
   removeICDIX(index) {
-    if (confirm('Hapus data ICDIX ini?')) {
+    if (confirm("Hapus data ICDIX ini?")) {
       this.icdixTableData.splice(index, 1);
       this.renderICDIXTable();
     }
   }
 
   addDrug() {
-    const nama = prompt('Nama Obat:');
+    const nama = prompt("Nama Obat:");
     if (!nama) return;
-    const jenis = prompt('Jenis Obat (contoh: Tablet, Kapsul, Sirup):');
+    const jenis = prompt("Jenis Obat (contoh: Tablet, Kapsul, Sirup):");
     if (!jenis) return;
-    const jumlah = parseInt(prompt('Jumlah:'));
+    const jumlah = parseInt(prompt("Jumlah:"));
     if (!jumlah || jumlah <= 0) {
-      alert('Jumlah harus lebih dari 0!');
+      alert("Jumlah harus lebih dari 0!");
       return;
     }
-    const harga = parseFloat(prompt('Harga per unit:'));
+    const harga = parseFloat(prompt("Harga per unit:"));
     if (!harga || harga < 0) {
-      alert('Harga tidak valid!');
+      alert("Harga tidak valid!");
       return;
     }
-    const signa = prompt('Signa (aturan pakai):');
+    const signa = prompt("Signa (aturan pakai):");
     if (!signa) return;
 
-    this.drugTableData.push({ 
-      nama: nama.trim(), 
-      jenis: jenis.trim(), 
-      jumlah, 
-      harga, 
-      signa: signa.trim() 
+    this.drugTableData.push({
+      nama: nama.trim(),
+      jenis: jenis.trim(),
+      jumlah,
+      harga,
+      signa: signa.trim(),
     });
     this.renderStepContent();
   }
 
   removeDrug(index) {
-    if (confirm('Hapus obat ini?')) {
+    if (confirm("Hapus obat ini?")) {
       this.drugTableData.splice(index, 1);
       this.renderStepContent();
     }
@@ -927,37 +954,37 @@ class PemeriksaanModal {
   }
 
   updateNavigationButtons() {
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const finishBtn = document.getElementById('finishBtn');
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const finishBtn = document.getElementById("finishBtn");
 
-    prevBtn.style.display = this.currentStep === 0 ? 'none' : 'inline-flex';
-    
+    prevBtn.style.display = this.currentStep === 0 ? "none" : "inline-flex";
+
     if (this.currentStep === this.totalSteps - 1) {
-      nextBtn.style.display = 'none';
-      finishBtn.style.display = 'inline-flex';
+      nextBtn.style.display = "none";
+      finishBtn.style.display = "inline-flex";
     } else {
-      nextBtn.style.display = 'inline-flex';
-      finishBtn.style.display = 'none';
+      nextBtn.style.display = "inline-flex";
+      finishBtn.style.display = "none";
     }
   }
 
   validateCurrentStep() {
     switch (this.currentStep) {
       case 1:
-        const keluhan = document.getElementById('keluhan')?.value.trim();
-        const anamnesis = document.getElementById('anamnesis')?.value.trim();
-        const terapiObat = document.getElementById('terapiObat')?.value.trim();
-        
+        const keluhan = document.getElementById("keluhan")?.value.trim();
+        const anamnesis = document.getElementById("anamnesis")?.value.trim();
+        const terapiObat = document.getElementById("terapiObat")?.value.trim();
+
         if (!keluhan || !anamnesis || !terapiObat) {
-          alert('⚠️ Field yang bertanda (*) wajib diisi!');
+          alert("⚠️ Field yang bertanda (*) wajib diisi!");
           return false;
         }
         break;
-      
+
       case 4:
         if (this.drugTableData.length === 0) {
-          if (!confirm('⚠️ Belum ada obat yang ditambahkan. Lanjutkan?')) {
+          if (!confirm("⚠️ Belum ada obat yang ditambahkan. Lanjutkan?")) {
             return false;
           }
         }
@@ -968,7 +995,7 @@ class PemeriksaanModal {
 
   nextStep() {
     if (!this.validateCurrentStep()) return;
-    
+
     if (this.currentStep < this.totalSteps - 1) {
       this.currentStep++;
       this.initializeStep(this.currentStep);
@@ -985,69 +1012,88 @@ class PemeriksaanModal {
   async finish() {
     if (!this.validateCurrentStep()) return;
 
-    if (!confirm('🏁 Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui.')) return;
+    if (
+      !confirm(
+        "🏁 Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui."
+      )
+    )
+      return;
 
     const pemeriksaanData = {
       id_antrian: this.queueData.id_antrian,
-      
-      keluhan: document.getElementById('keluhan')?.value || '',
-      anamnesis: document.getElementById('anamnesis')?.value || '',
-      alergi_makanan: document.getElementById('alergiMakanan')?.value || 'Tidak Ada',
-      alergi_udara: document.getElementById('alergiUdara')?.value || 'Tidak Ada',
-      alergi_obat: document.getElementById('alergiObat')?.value || 'Tidak Ada',
-      prognosa: document.getElementById('prognosa')?.value || '',
-      terapi_obat: document.getElementById('terapiObat')?.value || '',
-      terapi_non_obat: document.getElementById('terapiNonObat')?.value || '',
-      bmhp: document.getElementById('bmhp')?.value || '',
-      
-      body_weight: document.getElementById('bodyWeight')?.value || '',
-      oxygen_sat: document.getElementById('oxygenSat')?.value || '',
-      body_height: document.getElementById('bodyHeight')?.value || '',
-      body_temp: document.getElementById('bodyTemp')?.value || '',
-      blood_pressure: document.getElementById('bloodPressure')?.value || '',
-      heart_rate: document.getElementById('heartRate')?.value || '',
-      resp_rate: document.getElementById('respRate')?.value || '',
-      
+
+      keluhan: document.getElementById("keluhan")?.value || "",
+      anamnesis: document.getElementById("anamnesis")?.value || "",
+      alergi_makanan:
+        document.getElementById("alergiMakanan")?.value || "Tidak Ada",
+      alergi_udara:
+        document.getElementById("alergiUdara")?.value || "Tidak Ada",
+      alergi_obat: document.getElementById("alergiObat")?.value || "Tidak Ada",
+      prognosa: document.getElementById("prognosa")?.value || "",
+      terapi_obat: document.getElementById("terapiObat")?.value || "",
+      terapi_non_obat: document.getElementById("terapiNonObat")?.value || "",
+      bmhp: document.getElementById("bmhp")?.value || "",
+
+      body_weight: document.getElementById("bodyWeight")?.value || "",
+      oxygen_sat: document.getElementById("oxygenSat")?.value || "",
+      body_height: document.getElementById("bodyHeight")?.value || "",
+      body_temp: document.getElementById("bodyTemp")?.value || "",
+      blood_pressure: document.getElementById("bloodPressure")?.value || "",
+      heart_rate: document.getElementById("heartRate")?.value || "",
+      resp_rate: document.getElementById("respRate")?.value || "",
+
       icdx: this.icdxTableData,
       icdix: this.icdixTableData,
-      
+
       obat: this.drugTableData,
       harga_jasa: this.hargaJasa,
-      total: this.drugTableData.reduce((sum, drug) => sum + (drug.harga * drug.jumlah), 0) + this.hargaJasa
+      total:
+        this.drugTableData.reduce(
+          (sum, drug) => sum + drug.harga * drug.jumlah,
+          0
+        ) + this.hargaJasa,
     };
 
-    console.log('💾 Saving pemeriksaan data:', pemeriksaanData);
+    console.log("💾 Saving pemeriksaan data:", pemeriksaanData);
 
     try {
-      const response = await fetch(`../API/auth/antrian.php?action=finish_pemeriksaan&id=${this.queueData.id_antrian}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pemeriksaanData)
-      });
+      const response = await fetch(
+        `../API/auth/antrian.php?action=finish_pemeriksaan&id=${this.queueData.id_antrian}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pemeriksaanData),
+        }
+      );
 
       const result = await response.json();
-      console.log('📥 Server Response:', result);
+      console.log("📥 Server Response:", result);
 
       if (result.success) {
-        alert('✅ Pemeriksaan berhasil diselesaikan!\n\nData telah tersimpan di sistem.');
+        alert(
+          "✅ Pemeriksaan berhasil diselesaikan!\n\nData telah tersimpan di sistem."
+        );
         this.close();
-        
+
         if (window.currentFragment && window.currentFragment.loadQueues) {
           await window.currentFragment.loadQueues();
         }
       } else {
-        alert('❌ Gagal menyimpan pemeriksaan:\n' + (result.message || result.error || 'Unknown error'));
+        alert(
+          "❌ Gagal menyimpan pemeriksaan:\n" +
+            (result.message || result.error || "Unknown error")
+        );
       }
     } catch (error) {
-      console.error('❌ Error saving pemeriksaan:', error);
-      alert('❌ Error: ' + error.message);
+      console.error("❌ Error saving pemeriksaan:", error);
+      alert("❌ Error: " + error.message);
     }
   }
 
   close() {
-    const modal = document.getElementById('pemeriksaanModal');
+    const modal = document.getElementById("pemeriksaanModal");
     if (modal) {
-      modal.style.animation = 'fadeOut 0.3s';
+      modal.style.animation = "fadeOut 0.3s";
       setTimeout(() => modal.remove(), 300);
     }
   }
@@ -1188,66 +1234,77 @@ class PemeriksaanFragment {
       `;
     }
 
-    return this.queues.map((queue) => {
-      const statusClass = `status-${queue.status_antrian.toLowerCase().replace(" ", "-")}`;
-      const hasEncounter = queue.id_encounter_satusehat; // ✅ FIXED: Correct column name
+    return this.queues
+      .map((queue) => {
+        const statusClass = `status-${queue.status_antrian
+          .toLowerCase()
+          .replace(" ", "-")}`;
+        const hasEncounter = queue.id_encounter_satusehat; // ✅ FIXED: Correct column name
 
-      let actionButtons = '';
-      
-      if (queue.status_antrian.toLowerCase() === "di terima") {
-        if (hasEncounter) {
-          actionButtons = `
+        let actionButtons = "";
+
+        if (queue.status_antrian.toLowerCase() === "di terima") {
+          if (hasEncounter) {
+            actionButtons = `
             <button class="btn btn-resume btn-sm" onclick="window.currentFragment.resumeQueue('${queue.id_antrian}')">
               <i class="bi bi-play-circle me-1"></i>LANJUTKAN
             </button>
           `;
-        } else {
-          actionButtons = `
+          } else {
+            actionButtons = `
             <button class="btn btn-periksa btn-sm" onclick="window.currentFragment.periksaQueue('${queue.id_antrian}')">
               <i class="bi bi-heart-pulse me-1"></i>PERIKSA
             </button>
           `;
-        }
-      } else if (queue.status_antrian.toLowerCase() === "sedang diperiksa") {
-        // ✅ FIXED: Removed KELUAR button, only show LANJUT
-        actionButtons = `
+          }
+        } else if (queue.status_antrian.toLowerCase() === "sedang diperiksa") {
+          // ✅ FIXED: Removed KELUAR button, only show LANJUT
+          actionButtons = `
           <button class="btn btn-continue btn-sm" onclick="window.currentFragment.continueExamination('${queue.id_antrian}')" title="Lanjutkan Pemeriksaan">
             <i class="bi bi-clipboard-pulse me-1"></i>LANJUT
           </button>
         `;
-      } else if (queue.status_antrian.toLowerCase() === "selesai") {
-        actionButtons = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Selesai</span>`;
-      } else {
-        actionButtons = `<span class="text-muted">-</span>`;
-      }
+        } else if (queue.status_antrian.toLowerCase() === "selesai") {
+          actionButtons = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Selesai</span>`;
+        } else {
+          actionButtons = `<span class="text-muted">-</span>`;
+        }
 
-      const encounterDisplay = hasEncounter 
-        ? `<span class="encounter-badge" title="${hasEncounter}">${hasEncounter.substring(0, 8)}...</span>`
-        : `<span class="text-muted">-</span>`;
+        const encounterDisplay = hasEncounter
+          ? `<span class="encounter-badge" title="${hasEncounter}">${hasEncounter.substring(
+              0,
+              8
+            )}...</span>`
+          : `<span class="text-muted">-</span>`;
 
-      return `
+        return `
         <tr>
-          <td><strong class="text-primary fs-5">${queue.no_antrian}</strong></td>
+          <td><strong class="text-primary fs-5">${
+            queue.no_antrian
+          }</strong></td>
           <td>${queue.tanggal_antrian}</td>
           <td><strong>${queue.jam_antrian}</strong></td>
           <td>${queue.nama ?? "-"}</td>
           <td><small>${queue.nik ?? "-"}</small></td>
-          <td><span class="badge badge-status ${statusClass}">${queue.status_antrian}</span></td>
+          <td><span class="badge badge-status ${statusClass}">${
+          queue.status_antrian
+        }</span></td>
           <td>${encounterDisplay}</td>
           <td>${actionButtons}</td>
         </tr>
       `;
-    }).join("");
+      })
+      .join("");
   }
 
   async continueExamination(id) {
     console.log("📋 Continue examination for queue:", id);
-    
-    const queueData = this.queues.find(q => q.id_antrian === id);
+
+    const queueData = this.queues.find((q) => q.id_antrian === id);
     if (queueData) {
       window.pemeriksaanModal.show(queueData);
     } else {
-      alert('❌ Data antrian tidak ditemukan');
+      alert("❌ Data antrian tidak ditemukan");
     }
   }
 
@@ -1306,7 +1363,8 @@ class PemeriksaanFragment {
 
   setupEventListeners() {
     const refreshBtn = document.getElementById("refreshBtn");
-    if (refreshBtn) refreshBtn.addEventListener("click", () => this.loadQueues());
+    if (refreshBtn)
+      refreshBtn.addEventListener("click", () => this.loadQueues());
   }
 
   async loadQueues() {
@@ -1316,19 +1374,23 @@ class PemeriksaanFragment {
     }
 
     try {
-      let { data, error } = await window.supabaseClient.rpc('get_latest_antrian_for_dokter', { 
-        p_dokter: this.currentDoctorId 
-      });
-      
+      let { data, error } = await window.supabaseClient.rpc(
+        "get_latest_antrian_for_dokter",
+        {
+          p_dokter: this.currentDoctorId,
+        }
+      );
+
       console.log("📥 Loaded queues:", data, error);
 
       if (Array.isArray(data)) {
-        this.queues = data.filter(q => 
-          q.status_antrian.toLowerCase() === "di terima" || 
-          q.status_antrian.toLowerCase() === "sedang diperiksa" || 
-          q.status_antrian.toLowerCase() === "selesai"
+        this.queues = data.filter(
+          (q) =>
+            q.status_antrian.toLowerCase() === "di terima" ||
+            q.status_antrian.toLowerCase() === "sedang diperiksa" ||
+            q.status_antrian.toLowerCase() === "selesai"
         );
-        
+
         this.updateTable();
 
         const countBadge = document.getElementById("queueCount");
@@ -1343,7 +1405,12 @@ class PemeriksaanFragment {
   }
 
   async periksaQueue(id) {
-    if (!confirm("Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT.")) return;
+    if (
+      !confirm(
+        "Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT."
+      )
+    )
+      return;
 
     console.log("=".repeat(50));
     console.log("🔗 BLOCKCHAIN MODE: NEW EXAMINATION");
@@ -1366,17 +1433,20 @@ class PemeriksaanFragment {
         console.log("🏥 Encounter ID:", result.id_encounter_satusehat);
         console.log("🔗 Hash:", result.hash);
         console.log("=".repeat(50));
-        
+
         await this.loadQueues();
-        
-        const queueData = this.queues.find(q => q.id_antrian === id);
+
+        const queueData = this.queues.find((q) => q.id_antrian === id);
         if (queueData) {
           window.pemeriksaanModal.show(queueData);
         } else {
-          alert('❌ Data antrian tidak ditemukan');
+          alert("❌ Data antrian tidak ditemukan");
         }
       } else {
-        alert("❌ Gagal memulai pemeriksaan: " + (result.message || result.error || ""));
+        alert(
+          "❌ Gagal memulai pemeriksaan: " +
+            (result.message || result.error || "")
+        );
       }
     } catch (error) {
       console.error("❌ Error starting examination:", error);
@@ -1385,7 +1455,12 @@ class PemeriksaanFragment {
   }
 
   async resumeQueue(id) {
-    if (!confirm("Lanjutkan pemeriksaan pasien ini?\n\nAnda akan melanjutkan pemeriksaan yang sudah dimulai sebelumnya.")) return;
+    if (
+      !confirm(
+        "Lanjutkan pemeriksaan pasien ini?\n\nAnda akan melanjutkan pemeriksaan yang sudah dimulai sebelumnya."
+      )
+    )
+      return;
 
     console.log("=".repeat(50));
     console.log("▶️ BLOCKCHAIN MODE: RESUME EXAMINATION");
@@ -1395,10 +1470,13 @@ class PemeriksaanFragment {
     console.log("=".repeat(50));
 
     try {
-      const response = await fetch(`${this.apiUrl}?action=resume_pemeriksaan&id=${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `${this.apiUrl}?action=resume_pemeriksaan&id=${id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       const result = await response.json();
       console.log("📥 Server Response:", result);
@@ -1408,17 +1486,20 @@ class PemeriksaanFragment {
         console.log("🏥 Encounter ID (reused):", result.id_encounter_satusehat);
         console.log("🔗 Hash:", result.hash);
         console.log("=".repeat(50));
-        
+
         await this.loadQueues();
-        
-        const queueData = this.queues.find(q => q.id_antrian === id);
+
+        const queueData = this.queues.find((q) => q.id_antrian === id);
         if (queueData) {
           window.pemeriksaanModal.show(queueData);
         } else {
-          alert('❌ Data antrian tidak ditemukan');
+          alert("❌ Data antrian tidak ditemukan");
         }
       } else {
-        alert("❌ Gagal melanjutkan pemeriksaan: " + (result.message || result.error || ""));
+        alert(
+          "❌ Gagal melanjutkan pemeriksaan: " +
+            (result.message || result.error || "")
+        );
       }
     } catch (error) {
       console.error("❌ Error resuming examination:", error);
@@ -1435,7 +1516,7 @@ class PemeriksaanFragment {
 
   onDestroy() {
     window.currentFragment = null;
-    console.log('Pemeriksaan fragment destroyed');
+    console.log("Pemeriksaan fragment destroyed");
   }
 }
 
