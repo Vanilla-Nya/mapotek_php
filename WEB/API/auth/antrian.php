@@ -10,6 +10,7 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once __DIR__ . '/../config/supabase.php';
 require_once __DIR__ . '/encounter_satusehat_api.php';
+require_once __DIR__ . '/../ApiClient.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
@@ -40,9 +41,34 @@ switch ($action) {
     case 'check_satusehat':
         checkSatusehat();
         break;
+    case 'register_satusehat':
+        registerSatusehat();
+        break;
+    case 'periksa':
+        periksaQueue();
+        break;
+    case 'exit_pemeriksaan':
+        exitPemeriksaan();
+        break;
+
+    case 'resume_pemeriksaan':
+        resumePemeriksaan();
+        break;
+
+    case 'finish_pemeriksaan':
+        finishPemeriksaan();
+        break;
     default:
         echo json_encode(['error' => 'Invalid action']);
         break;
+}
+
+/**
+ * 🔥 BLOCKCHAIN: Generate hash for antrian data
+ */
+function generateHash($data) {
+    $hashString = json_encode($data) . microtime(true);
+    return hash('sha256', $hashString);
 }
 
 /**
@@ -61,7 +87,6 @@ function checkSatusehat() {
     }
     
     try {
-        // Get patient data including id_satusehat
         $params = "select=id_pasien,nama,nik,id_satusehat&id_pasien=eq.$patientId&limit=1";
         $result = supabase('GET', 'pasien', $params);
         
@@ -86,6 +111,169 @@ function checkSatusehat() {
             'success' => false,
             'error' => $e->getMessage()
         ]);
+    }
+}
+
+/**
+ * Register patient to SATUSEHAT by NIK search using ApiClient
+ * POST: ?action=register_satusehat
+ * Body: { "patient_id": "xxx" }
+ */
+function registerSatusehat()
+{
+    $input = json_decode(file_get_contents('php://input'), true);
+    $patientId = $input['patient_id'] ?? null;
+
+    if (!$patientId) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'patient_id required'
+        ]);
+        return;
+    }
+
+    error_log("🏥 REGISTERING PATIENT TO SATUSEHAT: $patientId");
+
+    try {
+        // --- Fetch patient data from Supabase
+        $params = "select=id_pasien,nama,nik,tanggal_lahir,jenis_kelamin,alamat,no_telp&id_pasien=eq.$patientId&limit=1";
+        $result = supabase('GET', 'pasien', $params);
+
+        if (empty($result) || isset($result['error'])) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Patient not found in database'
+            ]);
+            return;
+        }
+
+        $patient = $result[0];
+        $nik = $patient['nik'];
+
+        if (empty($nik)) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Patient NIK is empty'
+            ]);
+            return;
+        }
+
+        error_log("📋 Patient data: " . json_encode($patient, JSON_PRETTY_PRINT));
+        error_log("🔍 Searching SATUSEHAT by NIK: $nik");
+
+        // --- Initialize API Client
+        $apiClient = new ApiClient();
+
+        // --- Search patient in SATUSEHAT with better matching
+        $satusehatId = searchSatusehatByNik(
+            $apiClient,
+            $nik,
+            $patient['nama'],
+            $patient['tanggal_lahir']
+        );
+
+        if (!$satusehatId) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Patient not found in SATUSEHAT',
+                'message' => 'Pasien dengan NIK ' . $nik . ' tidak ditemukan di SATUSEHAT. Pastikan pasien sudah terdaftar di sistem SATUSEHAT.'
+            ]);
+            return;
+        }
+
+        error_log("✅ Found in SATUSEHAT: $satusehatId");
+
+        // --- Update Supabase record with SATUSEHAT ID
+        $updateData = ['id_satusehat' => $satusehatId];
+        $updateParams = "id_pasien=eq.$patientId";
+        $updateResult = supabase('PATCH', 'pasien', $updateParams, $updateData);
+
+        if (isset($updateResult['error'])) {
+            error_log("❌ Failed to update patient table: " . json_encode($updateResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to update patient record',
+                'details' => $updateResult['error']
+            ]);
+            return;
+        }
+
+        error_log("✅ Patient table updated with SATUSEHAT ID");
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Patient registered to SATUSEHAT successfully',
+            'id_satusehat' => $satusehatId,
+            'patient_name' => $patient['nama'],
+            'nik' => $nik
+        ]);
+
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in registerSatusehat: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+
+/**
+ * Search patient in SATUSEHAT by NIK using ApiClient
+ */
+function searchSatusehatByNik($apiClient, $nik, $expectedName = null, $expectedBirthDate = null)
+{
+    try {
+        error_log("🔍 Searching SATUSEHAT for NIK: $nik");
+        
+        $response = $apiClient->get('/Patient', [
+            'identifier' => 'https://fhir.kemkes.go.id/id/nik|' . $nik
+        ]);
+        
+        error_log("📥 SATUSEHAT API Response: " . substr($response, 0, 500)); // limit to avoid huge logs
+        
+        $data = json_decode($response, true);
+        
+        if (!isset($data['entry']) || count($data['entry']) === 0) {
+            error_log("⚠️ Patient with NIK $nik not found in SATUSEHAT");
+            return null;
+        }
+
+        $expectedName = strtolower(trim($expectedName ?? ''));
+        $expectedBirthDate = trim($expectedBirthDate ?? '');
+        $matchedId = null;
+
+        foreach ($data['entry'] as $entry) {
+            $resource = $entry['resource'] ?? [];
+            $id = $resource['id'] ?? null;
+            $name = strtolower(trim($resource['name'][0]['text'] ?? ''));
+            $birthDate = $resource['birthDate'] ?? '';
+
+            error_log("🧾 Checking patient: ID=$id, name=$name, birthDate=$birthDate");
+
+            $nameMatch = empty($expectedName) || strpos($name, $expectedName) !== false;
+            $birthMatch = empty($expectedBirthDate) || $birthDate === $expectedBirthDate;
+
+            if ($nameMatch && $birthMatch) {
+                $matchedId = $id;
+                error_log("✅ Found matching patient in SATUSEHAT: $id ($name, $birthDate)");
+                break;
+            }
+        }
+
+        // If no name/birth match found, fallback to first entry
+        if (!$matchedId) {
+            $fallbackId = $data['entry'][0]['resource']['id'];
+            error_log("⚠️ No exact match (name/birthDate), fallback to first entry: $fallbackId");
+            $matchedId = $fallbackId;
+        }
+
+        return $matchedId;
+
+    } catch (Exception $e) {
+        error_log("❌ Exception in searchSatusehatByNik: " . $e->getMessage());
+        return null;
     }
 }
 
@@ -205,23 +393,15 @@ function filterByHour() {
         return;
     }
     
-    $params = "select=*,pasien:id_pasien(nama,nik,no_telp,id_satusehat)&id_dokter=eq.$dokterId&tanggal_antrian=eq.$tanggal&jam_antrian=gte.$jamMulai&jam_antrian=lte.$jamAkhir&order=jam_antrian.asc";
+    $params = "select=*,pasien:id_pasien(nama,nik,no_telp,id_satusehat,tanggal_lahir)&id_dokter=eq.$dokterId&tanggal_antrian=eq.$tanggal&jam_antrian=gte.$jamMulai&jam_antrian=lte.$jamAkhir&order=jam_antrian.asc";
     
     $result = supabase('GET', 'antrian', $params);
     echo json_encode($result);
 }
 
 /**
- * ✅ CREATE QUEUE WITH JENIS_PASIEN (BPJS/UMUM)
+ * 🔥 BLOCKCHAIN: CREATE QUEUE WITH INITIAL HASH
  * POST: ?action=create
- * Body: {
- *   "no_antrian": "1251025",
- *   "tanggal_antrian": "2025-10-25",
- *   "jam_antrian": "10:00",
- *   "id_pasien": "xxx",
- *   "id_dokter": "xxx",
- *   "jenis_pasien": "BPJS" or "UMUM"
- * }
  */
 function createAntrian() {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -238,7 +418,6 @@ function createAntrian() {
         return;
     }
     
-    // Validate jenis_pasien
     $jenisPasien = strtoupper($input['jenis_pasien']);
     if (!in_array($jenisPasien, ['BPJS', 'UMUM'])) {
         echo json_encode([
@@ -261,7 +440,7 @@ function createAntrian() {
         return;
     }
     
-    // Prepare data with jenis_pasien
+    // 🔥 BLOCKCHAIN: Prepare data with initial hash and NULL prev_hash
     $data = [
         'no_antrian' => $input['no_antrian'],
         'tanggal_antrian' => $input['tanggal_antrian'],
@@ -269,11 +448,15 @@ function createAntrian() {
         'status_antrian' => 'Belum Periksa',
         'id_pasien' => $input['id_pasien'],
         'id_dokter' => $input['id_dokter'],
-        'jenis_pasien' => $jenisPasien,  // ✅ ADD JENIS_PASIEN
-        'created_at' => date('Y-m-d H:i:s')
+        'jenis_pasien' => $jenisPasien,
+        'created_at' => date('Y-m-d H:i:s'),
+        'prev_hash' => null // First block has no previous hash
     ];
     
-    error_log("📤 INSERTING TO DATABASE: " . json_encode($data, JSON_PRETTY_PRINT));
+    // Generate hash for this block
+    $data['current_hash'] = generateHash($data);
+    
+    error_log("📤 INSERTING TO DATABASE (BLOCKCHAIN): " . json_encode($data, JSON_PRETTY_PRINT));
     
     $result = supabase('POST', 'antrian', '', $data);
     
@@ -288,16 +471,18 @@ function createAntrian() {
     } else {
         echo json_encode([
             'success' => true,
-            'message' => 'Queue created successfully',
+            'message' => 'Queue created successfully (Blockchain)',
             'data' => $result,
-            'jenis_pasien' => $jenisPasien
+            'jenis_pasien' => $jenisPasien,
+            'current_hash' => $data['current_hash']
         ]);
     }
 }
 
 /**
- * 🔥 ACCEPT QUEUE + CREATE SATUSEHAT ENCOUNTER
+ * 🔥 BLOCKCHAIN: ACCEPT QUEUE - INSERT NEW ROW WITH PREV_HASH
  * POST: ?action=accept&id=xxx
+ * Body (optional): { "jenis_pasien": "BPJS" or "UMUM" }
  */
 function acceptQueue() {
     $id = $_GET['id'] ?? null;
@@ -307,8 +492,19 @@ function acceptQueue() {
         return;
     }
     
+    $input = json_decode(file_get_contents('php://input'), true);
+    $newJenisPasien = isset($input['jenis_pasien']) ? strtoupper($input['jenis_pasien']) : null;
+    
+    if ($newJenisPasien && !in_array($newJenisPasien, ['BPJS', 'UMUM'])) {
+        echo json_encode([
+            'error' => 'Invalid jenis_pasien',
+            'message' => 'jenis_pasien must be BPJS or UMUM'
+        ]);
+        return;
+    }
+    
     try {
-        // Get queue data with patient and doctor info
+        // Get current queue data (latest block)
         $params = "select=*,pasien:id_pasien(nama,id_satusehat),dokter:id_dokter(nama_lengkap,id_satusehat)&id_antrian=eq.$id&limit=1";
         $queue = supabase('GET', 'antrian', $params);
         
@@ -320,29 +516,29 @@ function acceptQueue() {
             return;
         }
         
-        $queueData = $queue[0];
+        $currentBlock = $queue[0];
         
-        error_log("📋 ACCEPTING QUEUE: " . json_encode($queueData, JSON_PRETTY_PRINT));
+        error_log("📋 ACCEPTING QUEUE (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
         
         // Check if already processed
-        if ($queueData['status_antrian'] !== 'Belum Periksa') {
+        if ($currentBlock['status_antrian'] !== 'Belum Periksa') {
             echo json_encode([
                 'error' => 'Queue already processed',
                 'message' => 'Antrian sudah diproses sebelumnya',
-                'current_status' => $queueData['status_antrian']
+                'current_status' => $currentBlock['status_antrian']
             ]);
             return;
         }
         
-        $patientSatusehatId = $queueData['pasien']['id_satusehat'] ?? null;
-        $doctorSatusehatId = $queueData['dokter']['id_satusehat'] ?? null;
+        $patientSatusehatId = $currentBlock['pasien']['id_satusehat'] ?? null;
+        $doctorSatusehatId = $currentBlock['dokter']['id_satusehat'] ?? null;
         
         // Validate SATUSEHAT IDs
         if (!$patientSatusehatId) {
             echo json_encode([
                 'error' => 'Patient missing SatuSehat ID',
                 'message' => 'Pasien belum memiliki ID SatuSehat. Harap daftarkan pasien ke SatuSehat terlebih dahulu.',
-                'patient_name' => $queueData['pasien']['nama']
+                'patient_name' => $currentBlock['pasien']['nama']
             ]);
             return;
         }
@@ -351,52 +547,56 @@ function acceptQueue() {
             echo json_encode([
                 'error' => 'Doctor missing SatuSehat ID',
                 'message' => 'Dokter belum memiliki ID SatuSehat. Harap daftarkan dokter ke SatuSehat terlebih dahulu.',
-                'doctor_name' => $queueData['dokter']['nama_lengkap']
+                'doctor_name' => $currentBlock['dokter']['nama_lengkap']
             ]);
             return;
         }
         
-        // Create encounter in SATUSEHAT
-        error_log("🏥 Creating SATUSEHAT Encounter...");
-        
-        $encounterId = EncounterSatusehatApi::createEncounter(
-            $patientSatusehatId,
-            $queueData['pasien']['nama'],
-            $doctorSatusehatId,
-            $queueData['dokter']['nama_lengkap']
-        );
-        
-        if (!$encounterId) {
-            echo json_encode([
-                'error' => 'SatuSehat API Error',
-                'message' => 'Gagal membuat encounter di SatuSehat. Silakan coba lagi.',
-                'details' => 'Check server logs for more information'
-            ]);
-            return;
-        }
-        
-        error_log("✅ SATUSEHAT Encounter created: $encounterId");
-        
-        // Update queue status
-        $updateData = [
+        // 🔥 BLOCKCHAIN: Create new block (row) with updated status
+        // Encounter creation removed - just validate and update status
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
             'status_antrian' => 'Di Terima',
-            'id_encounter_satusehat' => $encounterId,
-            'waktu_diterima' => date('Y-m-d H:i:s')
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $newJenisPasien ?? $currentBlock['jenis_pasien'],
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash'] // Link to previous block
         ];
         
-        $updateParams = "id_antrian=eq.$id";
-        $updateResult = supabase('PATCH', 'antrian', $updateParams, $updateData);
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
         
-        error_log("✅ Queue updated: " . json_encode($updateResult, JSON_PRETTY_PRINT));
+        error_log("⛓️ BLOCKCHAIN: Creating new block");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert new block: " . json_encode($insertResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create new block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ New block created: " . json_encode($insertResult, JSON_PRETTY_PRINT));
         
         echo json_encode([
             'success' => true,
-            'message' => 'Queue accepted and SatuSehat encounter created successfully',
-            'encounter_id' => $encounterId,
-            'queue_number' => $queueData['no_antrian'],
-            'patient_name' => $queueData['pasien']['nama'],
-            'jenis_pasien' => $queueData['jenis_pasien'] ?? 'UMUM',
-            'hash' => substr(md5($encounterId . time()), 0, 32)
+            'message' => 'Queue accepted and new block created (Blockchain)',
+            'queue_number' => $currentBlock['no_antrian'],
+            'patient_name' => $currentBlock['pasien']['nama'],
+            'jenis_pasien' => $newJenisPasien ?? $currentBlock['jenis_pasien'],
+            'prev_hash' => $currentBlock['current_hash'],
+            'new_hash' => $newBlock['current_hash'],
+            'blockchain_verified' => true
         ]);
         
     } catch (Exception $e) {
@@ -412,7 +612,7 @@ function acceptQueue() {
 }
 
 /**
- * Delete queue (soft delete - mark as cancelled)
+ * 🔥 BLOCKCHAIN: DELETE QUEUE - INSERT NEW ROW WITH STATUS "Batal"
  * POST: ?action=delete&id=xxx
  */
 function deleteQueue() {
@@ -424,7 +624,7 @@ function deleteQueue() {
     }
     
     try {
-        // Check if queue exists
+        // Get current queue data (latest block)
         $params = "select=*&id_antrian=eq.$id&limit=1";
         $queue = supabase('GET', 'antrian', $params);
         
@@ -436,22 +636,554 @@ function deleteQueue() {
             return;
         }
         
-        // Update status to cancelled
-        $updateData = [
+        $currentBlock = $queue[0];
+        
+        error_log("🗑️ DELETING QUEUE (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
+        
+        // 🔥 BLOCKCHAIN: Create new block with status "Batal"
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
             'status_antrian' => 'Batal',
-            'waktu_dibatalkan' => date('Y-m-d H:i:s')
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $currentBlock['jenis_pasien'],
+            'id_encounter_satusehat' => $currentBlock['id_encounter_satusehat'],
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash'] // Fixed: was 'hash' before
         ];
         
-        $updateParams = "id_antrian=eq.$id";
-        $result = supabase('PATCH', 'antrian', $updateParams, $updateData);
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
+        
+        error_log("⛓️ BLOCKCHAIN: Creating cancellation block");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert cancellation block: " . json_encode($insertResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create cancellation block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ Cancellation block created");
         
         echo json_encode([
             'success' => true,
-            'message' => 'Queue cancelled successfully',
-            'hash' => substr(md5($id . time()), 0, 32)
+            'message' => 'Queue cancelled and new block created (Blockchain)',
+            'prev_hash' => $currentBlock['current_hash'],
+            'new_hash' => $newBlock['current_hash'],
+            'blockchain_verified' => true
         ]);
         
     } catch (Exception $e) {
+        echo json_encode([
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * 🔥 BLOCKCHAIN: PERIKSA QUEUE - INSERT NEW ROW WITH STATUS "Sedang Diperiksa"
+ * AND CREATE SATUSEHAT ENCOUNTER
+ * POST: ?action=periksa&id=xxx
+ */
+function periksaQueue() {
+    $id = $_GET['id'] ?? null;
+    
+    if (!$id) {
+        echo json_encode(['error' => 'ID required']);
+        return;
+    }
+    
+    try {
+        // Get queue data by ID
+        $params = "select=*,pasien:id_pasien(nama,id_satusehat),dokter:id_dokter(nama_lengkap,id_satusehat)&id_antrian=eq.$id";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        $currentBlock = $queue[0];
+        
+        error_log("🩺 PROCESSING QUEUE (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
+        
+        // Handle based on current status
+        $currentStatus = $currentBlock['status_antrian'];
+        
+        // If already "Sedang Diperiksa", return the existing data
+        if ($currentStatus === 'Sedang Diperiksa') {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Pemeriksaan sudah berlangsung',
+                'status' => 'already_in_progress',
+                'queue_number' => $currentBlock['no_antrian'],
+                'patient_name' => $currentBlock['pasien']['nama'] ?? 'Unknown',
+                'doctor_name' => $currentBlock['dokter']['nama_lengkap'] ?? 'Unknown',
+                'encounter_id' => $currentBlock['id_encounter_satusehat'] ?? null,
+                'reference_id' => $currentBlock['id_antrian'],
+                'hash' => $currentBlock['current_hash']
+            ]);
+            return;
+        }
+        
+        // Check if status is "Di Terima" to start examination
+        if ($currentStatus !== 'Di Terima') {
+            echo json_encode([
+                'error' => 'Invalid queue status',
+                'message' => 'Antrian harus berstatus "Di Terima" untuk memulai pemeriksaan',
+                'current_status' => $currentStatus
+            ]);
+            return;
+        }
+        
+        // Extract SATUSEHAT IDs
+        $patientSatusehatId = $currentBlock['pasien']['id_satusehat'] ?? null;
+        $doctorSatusehatId = $currentBlock['dokter']['id_satusehat'] ?? null;
+        $patientName = $currentBlock['pasien']['nama'] ?? 'Unknown';
+        $doctorName = $currentBlock['dokter']['nama_lengkap'] ?? 'Unknown';
+        
+        // Validate SATUSEHAT IDs
+        if (!$patientSatusehatId) {
+            echo json_encode([
+                'error' => 'Patient missing SatuSehat ID',
+                'message' => 'Pasien belum memiliki ID SatuSehat',
+                'patient_name' => $patientName
+            ]);
+            return;
+        }
+        
+        if (!$doctorSatusehatId) {
+            echo json_encode([
+                'error' => 'Doctor missing SatuSehat ID',
+                'message' => 'Dokter belum memiliki ID SatuSehat',
+                'doctor_name' => $doctorName
+            ]);
+            return;
+        }
+        
+        // 🏥 CREATE SATUSEHAT ENCOUNTER
+        error_log("🏥 Creating SATUSEHAT Encounter...");
+        error_log("   Patient: $patientName (ID: $patientSatusehatId)");
+        error_log("   Doctor: $doctorName (ID: $doctorSatusehatId)");
+        
+        $encounterNumber = 'ENC-' . $currentBlock['no_antrian'] . '-' . date('His');
+        
+        $encounterId = EncounterSatusehatApi::createEncounter(
+            $patientSatusehatId,
+            $patientName,
+            $doctorSatusehatId,
+            $doctorName,
+            null, // locationId - uses default
+            null, // locationDisplay - uses default
+            $encounterNumber
+        );
+        
+        if (!$encounterId) {
+            error_log("❌ Failed to create SATUSEHAT Encounter");
+            echo json_encode([
+                'error' => 'Failed to create SATUSEHAT Encounter',
+                'message' => 'Gagal membuat Encounter di SATUSEHAT. Silakan coba lagi.'
+            ]);
+            return;
+        }
+        
+        error_log("✅ SATUSEHAT Encounter created: $encounterId");
+        
+        // 🔥 BLOCKCHAIN: Create new block with "Sedang Diperiksa" status
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
+            'status_antrian' => 'Sedang Diperiksa',
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $currentBlock['jenis_pasien'],
+            'id_encounter_satusehat' => $encounterId, // Store encounter ID
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash'] // Link to previous block
+        ];
+        
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
+        
+        error_log("⛓️ BLOCKCHAIN: Creating examination block");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        error_log("   Encounter ID: " . $encounterId);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert examination block: " . json_encode($insertResult['error']));
+            
+            // Try to cancel the encounter in SATUSEHAT if blockchain insert fails
+            error_log("🔄 Attempting to cancel SATUSEHAT Encounter...");
+            EncounterSatusehatApi::updateEncounterStatus($encounterId, 'cancelled');
+            
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create examination block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ Examination block created successfully");
+        error_log("✅ Reference ID: " . $currentBlock['id_antrian']);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Pemeriksaan dimulai (Blockchain + SATUSEHAT)',
+            'status' => 'started',
+            'queue_number' => $currentBlock['no_antrian'],
+            'patient_name' => $patientName,
+            'doctor_name' => $doctorName,
+            'encounter_id' => $encounterId,
+            'encounter_number' => $encounterNumber,
+            'reference_id' => $currentBlock['id_antrian'], // Original queue ID
+            'new_id' => $insertResult[0]['id_antrian'] ?? null, // New block ID
+            'hash' => $newBlock['current_hash'],
+            'prev_hash' => $currentBlock['current_hash'],
+            'blockchain_verified' => true
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in periksaQueue: " . $e->getMessage());
+        error_log("   Trace: " . $e->getTraceAsString());
+        
+        echo json_encode([
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * 🚪 EXIT PEMERIKSAAN - Change status back to "Di Terima" without losing encounter
+ * This allows doctor to exit form and return later using the same encounter
+ * POST: ?action=exit_pemeriksaan&id=xxx
+ */
+function exitPemeriksaan() {
+    $id = $_GET['id'] ?? null;
+    
+    if (!$id) {
+        echo json_encode(['error' => 'ID required']);
+        return;
+    }
+    
+    try {
+        // Get current queue data (must be "Sedang Periksa")
+        $params = "select=*&id_antrian=eq.$id&limit=1";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        $currentBlock = $queue[0];
+        
+        error_log("🚪 EXITING EXAMINATION (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
+        
+        // Check if status is "Sedang Periksa"
+        if ($currentBlock['status_antrian'] !== 'Sedang Diperiksa') {
+            echo json_encode([
+                'error' => 'Invalid queue status',
+                'message' => 'Hanya pemeriksaan yang sedang berlangsung yang bisa di-exit',
+                'current_status' => $currentBlock['status_antrian']
+            ]);
+            return;
+        }
+        
+        // 🔥 BLOCKCHAIN: Create new block with "Di Terima" status
+        // But KEEP the encounter ID so it can be resumed later
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
+            'status_antrian' => 'Di Terima', // Back to "Di Terima"
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $currentBlock['jenis_pasien'],
+            'id_encounter_satusehat' => $currentBlock['id_encounter_satusehat'], // KEEP encounter ID
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash']
+        ];
+        
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
+        
+        error_log("⛓️ BLOCKCHAIN: Creating exit block (status: Di Terima, keeping encounter)");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        error_log("   Encounter ID (preserved): " . $currentBlock['id_encounter_satusehat']);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert exit block: " . json_encode($insertResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create exit block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ Exit block created - Doctor can resume later with same encounter");
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Pemeriksaan di-pause (data tersimpan)',
+            'queue_number' => $currentBlock['no_antrian'],
+            'encounter_id' => $currentBlock['id_encounter_satusehat'],
+            'can_resume' => true,
+            'hash' => $newBlock['current_hash'],
+            'prev_hash' => $currentBlock['current_hash']
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in exitPemeriksaan: " . $e->getMessage());
+        echo json_encode([
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * ▶️ RESUME PEMERIKSAAN - Resume examination with existing encounter
+ * This reuses the existing encounter ID without creating a new one
+ * POST: ?action=resume_pemeriksaan&id=xxx
+ */
+function resumePemeriksaan() {
+    $id = $_GET['id'] ?? null;
+    
+    if (!$id) {
+        echo json_encode(['error' => 'ID required']);
+        return;
+    }
+    
+    try {
+        // Get current queue data (must be "Di Terima" with encounter ID)
+        $params = "select=*,pasien:id_pasien(nama),dokter:id_dokter(nama_lengkap)&id_antrian=eq.$id&limit=1";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        $currentBlock = $queue[0];
+        
+        error_log("▶️ RESUMING EXAMINATION (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
+        
+        // Check if has encounter ID (means it was started before)
+        if (empty($currentBlock['id_encounter_satusehat'])) {
+            echo json_encode([
+                'error' => 'No encounter found',
+                'message' => 'Pemeriksaan belum pernah dimulai sebelumnya',
+                'should_use' => 'periksa' // Tell frontend to use regular periksa instead
+            ]);
+            return;
+        }
+        
+        // Check if status is "Di Terima"
+        if ($currentBlock['status_antrian'] !== 'Di Terima') {
+            echo json_encode([
+                'error' => 'Invalid queue status',
+                'message' => 'Status harus "Di Terima" untuk melanjutkan pemeriksaan',
+                'current_status' => $currentBlock['status_antrian']
+            ]);
+            return;
+        }
+        
+        // 🔥 BLOCKCHAIN: Create new block with "Sedang Periksa" status
+        // REUSE the existing encounter ID (no new encounter created)
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
+            'status_antrian' => 'Sedang Diperiksa', // Resume examination
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $currentBlock['jenis_pasien'],
+            'id_encounter_satusehat' => $currentBlock['id_encounter_satusehat'], // REUSE encounter
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash']
+        ];
+        
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
+        
+        error_log("⛓️ BLOCKCHAIN: Creating resume block (reusing encounter)");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        error_log("   Encounter ID (reused): " . $currentBlock['id_encounter_satusehat']);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert resume block: " . json_encode($insertResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create resume block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ Resume block created - Using existing encounter");
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Pemeriksaan dilanjutkan (menggunakan encounter yang sama)',
+            'queue_number' => $currentBlock['no_antrian'],
+            'patient_name' => $currentBlock['pasien']['nama'],
+            'doctor_name' => $currentBlock['dokter']['nama_lengkap'],
+            'encounter_id' => $currentBlock['id_encounter_satusehat'],
+            'resumed' => true,
+            'hash' => $newBlock['current_hash'],
+            'prev_hash' => $currentBlock['current_hash']
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in resumePemeriksaan: " . $e->getMessage());
+        echo json_encode([
+            'error' => 'Exception occurred',
+            'message' => $e->getMessage()
+        ]);
+    }
+}
+
+/**
+ * ✅ FINISH PEMERIKSAAN - Complete examination and update SATUSEHAT encounter status
+ * POST: ?action=finish_pemeriksaan&id=xxx
+ */
+function finishPemeriksaan() {
+    $id = $_GET['id'] ?? null;
+    
+    if (!$id) {
+        echo json_encode(['error' => 'ID required']);
+        return;
+    }
+    
+    try {
+        // Get current queue data (must be "Sedang Periksa")
+        $params = "select=*&id_antrian=eq.$id&limit=1";
+        $queue = supabase('GET', 'antrian', $params);
+        
+        if (empty($queue) || isset($queue['error'])) {
+            echo json_encode([
+                'error' => 'Queue not found',
+                'message' => 'Antrian tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        $currentBlock = $queue[0];
+        
+        error_log("✅ FINISHING EXAMINATION (BLOCKCHAIN): " . json_encode($currentBlock, JSON_PRETTY_PRINT));
+        
+        // Check if status is "Sedang Periksa"
+        if ($currentBlock['status_antrian'] !== 'Sedang Diperiksa') {
+            echo json_encode([
+                'error' => 'Invalid queue status',
+                'message' => 'Status harus "Sedang Periksa" untuk menyelesaikan pemeriksaan',
+                'current_status' => $currentBlock['status_antrian']
+            ]);
+            return;
+        }
+        
+        // 🏥 UPDATE SATUSEHAT ENCOUNTER STATUS TO "FINISHED"
+        if (!empty($currentBlock['id_encounter_satusehat'])) {
+            error_log("🏥 Updating SATUSEHAT Encounter to 'finished': " . $currentBlock['id_encounter_satusehat']);
+            
+            $encounterUpdated = EncounterSatusehatApi::updateEncounterStatus(
+                $currentBlock['id_encounter_satusehat'], 
+                'finished'
+            );
+            
+            if (!$encounterUpdated) {
+                error_log("⚠️ Warning: Failed to update SATUSEHAT Encounter status");
+                // Continue anyway - blockchain record is more important
+            } else {
+                error_log("✅ SATUSEHAT Encounter marked as finished");
+            }
+        }
+        
+        // 🔥 BLOCKCHAIN: Create new block with "Selesai" status
+        $newBlock = [
+            'no_antrian' => $currentBlock['no_antrian'],
+            'tanggal_antrian' => $currentBlock['tanggal_antrian'],
+            'jam_antrian' => $currentBlock['jam_antrian'],
+            'status_antrian' => 'Selesai',
+            'id_pasien' => $currentBlock['id_pasien'],
+            'id_dokter' => $currentBlock['id_dokter'],
+            'jenis_pasien' => $currentBlock['jenis_pasien'],
+            'id_encounter_satusehat' => $currentBlock['id_encounter_satusehat'],
+            'created_at' => date('Y-m-d H:i:s'),
+            'prev_hash' => $currentBlock['current_hash']
+        ];
+        
+        // Generate new hash
+        $newBlock['current_hash'] = generateHash($newBlock);
+        
+        error_log("⛓️ BLOCKCHAIN: Creating finish block");
+        error_log("   Previous Hash: " . $currentBlock['current_hash']);
+        error_log("   New Hash: " . $newBlock['current_hash']);
+        
+        // Insert new block
+        $insertResult = supabase('POST', 'antrian', '', $newBlock);
+        
+        if (isset($insertResult['error'])) {
+            error_log("❌ Failed to insert finish block: " . json_encode($insertResult['error']));
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to create finish block',
+                'details' => $insertResult['error']
+            ]);
+            return;
+        }
+        
+        error_log("✅ Examination completed successfully");
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Pemeriksaan selesai',
+            'queue_number' => $currentBlock['no_antrian'],
+            'encounter_id' => $currentBlock['id_encounter_satusehat'],
+            'encounter_updated' => $encounterUpdated ?? false,
+            'hash' => $newBlock['current_hash'],
+            'prev_hash' => $currentBlock['current_hash']
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ EXCEPTION in finishPemeriksaan: " . $e->getMessage());
         echo json_encode([
             'error' => 'Exception occurred',
             'message' => $e->getMessage()

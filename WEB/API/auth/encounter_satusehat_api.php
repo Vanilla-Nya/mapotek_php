@@ -1,8 +1,7 @@
 <?php
 // auth/encounter_satusehat_api.php
 
-// Adjust this path to where your SatuSehatAPI class is located
-require_once __DIR__ . '/../config/satusehat_api.php';
+require_once __DIR__ . '/../ApiClient.php';
 
 class EncounterSatusehatApi {
     
@@ -28,13 +27,26 @@ class EncounterSatusehatApi {
         $encounterNumber = null
     ) {
         try {
-            $api = new SatuSehatAPI();
+            error_log("🏥 ===== CREATING SATUSEHAT ENCOUNTER =====");
+            error_log("📋 Patient: $namaPasien (ID: $idSatusehatPasien)");
+            error_log("👨‍⚕️ Doctor: $namaDokter (ID: $idSatusehatDokter)");
+            
+            // Validate required parameters
+            if (empty($idSatusehatPasien)) {
+                error_log("❌ Patient SATUSEHAT ID is empty!");
+                return null;
+            }
+            
+            if (empty($idSatusehatDokter)) {
+                error_log("❌ Doctor SATUSEHAT ID is empty!");
+                return null;
+            }
+            
+            $api = new ApiClient();
             
             // Generate timestamps
             $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
             $periodStart = $now->format(DateTime::ATOM);
-            $endTime = (clone $now)->modify("+15 minutes");
-            $periodEnd = $endTime->format(DateTime::ATOM);
             
             // Generate unique encounter number if not provided
             if (!$encounterNumber) {
@@ -47,7 +59,7 @@ class EncounterSatusehatApi {
                 $locationDisplay = 'Ruang 1A, Poliklinik Bedah Rawat Jalan Terpadu, Lantai 2, Gedung G';
             }
             
-            $orgId = SatuSehatAPI::getOrgId();
+            $orgId = ApiClient::getOrgId();
             
             $encounter = [
                 "resourceType" => "Encounter",
@@ -62,14 +74,20 @@ class EncounterSatusehatApi {
                     "display" => $namaPasien
                 ],
                 "participant" => [[
+                    "type" => [[
+                        "coding" => [[
+                            "system" => "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                            "code" => "ATND",
+                            "display" => "attender"
+                        ]]
+                    ]],
                     "individual" => [
                         "reference" => "Practitioner/" . $idSatusehatDokter,
                         "display" => $namaDokter
                     ]
                 ]],
                 "period" => [
-                    "start" => $periodStart,
-                    "end" => $periodEnd
+                    "start" => $periodStart
                 ],
                 "location" => [[
                     "location" => [
@@ -90,33 +108,51 @@ class EncounterSatusehatApi {
                 ]
             ];
             
-            error_log("🏥 Creating SATUSEHAT Encounter:");
-            error_log("   Patient: $namaPasien (ID: $idSatusehatPasien)");
-            error_log("   Doctor: $namaDokter (ID: $idSatusehatDokter)");
-            error_log("   Encounter #: $encounterNumber");
-            error_log("   Payload: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            error_log("📤 Encounter Payload: " . json_encode($encounter, JSON_PRETTY_PRINT));
             
-            // Create encounter using your SatuSehatAPI class
+            // Create encounter using ApiClient
             $response = $api->post("/Encounter", $encounter);
             
-            error_log("✅ SATUSEHAT Response: " . json_encode($response, JSON_PRETTY_PRINT));
+            error_log("📥 SATUSEHAT Raw Response: " . $response);
             
-            if (isset($response['id'])) {
-                error_log("✅ Encounter created successfully: " . $response['id']);
-                return $response['id'];
-            }
+            // Parse response
+            $responseData = json_decode($response, true);
             
-            // Check if response is an error
-            if (isset($response['issue']) || isset($response['error'])) {
-                error_log("❌ SATUSEHAT Error: " . json_encode($response, JSON_PRETTY_PRINT));
+            if (!$responseData) {
+                error_log("❌ Failed to parse JSON response");
+                error_log("   Raw response: " . $response);
                 return null;
             }
             
-            error_log("⚠️ Unexpected response format: " . json_encode($response, JSON_PRETTY_PRINT));
+            error_log("📥 SATUSEHAT Parsed Response: " . json_encode($responseData, JSON_PRETTY_PRINT));
+            
+            // Check for errors
+            if (isset($responseData['resourceType']) && $responseData['resourceType'] === 'OperationOutcome') {
+                error_log("❌ SATUSEHAT returned OperationOutcome (error)");
+                if (isset($responseData['issue'])) {
+                    foreach ($responseData['issue'] as $issue) {
+                        error_log("   - " . ($issue['severity'] ?? 'unknown') . ": " . ($issue['diagnostics'] ?? 'no message'));
+                    }
+                }
+                return null;
+            }
+            
+            // Check if we got an encounter ID
+            if (isset($responseData['id'])) {
+                $encounterId = $responseData['id'];
+                error_log("✅ Encounter created successfully!");
+                error_log("🆔 Encounter ID: " . $encounterId);
+                error_log("🔢 Encounter Number: " . $encounterNumber);
+                return $encounterId;
+            }
+            
+            error_log("❌ No 'id' field in response");
+            error_log("   Response keys: " . implode(', ', array_keys($responseData)));
             return null;
             
         } catch (Exception $ex) {
-            error_log("❌ Exception in createEncounter: " . $ex->getMessage());
+            error_log("❌ EXCEPTION in createEncounter: " . $ex->getMessage());
+            error_log("   File: " . $ex->getFile() . " Line: " . $ex->getLine());
             error_log("   Stack trace: " . $ex->getTraceAsString());
             return null;
         }
@@ -131,15 +167,23 @@ class EncounterSatusehatApi {
      */
     public static function updateEncounterStatus($encounterId, $newStatus = 'finished') {
         try {
-            $api = new SatuSehatAPI();
+            error_log("🔄 ===== UPDATING ENCOUNTER STATUS =====");
+            error_log("🆔 Encounter ID: " . $encounterId);
+            error_log("📊 New Status: " . $newStatus);
+            
+            $api = new ApiClient();
             
             // First, get the existing encounter
-            $encounter = $api->get("/Encounter/" . $encounterId);
+            $response = $api->get("/Encounter/" . $encounterId);
+            $encounter = json_decode($response, true);
             
             if (!$encounter || isset($encounter['issue'])) {
-                error_log("❌ Failed to fetch encounter: " . json_encode($encounter, JSON_PRETTY_PRINT));
+                error_log("❌ Failed to fetch encounter");
+                error_log("   Response: " . json_encode($encounter, JSON_PRETTY_PRINT));
                 return false;
             }
+            
+            error_log("📥 Current Encounter: " . json_encode($encounter, JSON_PRETTY_PRINT));
             
             // Update status
             $encounter['status'] = $newStatus;
@@ -156,18 +200,19 @@ class EncounterSatusehatApi {
             ];
             
             // Update period end time if finishing
-            if ($newStatus === 'finished') {
+            if ($newStatus === 'finished' && isset($encounter['period'])) {
                 $encounter['period']['end'] = $now->format(DateTime::ATOM);
             }
             
-            error_log("🔄 Updating Encounter $encounterId to status: $newStatus");
+            error_log("📤 Updated Encounter Payload: " . json_encode($encounter, JSON_PRETTY_PRINT));
             
-            // Use PUT method to update
-            $response = $api->request("PUT", "/Encounter/" . $encounterId, $encounter);
+            // Use PUT method to update (need to implement in ApiClient)
+            $updateResponse = $api->post("/Encounter/" . $encounterId, $encounter);
+            $responseData = json_decode($updateResponse, true);
             
-            error_log("🔄 Update Response: " . json_encode($response, JSON_PRETTY_PRINT));
+            error_log("📥 Update Response: " . json_encode($responseData, JSON_PRETTY_PRINT));
             
-            if (isset($response['id'])) {
+            if (isset($responseData['id'])) {
                 error_log("✅ Encounter status updated successfully");
                 return true;
             }
@@ -176,7 +221,8 @@ class EncounterSatusehatApi {
             return false;
             
         } catch (Exception $ex) {
-            error_log("❌ Exception in updateEncounterStatus: " . $ex->getMessage());
+            error_log("❌ EXCEPTION in updateEncounterStatus: " . $ex->getMessage());
+            error_log("   Stack trace: " . $ex->getTraceAsString());
             return false;
         }
     }
@@ -189,20 +235,32 @@ class EncounterSatusehatApi {
      */
     public static function searchPatientByNIK($nik) {
         try {
-            $api = new SatuSehatAPI();
+            error_log("🔍 Searching patient by NIK: " . $nik);
             
-            $url = "/Patient?identifier=" . urlencode("https://fhir.kemkes.go.id/id/nik|" . $nik);
+            $api = new ApiClient();
             
-            error_log("🔍 Searching patient by NIK: $nik");
+            $response = $api->get("/Patient", [
+                'identifier' => 'https://fhir.kemkes.go.id/id/nik|' . $nik
+            ]);
             
-            $response = $api->get($url);
+            error_log("📥 Patient Search Response: " . $response);
             
-            error_log("🔍 Patient Search Response: " . json_encode($response, JSON_PRETTY_PRINT));
+            $responseData = json_decode($response, true);
+            
+            if (!$responseData) {
+                error_log("❌ Failed to parse JSON response");
+                return [
+                    'success' => false,
+                    'error' => 'Invalid JSON response'
+                ];
+            }
             
             // Check if patient found
-            if (isset($response['entry']) && count($response['entry']) > 0) {
-                $patient = $response['entry'][0]['resource'];
+            if (isset($responseData['entry']) && count($responseData['entry']) > 0) {
+                $patient = $responseData['entry'][0]['resource'];
                 $satusehatId = $patient['id'] ?? null;
+                
+                error_log("✅ Patient found: " . $satusehatId);
                 
                 return [
                     'success' => true,
@@ -212,6 +270,8 @@ class EncounterSatusehatApi {
                 ];
             }
             
+            error_log("⚠️ Patient not found in SATUSEHAT");
+            
             return [
                 'success' => true,
                 'found' => false,
@@ -219,7 +279,7 @@ class EncounterSatusehatApi {
             ];
             
         } catch (Exception $ex) {
-            error_log("❌ Exception in searchPatientByNIK: " . $ex->getMessage());
+            error_log("❌ EXCEPTION in searchPatientByNIK: " . $ex->getMessage());
             return [
                 'success' => false,
                 'error' => $ex->getMessage()
@@ -235,19 +295,24 @@ class EncounterSatusehatApi {
      */
     public static function getEncounter($encounterId) {
         try {
-            $api = new SatuSehatAPI();
+            error_log("📋 Getting encounter: " . $encounterId);
             
-            $encounter = $api->get("/Encounter/" . $encounterId);
+            $api = new ApiClient();
+            
+            $response = $api->get("/Encounter/" . $encounterId);
+            $encounter = json_decode($response, true);
             
             if ($encounter && !isset($encounter['issue'])) {
+                error_log("✅ Encounter retrieved successfully");
                 return $encounter;
             }
             
-            error_log("❌ Failed to fetch encounter: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            error_log("❌ Failed to fetch encounter");
+            error_log("   Response: " . json_encode($encounter, JSON_PRETTY_PRINT));
             return null;
             
         } catch (Exception $ex) {
-            error_log("❌ Exception in getEncounter: " . $ex->getMessage());
+            error_log("❌ EXCEPTION in getEncounter: " . $ex->getMessage());
             return null;
         }
     }

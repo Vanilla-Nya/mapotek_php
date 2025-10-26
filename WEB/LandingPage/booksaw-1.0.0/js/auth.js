@@ -92,42 +92,40 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("📤 Attempting login...");
 
       try {
-        const {data, error} = await supabaseClient.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        });
-        // const response = await fetch("../../API/auth/auth.php", {
-        //   method: "POST",
-        //   headers: { "Content-Type": "application/json" },
-        //   body: JSON.stringify(formData),
-        // });
-        if (error) throw error;
-
-        const result = await data;
-        console.log("📥 Login response:", result);
-
-        if (result.success) {
-          localStorage.setItem("access_token", result.access_token);
-          localStorage.setItem("user", JSON.stringify(result.user));
-          localStorage.setItem("isLoggedIn", "true");
-
-          console.log("✅ Login successful!");
-          alert("Login berhasil! Selamat datang, " + result.user.nama_lengkap);
-
-          modal.style.display = "none";
-          window.location.replace("/mapotek_php/WEB/Dashboard/index.html");
-        } else {
-          alert(
-            "Login gagal: " + (result.message || "Email atau password salah")
-          );
-        }
-      } catch (error) {
-        console.error("❌ Error:", error);
-        alert("Terjadi kesalahan saat login: " + error.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      if (error) {
+        throw error; // Langsung throw, biar di-handle di catch
       }
+      
+      const user = data.user;
+      const access_token = data.session?.access_token;
+      
+      if (!user || !access_token) {
+        throw new Error("Tidak ada token atau user."); // Throw error baru
+      }
+      
+      // Store user info
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("isLoggedIn", "true");
+      
+      console.log("✅ Login successful!", user);
+      alert("Login berhasil! Selamat datang, " + (user.email || "User"));
+      
+      modal.style.display = "none";
+      window.location.replace("/mapotek_php/WEB/Dashboard/index.html");
+      
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert("Login gagal: " + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
     });
   }
 

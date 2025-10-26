@@ -142,7 +142,7 @@ class ProfileFragment {
                                         <select class="form-select bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                 id="jenis_kelamin" disabled style="backdrop-filter: blur(10px);">
                                             <option value="">Pilih Jenis Kelamin</option>
-                                            <option value="Laki-laki">Laki-laki</option>
+                                            <option value="Laki-Laki">Laki-Laki</option>
                                             <option value="Perempuan">Perempuan</option>
                                         </select>
                                     </div>

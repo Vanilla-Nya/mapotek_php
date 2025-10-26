@@ -259,29 +259,32 @@
     <!-- ========================================== -->
     <!-- SCRIPTS - CORRECT ORDER! ⚡ -->
     <!-- ========================================== -->
-    
+
     <!-- 1. Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <!-- 2. Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
     <!-- 3. Initialize Supabase -->
     <script src="js/supabase-client.js"></script>
-    
+
     <!-- 4. Cropper.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
-    
+
     <!-- 5. QRCode.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <!-- ⭐ 6. Address Format Utility (NEW) -->
+
+    <!-- 6. Address Format Utility -->
     <script src="js/utils/addressFormat.js"></script>
-    
+
     <!-- 7. USER PROFILE UPDATER - Must load BEFORE app.js! -->
     <script src="js/user-profile-updater.js"></script>
-    
-    <!-- 8. Load All Fragment Files -->
+
+    <!-- ⭐ 8. Modal Helper - BEFORE fragments! (FIXED PATH) -->
+    <script src="js/Utils/modal-helper.js"></script>
+
+    <!-- 9. Load All Fragment Files -->
     <script src="js/Fragments/dashboardfragment.js"></script>
     <script src="js/Fragments/pasienfragment.js"></script>
     <script src="js/Fragments/obatfragment.js"></script>
@@ -289,11 +292,23 @@
     <script src="js/Fragments/pemeriksaanfragment.js"></script>
     <script src="js/Fragments/pembukuanfragment.js"></script>
     <script src="js/Fragments/profilefragment.js"></script>
-    
-    <!-- 9. Load Fragment Manager -->
+
+    <!-- 10. Load Fragment Manager -->
     <script src="js/fragmentmanager.js"></script>
-    
-    <!-- 10. Load Main App - LAST! -->
+
+    <!-- 11. Load Main App - LAST! -->
     <script src="js/app.js"></script>
+
+    <!-- 12. Initialize modal styles when page loads -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.modalHelper) {
+        window.modalHelper.initializeStyles();
+        console.log("✅ Modal helper loaded and styles initialized");
+        } else {
+        console.error("❌ Modal helper not found! Check the path.");
+        }
+    });
+    </script>
 </body>
 </html>
