@@ -1,0 +1,91 @@
+/* Warna Teal yang Digunakan pada Gambar 1 */
+.bg-teal {
+    background-color: #9de3ce !important; /* Contoh warna teal */
+}
+
+/* Kustomisasi Sidebar */
+#sidebar-wrapper {
+    min-height: 100vh;
+    margin-left: -15rem;
+    transition: margin 0.25s ease-out;
+    width: 15rem; /* Lebar sidebar */
+    display: flex; /* Untuk menempatkan Profile/Logout di bawah */
+    flex-direction: column;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+#sidebar-wrapper .list-group {
+    flex-grow: 1; /* Agar daftar menu mengisi ruang tengah */
+}
+
+.active-link {
+    background-color: #1e7e72 !important; /* Warna sedikit lebih gelap untuk link aktif */
+    border-left: 5px solid white; /* Garis putih di samping link aktif */
+}
+
+/* Kustomisasi Konten Utama */
+#page-content-wrapper {
+    min-width: 100vw;
+}
+
+/* Timeline Antrian (Mirip Gambar 2) */
+.timeline {
+    position: relative;
+    padding: 0;
+    list-style: none;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 12px;
+    width: 2px;
+    background-color: #e9ecef;
+}
+
+.timeline-item {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #20c997; /* Warna marker */
+    z-index: 100;
+    border: 3px solid white;
+}
+
+.timeline-item.past .timeline-marker {
+    background-color: #adb5bd; /* Warna abu-abu untuk item yang telah lewat */
+}
+
+.timeline-content {
+    margin-left: 40px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Untuk tampilan di desktop */
+@media (min-width: 768px) {
+    #sidebar-wrapper {
+        margin-left: 0;
+    }
+    #page-content-wrapper {
+        min-width: 0;
+        width: 100%;
+    }
+    #wrapper.toggled #sidebar-wrapper {
+        margin-left: -15rem;
+    }
+}
