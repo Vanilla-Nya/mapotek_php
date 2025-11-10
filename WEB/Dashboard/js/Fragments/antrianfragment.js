@@ -357,7 +357,7 @@ class AntrianFragment {
       
       #addQueueModal .modal-header,
       #actionQueueModal .modal-header {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         border-radius: 12px 12px 0 0;
         padding: 1rem 1.5rem;
         border-bottom: none;
@@ -413,7 +413,7 @@ class AntrianFragment {
       }
 
       .btn-custom-teal { 
-        background: linear-gradient(135deg, #5CD4C8 0%, #4AC4B8 100%); 
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); 
         color: white; 
         border: none;
         border-radius: 0.375rem;
@@ -421,7 +421,7 @@ class AntrianFragment {
         font-weight: 500;
       }
       .btn-custom-teal:hover { 
-        background: linear-gradient(135deg, #4AC4B8 0%, #3AB3A8 100%); 
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); 
         color: white; 
       }
       
@@ -721,7 +721,7 @@ class AntrianFragment {
     document.getElementById("satusehatCheckStatus").style.display = "block";
 
     try {
-      const url = `${this.apiUrl}?action=check_satusehat&patient_id=${patientId}`;
+      const url = `${this.apiUrl}?action=check_satusehat&id_pasien=${patientId}`;
       const response = await fetch(url);
       const result = await response.json();
 
@@ -947,7 +947,8 @@ class AntrianFragment {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patient_id: this.currentQueueData.id_pasien,
+          id_pasien: this.currentQueueData.id_pasien,      // ✅ CORRECT
+          id_dokter: this.currentDoctorId,                 // ✅ ADD THIS TOO!
         }),
       });
 
@@ -1022,7 +1023,8 @@ class AntrianFragment {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                patient_id: this.currentQueueData.id_pasien,
+                id_pasien: this.currentQueueData.id_pasien,     // ✅ CORRECT
+                id_dokter: this.currentDoctorId,                // ✅ ADD THIS TOO!
               }),
             }
           );

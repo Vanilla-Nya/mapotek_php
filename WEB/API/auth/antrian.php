@@ -110,12 +110,12 @@ function generateHash($data) {
  * GET: ?action=check_satusehat&patient_id=xxx
  */
 function checkSatusehat() {
-    $patientId = $_GET['patient_id'] ?? null;
+    $patientId = $_GET['id_pasien'] ?? null;
     
     if (!$patientId) {
         echo json_encode([
             'success' => false,
-            'error' => 'patient_id required'
+            'error' => 'id_pasien required'
         ]);
         return;
     }
@@ -156,17 +156,28 @@ function checkSatusehat() {
 function registerSatusehat()
 {
     $input = json_decode(file_get_contents('php://input'), true);
-    $patientId = $input['patient_id'] ?? null;
+    $patientId = $input['id_pasien'] ?? null;
+    $dokterId = $input['id_dokter'] ?? null;  // ✅ ADD THIS LINE!
 
     if (!$patientId) {
         echo json_encode([
             'success' => false,
-            'error' => 'patient_id required'
+            'error' => 'id_pasien required'
+        ]);
+        return;
+    }
+
+    // ✅ ADD THIS VALIDATION!
+    if (!$dokterId) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'doctor_id required'
         ]);
         return;
     }
 
     error_log("🏥 REGISTERING PATIENT TO SATUSEHAT: $patientId");
+    error_log("👨‍⚕️ Doctor ID: $dokterId");
 
     try {
         // --- Fetch patient data from Supabase
@@ -195,12 +206,21 @@ function registerSatusehat()
         error_log("📋 Patient data: " . json_encode($patient, JSON_PRETTY_PRINT));
         error_log("🔍 Searching SATUSEHAT by NIK: $nik");
 
-        // --- Initialize API Client
-        $apiClient = new ApiClient();
+        // ✅ NOW $dokterId is defined!
+        require_once __DIR__ . '/../config/satusehat_api.php';  // Fix path!
+        $satusehatApi = SatuSehatAPI::forDoctor($dokterId);
 
-        // --- Search patient in SATUSEHAT with better matching
+        if (!$satusehatApi->isConfigured()) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'SatuSehat belum dikonfigurasi. Silakan lengkapi di halaman Profil.'
+            ]);
+            return;
+        }
+
+        // Search patient in SATUSEHAT
         $satusehatId = searchSatusehatByNik(
-            $apiClient,
+            $satusehatApi,
             $nik,
             $patient['nama'],
             $patient['tanggal_lahir']
@@ -244,6 +264,7 @@ function registerSatusehat()
 
     } catch (Exception $e) {
         error_log("❌ EXCEPTION in registerSatusehat: " . $e->getMessage());
+        error_log("   Trace: " . $e->getTraceAsString());
         echo json_encode([
             'success' => false,
             'error' => 'Exception occurred',
@@ -256,57 +277,85 @@ function registerSatusehat()
 /**
  * Search patient in SATUSEHAT by NIK using ApiClient
  */
-function searchSatusehatByNik($apiClient, $nik, $expectedName = null, $expectedBirthDate = null)
+function searchSatusehatByNik($satusehatApi, $nik, $expectedName = null, $expectedBirthDate = null)
 {
     try {
         error_log("🔍 Searching SATUSEHAT for NIK: $nik");
         
-        $response = $apiClient->get('/Patient', [
-            'identifier' => 'https://fhir.kemkes.go.id/id/nik|' . $nik
-        ]);
+        // ✅ NEW: Use SatuSehatAPI's get() method
+        // Response is already decoded as array by SatuSehatAPI
+        $data = $satusehatApi->get('/Patient?identifier=https://fhir.kemkes.go.id/id/nik|' . urlencode($nik));
         
-        error_log("📥 SATUSEHAT API Response: " . substr($response, 0, 500)); // limit to avoid huge logs
+        error_log("📥 SATUSEHAT API Response: " . substr(json_encode($data), 0, 500));
         
-        $data = json_decode($response, true);
-        
+        // Check if patient found
         if (!isset($data['entry']) || count($data['entry']) === 0) {
             error_log("⚠️ Patient with NIK $nik not found in SATUSEHAT");
             return null;
         }
 
+        // Normalize expected values for matching
         $expectedName = strtolower(trim($expectedName ?? ''));
         $expectedBirthDate = trim($expectedBirthDate ?? '');
         $matchedId = null;
 
+        // Search through all returned patients for best match
         foreach ($data['entry'] as $entry) {
             $resource = $entry['resource'] ?? [];
             $id = $resource['id'] ?? null;
-            $name = strtolower(trim($resource['name'][0]['text'] ?? ''));
+            
+            // Get patient name (could be in different formats)
+            $patientName = '';
+            if (isset($resource['name'][0]['text'])) {
+                $patientName = $resource['name'][0]['text'];
+            } elseif (isset($resource['name'][0])) {
+                // Build name from parts if 'text' not available
+                $nameParts = [];
+                if (isset($resource['name'][0]['given'])) {
+                    $nameParts = array_merge($nameParts, $resource['name'][0]['given']);
+                }
+                if (isset($resource['name'][0]['family'])) {
+                    $nameParts[] = $resource['name'][0]['family'];
+                }
+                $patientName = implode(' ', $nameParts);
+            }
+            $patientName = strtolower(trim($patientName));
+            
+            // Get birth date
             $birthDate = $resource['birthDate'] ?? '';
 
-            error_log("🧾 Checking patient: ID=$id, name=$name, birthDate=$birthDate");
+            error_log("🧾 Checking patient: ID=$id, name=$patientName, birthDate=$birthDate");
 
-            $nameMatch = empty($expectedName) || strpos($name, $expectedName) !== false;
-            $birthMatch = empty($expectedBirthDate) || $birthDate === $expectedBirthDate;
+            // Matching logic
+            $nameMatch = empty($expectedName) || 
+                         strpos($patientName, $expectedName) !== false || 
+                         strpos($expectedName, $patientName) !== false;
+            
+            $birthMatch = empty($expectedBirthDate) || 
+                          $birthDate === $expectedBirthDate;
 
+            // If both match, we found our patient
             if ($nameMatch && $birthMatch) {
                 $matchedId = $id;
-                error_log("✅ Found matching patient in SATUSEHAT: $id ($name, $birthDate)");
+                error_log("✅ Found matching patient in SATUSEHAT: $id (name: $patientName, dob: $birthDate)");
                 break;
             }
         }
 
-        // If no name/birth match found, fallback to first entry
-        if (!$matchedId) {
-            $fallbackId = $data['entry'][0]['resource']['id'];
-            error_log("⚠️ No exact match (name/birthDate), fallback to first entry: $fallbackId");
-            $matchedId = $fallbackId;
+        // If no exact match found, use first entry as fallback
+        if (!$matchedId && count($data['entry']) > 0) {
+            $fallbackId = $data['entry'][0]['resource']['id'] ?? null;
+            if ($fallbackId) {
+                error_log("⚠️ No exact match (name/birthDate), using first entry as fallback: $fallbackId");
+                $matchedId = $fallbackId;
+            }
         }
 
         return $matchedId;
 
     } catch (Exception $e) {
         error_log("❌ Exception in searchSatusehatByNik: " . $e->getMessage());
+        error_log("   Stack trace: " . $e->getTraceAsString());
         return null;
     }
 }
@@ -336,28 +385,49 @@ function searchPasien() {
  * GET: ?action=generate_number
  */
 function generateQueueNumber() {
-    $today = date('dmy');
-    $tanggal = date('Y-m-d');
+    $today = date('dmy'); // Format: 301025 (30 Oct 2025)
+    $tanggal = date('Y-m-d'); // Format: 2025-10-30
 
     try {
+        // Get the last queue number for today
         $params = "select=no_antrian&tanggal_antrian=eq.$tanggal&order=no_antrian.desc&limit=1";
         $result = supabase('GET', 'antrian', $params);
 
-        $lastNumber = 0;
+        $lastCounter = 0;
+        
         if (!empty($result) && isset($result[0]['no_antrian'])) {
-            preg_match('/^(\d+)/', $result[0]['no_antrian'], $matches);
-            $lastNumber = isset($matches[1]) ? intval($matches[1]) : 0;
+            $lastNumber = $result[0]['no_antrian'];
+            
+            // ✅ EXTRACT counter from format "DDMMYYXXX"
+            // Example: "301025001" → extract last 3 digits "001"
+            if (strlen($lastNumber) >= 9) {
+                $counterPart = substr($lastNumber, 6, 3); // Get characters from position 6, length 3
+                $lastCounter = intval($counterPart);
+                
+                error_log("🔍 Last queue number: $lastNumber");
+                error_log("🔍 Extracted counter: $counterPart → $lastCounter");
+            }
+        } else {
+            error_log("📋 No previous queue for today - starting from 001");
         }
 
-        $newNumber = $lastNumber + 1;
-        $queueNumber = $newNumber . $today;
+        // Increment counter
+        $newCounter = $lastCounter + 1;
+        
+        // Format: DDMMYYXXX (pad counter to 3 digits)
+        $queueNumber = $today . str_pad($newCounter, 3, '0', STR_PAD_LEFT);
+
+        error_log("✅ Generated queue number: $queueNumber (counter: $newCounter)");
 
         echo json_encode([
             'success' => true,
             'no_antrian' => $queueNumber,
-            'tanggal' => $tanggal
+            'tanggal' => $tanggal,
+            'counter' => $newCounter
         ]);
+        
     } catch (Exception $e) {
+        error_log("❌ Error in generateQueueNumber: " . $e->getMessage());
         echo json_encode([
             'success' => false,
             'error' => 'Failed to generate queue number',

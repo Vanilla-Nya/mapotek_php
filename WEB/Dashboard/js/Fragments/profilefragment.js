@@ -1,4 +1,4 @@
-// ProfileFragment.js - Complete version with profile sync
+// ProfileFragment.js - Complete version with SatuSehat API Configuration
 class ProfileFragment {
     constructor() {
         this.title = 'Profile';
@@ -23,22 +23,167 @@ class ProfileFragment {
 
     render() {
         return `
+                <style>
+                /* Protect profile avatar section from modal interference */
+                /* 1. Profile Avatar Section - Main Container */
+                .profile-avatar-section {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    isolation: isolate;
+                    z-index: 1;
+                    width: 100%;
+                }
+
+                /* 2. Avatar Wrapper - Contains avatar and button */
+                .profile-avatar-wrapper {
+                    position: relative;
+                    display: inline-block;
+                    isolation: isolate;
+                }
+
+                /* 3. Avatar Container - The circle with photo/icon */
+                #avatarContainer {
+                    width: 100px;
+                    height: 100px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    overflow: hidden;
+                    position: relative;
+                    z-index: 1;
+                    border-radius: 50%;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                /* 4. Camera Button - Properly positioned */
+                #btnChangeAvatar {
+                    position: absolute !important;
+                    bottom: 0 !important;
+                    right: 0 !important;
+                    width: 32px !important;
+                    height: 32px !important;
+                    padding: 0 !important;
+                    z-index: 10 !important;
+                    border-radius: 50% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    background: #0d6efd !important;
+                    border: 2px solid white !important;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+                    margin: 0 !important;
+                    transform: translate(0, 0) !important;
+                }
+
+                #btnChangeAvatar:hover {
+                    background: #0b5ed7 !important;
+                    transform: scale(1.05) !important;
+                }
+
+                #btnChangeAvatar i {
+                    font-size: 14px !important;
+                    line-height: 1 !important;
+                }
+
+                /* 5. Avatar Upload Section - Strong hiding */
+                .avatar-upload-hidden {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    overflow: hidden !important;
+                    position: absolute !important;
+                    left: -9999px !important;
+                }
+
+                /* 6. Ensure avatar image and icon are centered */
+                #avatarImage,
+                #avatarIcon {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #avatarIcon {
+                    font-size: 50px;
+                }
+
+                /* 7. Profile display name and email spacing */
+                #profileDisplayName {
+                    margin-top: 1rem;
+                    margin-bottom: 0.5rem;
+                }
+
+                #profileDisplayEmail {
+                    margin-bottom: 1rem;
+                }
+
+                /* 8. Protect from modal interference */
+                body.modal-open .profile-avatar-section {
+                    position: relative !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                }
+
+                body.modal-open .profile-avatar-wrapper {
+                    position: relative !important;
+                    display: inline-block !important;
+                }
+
+                body.modal-open #avatarContainer {
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                    transform: none !important;
+                }
+
+                /* 9. Ensure button stays in place even with modal open */
+                body.modal-open #btnChangeAvatar {
+                    position: absolute !important;
+                    bottom: 0 !important;
+                    right: 0 !important;
+                }
+
+                /* ⭐ NEW: Password field toggle */
+                .password-toggle {
+                    position: relative;
+                }
+                .password-toggle-icon {
+                    position: absolute;
+                    right: 10px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    cursor: pointer;
+                    color: rgba(255,255,255,0.7);
+                }
+                .password-toggle-icon:hover {
+                    color: white;
+                }
+            </style>
+
+
             <div class="row justify-content-center">
                 <div class="col-lg-9">
                     <!-- Profile Header Card -->
-                    <div class="card border-0 shadow-sm mb-4">
+                    <div class="card border-0 shadow-sm mb-4" style="isolation: isolate;">
                         <div class="card-body text-center py-5">
                             <div class="mb-3 position-relative d-inline-block">
-                                <!-- Photo Display -->
                                 <div id="avatarContainer" class="bg-gradient rounded-circle d-inline-flex align-items-center justify-content-center" 
-                                    style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden;">
+                                    style="width: 100px; height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); overflow: hidden; position: relative; z-index: 1;">
                                     <img id="avatarImage" src="" alt="Avatar" class="d-none w-100 h-100" style="object-fit: cover;">
                                     <i id="avatarIcon" class="bi bi-person-fill text-white" style="font-size: 50px;"></i>
                                 </div>
                                 
-                                <!-- Edit Button -->
                                 <button class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0" 
-                                        id="btnChangeAvatar" style="width: 32px; height: 32px; padding: 0;">
+                                        id="btnChangeAvatar" style="width: 32px; height: 32px; padding: 0; z-index: 2;">
                                     <i class="bi bi-camera-fill"></i>
                                 </button>
                             </div>
@@ -57,13 +202,11 @@ class ProfileFragment {
                                     </label>
                                 </div>
                                 
-                                <!-- Upload Option -->
                                 <div id="uploadOption">
                                     <input type="file" class="form-control form-control-sm" id="avatarFile" accept="image/*">
                                     <small class="text-muted">Pilih foto untuk crop & preview</small>
                                 </div>
                                 
-                                <!-- Link Option -->
                                 <div id="linkOption" class="d-none">
                                     <input type="url" class="form-control form-control-sm" id="avatarLink" 
                                            placeholder="https://example.com/photo.jpg">
@@ -109,7 +252,7 @@ class ProfileFragment {
                     </div>
 
                     <!-- Profile Form Card -->
-                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
                         <div class="card-body p-4">
                             <h5 class="card-title mb-4 pb-3 border-bottom border-white border-opacity-25 text-white">
                                 <i class="bi bi-info-circle me-2"></i>Informasi Pribadi
@@ -152,6 +295,12 @@ class ProfileFragment {
                                                id="no_telp" disabled style="backdrop-filter: blur(10px);">
                                     </div>
                                     <div class="col-md-6">
+                                        <label class="form-label text-white text-opacity-75 small mb-1">NIK</label>
+                                        <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
+                                               id="nik" placeholder="Nomor Induk Kependudukan" disabled style="backdrop-filter: blur(10px);">
+                                        <small class="text-white text-opacity-50">Digunakan untuk pencarian ID SatuSehat</small>
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label text-white text-opacity-75 small mb-1">RFID</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="rfid" placeholder="Belum diatur" disabled style="backdrop-filter: blur(10px);">
@@ -160,6 +309,19 @@ class ProfileFragment {
                                         <label class="form-label text-white text-opacity-75 small mb-1">Jam Kerja</label>
                                         <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
                                                id="jam_kerja" placeholder="Contoh: 08:00 - 17:00" disabled style="backdrop-filter: blur(10px);">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-white text-opacity-75 small mb-1">
+                                            <i class="bi bi-hospital me-1"></i>ID SatuSehat (Practitioner)
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
+                                                   id="id_satusehat" placeholder="Belum dicari" readonly style="backdrop-filter: blur(10px);">
+                                            <button class="btn btn-outline-light" type="button" id="btnSearchSatuSehatId" disabled>
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-white text-opacity-50" id="satusehat_practitioner_info"></small>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label text-white text-opacity-75 small mb-1">Alamat</label>
@@ -180,8 +342,93 @@ class ProfileFragment {
                         </div>
                     </div>
 
+                    <!-- ⭐ NEW: SatuSehat API Configuration Card -->
+                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-white border-opacity-25">
+                                <h5 class="card-title mb-0 text-white">
+                                    <i class="bi bi-shield-check me-2"></i>Konfigurasi SatuSehat API
+                                </h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="satusehatEnabled" disabled>
+                                    <label class="form-check-label text-white small" for="satusehatEnabled">
+                                        Aktif
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <form id="satusehatForm">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label text-white text-opacity-75 small mb-1">
+                                            <i class="bi bi-building me-1"></i>Organization ID
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
+                                               id="satusehat_org_id" 
+                                               placeholder="Contoh: 7b4db35e-ea4e-4b46-b389-095472942d34"
+                                               disabled 
+                                               style="backdrop-filter: blur(10px);">
+                                        <small class="text-white text-opacity-50">ID organisasi dari SatuSehat</small>
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label text-white text-opacity-75 small mb-1">
+                                            <i class="bi bi-key me-1"></i>Client ID
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
+                                               id="satusehat_client_id" 
+                                               placeholder="Client ID dari SatuSehat"
+                                               disabled 
+                                               style="backdrop-filter: blur(10px);">
+                                    </div>
+                                    
+                                    <div class="col-12">
+                                        <label class="form-label text-white text-opacity-75 small mb-1">
+                                            <i class="bi bi-shield-lock me-1"></i>Client Secret
+                                        </label>
+                                        <div class="password-toggle">
+                                            <input type="password" 
+                                                   class="form-control bg-white bg-opacity-10 text-white border-white border-opacity-25" 
+                                                   id="satusehat_client_secret" 
+                                                   placeholder="Client Secret dari SatuSehat"
+                                                   disabled 
+                                                   style="backdrop-filter: blur(10px); padding-right: 40px;">
+                                            <i class="bi bi-eye password-toggle-icon" id="toggleSecret"></i>
+                                        </div>
+                                        <small class="text-white text-opacity-50">Rahasia, jangan dibagikan ke orang lain</small>
+                                    </div>
+                                </div>
+
+                                <div class="d-none gap-2 justify-content-end mt-4 pt-3 border-top border-white border-opacity-25" id="satusehatActionButtons">
+                                    <button type="button" class="btn btn-light" id="btnCancelSatuSehat">
+                                        <i class="bi bi-x-circle me-1"></i> Batal
+                                    </button>
+                                    <button type="button" class="btn btn-success" id="btnTestSatuSehat">
+                                        <i class="bi bi-lightning me-1"></i> Test Koneksi
+                                    </button>
+                                    <button type="submit" class="btn btn-light">
+                                        <i class="bi bi-check-circle me-1"></i> Simpan
+                                    </button>
+                                </div>
+
+                                <div class="mt-3 text-center">
+                                    <button type="button" class="btn btn-outline-light btn-sm" id="btnEditSatuSehat">
+                                        <i class="bi bi-pencil me-1"></i> Edit Konfigurasi API
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- Connection Status -->
+                            <div id="satusehatStatus" class="mt-3 d-none">
+                                <div class="alert mb-0" role="alert" id="satusehatStatusMessage"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- QR Code Card -->
-                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
                         <div class="card-body text-center text-white p-5">
                             <h4 class="mb-4 fw-bold">
                                 <i class="bi bi-qr-code me-2"></i>QR Code Antrian
@@ -218,7 +465,7 @@ class ProfileFragment {
                     </div>
 
                     <!-- Subscription Card -->
-                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);">
+                    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
                         <div class="card-body text-center text-white p-5">
                             <h4 class="mb-4 fw-bold">
                                 <i class="bi bi-calendar-check me-2"></i>Status Langganan
@@ -285,11 +532,16 @@ class ProfileFragment {
 
         this.formFields = [
             'nama_faskes', 'nama_lengkap', 'username', 'jenis_kelamin',
-            'no_telp', 'rfid', 'jam_kerja', 'alamat'
+            'no_telp', 'nik', 'rfid', 'jam_kerja', 'alamat'
         ];
 
-        await this.loadProfile();
+        this.satusehatFields = [
+            'satusehat_org_id', 'satusehat_client_id', 'satusehat_client_secret'
+        ];
+
+        // ⭐ FIX: Initialize subscription FIRST to get currentDokterId
         await this.initializeSubscription(user.email);
+        await this.loadProfile();
         await this.loadQRCode();
         this.attachEventListeners();
     }
@@ -336,6 +588,7 @@ class ProfileFragment {
     }
 
     attachEventListeners() {
+        // Profile edit listeners
         document.getElementById('btnEditToggle').addEventListener('click', () => {
             this.enableEdit();
         });
@@ -349,6 +602,7 @@ class ProfileFragment {
             this.saveProfile();
         });
 
+        // Avatar listeners
         document.getElementById('btnChangeAvatar').addEventListener('click', () => {
             this.showAvatarUpload();
         });
@@ -388,6 +642,40 @@ class ProfileFragment {
             document.getElementById('linkOption').classList.remove('d-none');
         });
 
+        // ⭐ NEW: SatuSehat API listeners
+        document.getElementById('btnEditSatuSehat').addEventListener('click', () => {
+            this.enableSatuSehatEdit();
+        });
+
+        document.getElementById('btnCancelSatuSehat').addEventListener('click', () => {
+            this.cancelSatuSehatEdit();
+        });
+
+        document.getElementById('satusehatForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveSatuSehatConfig();
+        });
+
+        document.getElementById('btnTestSatuSehat').addEventListener('click', () => {
+            this.testSatuSehatConnection();
+        });
+
+        document.getElementById('toggleSecret').addEventListener('click', () => {
+            this.togglePasswordVisibility();
+        });
+
+        document.getElementById('satusehatEnabled').addEventListener('change', (e) => {
+            if (!e.target.disabled) {
+                this.toggleSatuSehatEnabled(e.target.checked);
+            }
+        });
+
+        // ⭐ NEW: Search SatuSehat ID listener
+        document.getElementById('btnSearchSatuSehatId').addEventListener('click', () => {
+            this.searchSatuSehatId();
+        });
+
+        // QR Code listeners
         const btnGenerateQR = document.getElementById('btnGenerateQR');
         const btnDownloadQR = document.getElementById('btnDownloadQR');
         const btnPrintQR = document.getElementById('btnPrintQR');
@@ -406,6 +694,7 @@ class ProfileFragment {
             btnRegenerateQR.addEventListener('click', () => this.generateQRCode(true));
         }
 
+        // Subscription listeners
         const btnPerpanjang = document.getElementById('btnPerpanjang');
         const btnCekStatus = document.getElementById('btnCekStatus');
         const btnCopyVA = document.getElementById('btnCopyVA');
@@ -425,6 +714,313 @@ class ProfileFragment {
         console.log('🟢 All event listeners attached');
     }
 
+    // ⭐ NEW: SatuSehat Configuration Methods
+    enableSatuSehatEdit() {
+        this.satusehatFields.forEach(field => {
+            document.getElementById(field).disabled = false;
+        });
+        document.getElementById('satusehatEnabled').disabled = false;
+        document.getElementById('satusehatActionButtons').classList.remove('d-none');
+        document.getElementById('satusehatActionButtons').classList.add('d-flex');
+        document.getElementById('btnEditSatuSehat').style.display = 'none';
+    }
+
+    cancelSatuSehatEdit() {
+        this.satusehatFields.forEach(field => {
+            document.getElementById(field).disabled = true;
+        });
+        document.getElementById('satusehatEnabled').disabled = true;
+        document.getElementById('satusehatActionButtons').classList.remove('d-flex');
+        document.getElementById('satusehatActionButtons').classList.add('d-none');
+        document.getElementById('btnEditSatuSehat').style.display = '';
+        this.loadProfile(); // Reload to reset values
+    }
+
+    async saveSatuSehatConfig() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        
+        const formData = {
+            action: 'update_satusehat',
+            email: user.email,
+            satusehat_org_id: document.getElementById('satusehat_org_id').value,
+            satusehat_client_id: document.getElementById('satusehat_client_id').value,
+            satusehat_client_secret: document.getElementById('satusehat_client_secret').value,
+            satusehat_enabled: document.getElementById('satusehatEnabled').checked
+        };
+
+        // Validation
+        if (formData.satusehat_enabled) {
+            if (!formData.satusehat_org_id || !formData.satusehat_client_id || !formData.satusehat_client_secret) {
+                alert('Mohon lengkapi semua field API sebelum mengaktifkan!');
+                return;
+            }
+        }
+
+        const btnSubmit = document.querySelector('#satusehatForm button[type="submit"]');
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+        
+        try {
+            const response = await fetch('../API/auth/profile.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showToast('Konfigurasi SatuSehat berhasil disimpan!', 'success');
+                this.cancelSatuSehatEdit();
+            } else {
+                alert('Gagal menyimpan konfigurasi: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan konfigurasi');
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<i class="bi bi-check-circle me-1"></i> Simpan';
+        }
+    }
+
+    async testSatuSehatConnection() {
+        const org_id = document.getElementById('satusehat_org_id').value;
+        const client_id = document.getElementById('satusehat_client_id').value;
+        const client_secret = document.getElementById('satusehat_client_secret').value;
+
+        if (!org_id || !client_id || !client_secret) {
+            alert('Mohon lengkapi semua field sebelum test koneksi!');
+            return;
+        }
+
+        const btnTest = document.getElementById('btnTestSatuSehat');
+        btnTest.disabled = true;
+        btnTest.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Testing...';
+
+        try {
+            const response = await fetch('../API/satusehat/test_connection.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    org_id,
+                    client_id,
+                    client_secret
+                })
+            });
+
+            const result = await response.json();
+            
+            const statusDiv = document.getElementById('satusehatStatus');
+            const statusMessage = document.getElementById('satusehatStatusMessage');
+            
+            statusDiv.classList.remove('d-none');
+            
+            if (result.success) {
+                statusMessage.className = 'alert alert-success mb-0';
+                statusMessage.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Koneksi Berhasil!</strong><br>
+                    <small>Token: ${result.token?.substring(0, 20)}...</small>
+                `;
+            } else {
+                statusMessage.className = 'alert alert-danger mb-0';
+                statusMessage.innerHTML = `
+                    <i class="bi bi-x-circle me-2"></i>
+                    <strong>Koneksi Gagal!</strong><br>
+                    <small>${result.message}</small>
+                `;
+            }
+
+            setTimeout(() => {
+                statusDiv.classList.add('d-none');
+            }, 5000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat test koneksi');
+        } finally {
+            btnTest.disabled = false;
+            btnTest.innerHTML = '<i class="bi bi-lightning me-1"></i> Test Koneksi';
+        }
+    }
+
+    togglePasswordVisibility() {
+        const input = document.getElementById('satusehat_client_secret');
+        const icon = document.getElementById('toggleSecret');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    async toggleSatuSehatEnabled(enabled) {
+        if (enabled) {
+            const org_id = document.getElementById('satusehat_org_id').value;
+            const client_id = document.getElementById('satusehat_client_id').value;
+            const client_secret = document.getElementById('satusehat_client_secret').value;
+
+            if (!org_id || !client_id || !client_secret) {
+                document.getElementById('satusehatEnabled').checked = false;
+                alert('Mohon lengkapi konfigurasi API terlebih dahulu!');
+                return;
+            }
+        }
+    }
+
+    // ⭐ NEW: Search SatuSehat Practitioner ID
+    async searchSatuSehatId() {
+        if (!this.currentDokterId) {
+            alert('Doctor ID tidak ditemukan');
+            return;
+        }
+
+        const btnSearch = document.getElementById('btnSearchSatuSehatId');
+        const originalContent = btnSearch.innerHTML;
+        
+        btnSearch.disabled = true;
+        btnSearch.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        try {
+            // Get NIK from form (optional)
+            const nik = document.getElementById('nik').value || '';
+
+            const response = await fetch('../API/satusehat/search_practitioner.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_dokter: this.currentDokterId,
+                    nik: nik
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.multiple_found) {
+                    // Multiple practitioners found - show selection
+                    this.showPractitionerSelection(result.practitioners);
+                } else {
+                    // Single practitioner found and saved
+                    const data = result.data;
+                    
+                    // Update display using existing field
+                    document.getElementById('id_satusehat').value = data.id_satusehat;
+                    
+                    const infoDisplay = document.getElementById('satusehat_practitioner_info');
+                    infoDisplay.textContent = data.practitioner_name + 
+                        (data.practitioner_nik ? ' (NIK: ' + data.practitioner_nik + ')' : '');
+                    
+                    this.showToast('✅ ID SatuSehat berhasil ditemukan dan disimpan!', 'success');
+                    
+                    // Show success animation
+                    const idField = document.getElementById('id_satusehat');
+                    idField.classList.add('border-success');
+                    setTimeout(() => idField.classList.remove('border-success'), 2000);
+                }
+            } else {
+                // Error or not found
+                let errorMessage = result.message;
+                
+                if (result.action_required === 'enable_satusehat') {
+                    errorMessage += '\n\nSilakan aktifkan SatuSehat di bagian "Konfigurasi SatuSehat API" terlebih dahulu.';
+                }
+                
+                if (result.suggestion) {
+                    errorMessage += '\n\n💡 ' + result.suggestion;
+                }
+                
+                alert(errorMessage);
+            }
+
+        } catch (error) {
+            console.error('❌ Error searching SatuSehat ID:', error);
+            alert('Terjadi kesalahan saat mencari ID SatuSehat: ' + error.message);
+        } finally {
+            btnSearch.disabled = false;
+            btnSearch.innerHTML = originalContent;
+        }
+    }
+
+    // ⭐ NEW: Show practitioner selection modal (if multiple found)
+    showPractitionerSelection(practitioners) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade show';
+        modal.style.display = 'block';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        
+        modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Pilih Practitioner Anda</h5>
+                        <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Ditemukan ${practitioners.length} practitioner. Pilih yang sesuai:</p>
+                        <div class="list-group">
+                            ${practitioners.map(p => `
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        onclick="window.profileFragment.selectPractitioner('${p.id}', '${p.name}', '${p.identifier || ''}')">
+                                    <strong>${p.name}</strong><br>
+                                    <small class="text-muted">ID: ${p.id}${p.identifier ? ' | NIK: ' + p.identifier : ''}</small>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        window.profileFragment = this; // Make accessible for onclick
+    }
+
+    // ⭐ NEW: Select specific practitioner
+    async selectPractitioner(id, name, identifier) {
+        try {
+            // Save selected practitioner to database using existing field
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            const response = await fetch('../API/auth/profile.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'update_id_satusehat',
+                    email: user.email,
+                    id_satusehat: id
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update display
+                document.getElementById('id_satusehat').value = id;
+                document.getElementById('satusehat_practitioner_info').textContent = 
+                    name + (identifier ? ' (NIK: ' + identifier + ')' : '');
+                
+                this.showToast('✅ ID SatuSehat berhasil disimpan!', 'success');
+                
+                // Close modal
+                document.querySelector('.modal')?.remove();
+            } else {
+                alert('Gagal menyimpan: ' + result.message);
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan: ' + error.message);
+        }
+    }
+
+    // Existing methods continue...
     async loadQRCode() {
         if (!this.currentDokterId) {
             console.warn('⚠️ No doctor ID, waiting...');
@@ -468,7 +1064,6 @@ class ProfileFragment {
         activeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
 
         try {
-            // ✅ Get doctor info first
             const { data: dokter, error: fetchError } = await window.supabaseClient
                 .from('dokter')
                 .select('id_dokter, nama_lengkap')
@@ -479,7 +1074,6 @@ class ProfileFragment {
                 throw new Error('Gagal mengambil data dokter');
             }
 
-            // ✅ Generate QR data in the format Android expects (JSON)
             const qrData = JSON.stringify({
                 doctor_id: dokter.id_dokter,
                 doctor_name: dokter.nama_lengkap
@@ -487,7 +1081,6 @@ class ProfileFragment {
             
             console.log('🟢 Generating QR with data:', qrData);
             
-            // Save to database
             const { error } = await window.supabaseClient
                 .from('dokter')
                 .update({ 
@@ -665,26 +1258,57 @@ class ProfileFragment {
 
     showAvatarUpload() {
         this.storeOriginalAvatar();
-        document.getElementById('avatarUploadSection').classList.remove('d-none');
+        const uploadSection = document.getElementById('avatarUploadSection');
+        if (uploadSection) {
+            uploadSection.classList.remove('d-none');
+        }
     }
 
     hideAvatarUpload() {
-        document.getElementById('avatarUploadSection').classList.add('d-none');
-        document.getElementById('avatarFile').value = '';
-        document.getElementById('avatarLink').value = '';
+        const uploadSection = document.getElementById('avatarUploadSection');
+        if (uploadSection) {
+            uploadSection.classList.add('d-none');
+        }
+        
+        const avatarFile = document.getElementById('avatarFile');
+        const avatarLink = document.getElementById('avatarLink');
+        if (avatarFile) avatarFile.value = '';
+        if (avatarLink) avatarLink.value = '';
+        
+        const optionUpload = document.getElementById('optionUpload');
+        const optionLink = document.getElementById('optionLink');
+        const uploadOption = document.getElementById('uploadOption');
+        const linkOption = document.getElementById('linkOption');
+        
+        if (optionUpload) optionUpload.checked = true;
+        if (uploadOption) uploadOption.classList.remove('d-none');
+        if (linkOption) linkOption.classList.add('d-none');
+        
         this.croppedBlob = null;
     }
 
     storeOriginalAvatar() {
-        this.originalAvatarUrl = document.getElementById('avatarImage').src;
-        this.originalAvatarVisible = !document.getElementById('avatarImage').classList.contains('d-none');
+        const avatarImage = document.getElementById('avatarImage');
+        if (avatarImage) {
+            this.originalAvatarUrl = avatarImage.src;
+            this.originalAvatarVisible = !avatarImage.classList.contains('d-none');
+        }
     }
 
     restoreOriginalAvatar() {
-        if (this.originalAvatarVisible && this.originalAvatarUrl) {
-            this.displayAvatar(this.originalAvatarUrl);
+        const avatarImage = document.getElementById('avatarImage');
+        const avatarIcon = document.getElementById('avatarIcon');
+        
+        if (!avatarImage || !avatarIcon) return;
+        
+        if (this.originalAvatarVisible && this.originalAvatarUrl && this.originalAvatarUrl !== window.location.href) {
+            avatarImage.src = this.originalAvatarUrl;
+            avatarImage.classList.remove('d-none');
+            avatarIcon.classList.add('d-none');
         } else {
-            this.displayAvatar(null);
+            avatarImage.classList.add('d-none');
+            avatarImage.src = '';
+            avatarIcon.classList.remove('d-none');
         }
     }
 
@@ -825,7 +1449,6 @@ class ProfileFragment {
             this.hideAvatarUpload();
             this.croppedBlob = null;
             
-            // ⭐ UPDATE TOP BAR
             this.dispatchProfileUpdate(null, null, avatarUrl);
             
             this.showToast('Foto profil berhasil diupdate!', 'success');
@@ -890,15 +1513,22 @@ class ProfileFragment {
         const avatarIcon = document.getElementById('avatarIcon');
         const avatarCard = document.querySelector('.row.justify-content-center > .col-lg-9 > .card:first-child');
         
-        if (avatarUrl) {
+        if (!avatarImage || !avatarIcon) return;
+        
+        if (avatarUrl && avatarUrl !== '' && avatarUrl !== window.location.href) {
             avatarImage.src = avatarUrl;
             avatarImage.classList.remove('d-none');
             avatarIcon.classList.add('d-none');
-            avatarCard.style.setProperty('--avatar-bg-image', `url('${avatarUrl}')`);
+            if (avatarCard) {
+                avatarCard.style.setProperty('--avatar-bg-image', `url('${avatarUrl}')`);
+            }
         } else {
             avatarImage.classList.add('d-none');
+            avatarImage.src = '';
             avatarIcon.classList.remove('d-none');
-            avatarCard.style.setProperty('--avatar-bg-image', 'none');
+            if (avatarCard) {
+                avatarCard.style.setProperty('--avatar-bg-image', 'none');
+            }
         }
     }
 
@@ -917,12 +1547,19 @@ class ProfileFragment {
         });
         document.getElementById('actionButtons').classList.remove('d-flex');
         document.getElementById('actionButtons').classList.add('d-none');
-        document.getElementById('btnEditToggle').style.display = 'block';
+        document.getElementById('btnEditToggle').style.display = '';
         this.loadProfile();
     }
 
     async loadProfile() {
         const user = JSON.parse(localStorage.getItem('user'));
+        
+        if (!user || !user.email) {
+            console.error('❌ No user in localStorage');
+            return;
+        }
+        
+        console.log('🔍 Loading profile for:', user.email);
         
         try {
             const response = await fetch('../API/auth/profile.php', {
@@ -936,8 +1573,12 @@ class ProfileFragment {
 
             const result = await response.json();
             
+            console.log('📥 Profile response:', result);
+            
             if (result.success) {
                 const profile = result.data;
+                
+                console.log('✅ Profile loaded:', profile);
                 
                 document.getElementById('profileDisplayName').textContent = profile.nama_lengkap || 'Nama Belum Diisi';
                 document.getElementById('profileDisplayEmail').textContent = profile.email || '';
@@ -948,9 +1589,36 @@ class ProfileFragment {
                 document.getElementById('username').value = profile.username || '';
                 document.getElementById('jenis_kelamin').value = profile.jenis_kelamin || '';
                 document.getElementById('no_telp').value = profile.no_telp || '';
+                document.getElementById('nik').value = profile.nik || '';
                 document.getElementById('rfid').value = profile.rfid || '';
                 document.getElementById('jam_kerja').value = profile.jam_kerja || '';
                 document.getElementById('alamat').value = profile.alamat || '';
+                
+                // ⭐ Load SatuSehat config
+                document.getElementById('satusehat_org_id').value = profile.satusehat_org_id || '';
+                document.getElementById('satusehat_client_id').value = profile.satusehat_client_id || '';
+                document.getElementById('satusehat_client_secret').value = profile.satusehat_client_secret || '';
+                document.getElementById('satusehatEnabled').checked = profile.satusehat_enabled || false;
+                
+                // ⭐ Load SatuSehat Practitioner ID (using existing field)
+                document.getElementById('id_satusehat').value = profile.id_satusehat || '';
+                const infoDisplay = document.getElementById('satusehat_practitioner_info');
+                if (profile.id_satusehat) {
+                    // Show practitioner info if ID exists
+                    infoDisplay.textContent = profile.nama_lengkap + 
+                        (profile.nik ? ' (NIK: ' + profile.nik + ')' : '');
+                } else {
+                    infoDisplay.textContent = '';
+                }
+                
+                // Enable search button if SatuSehat is enabled
+                const btnSearch = document.getElementById('btnSearchSatuSehatId');
+                btnSearch.disabled = !(profile.satusehat_enabled || false);
+                if (profile.satusehat_enabled) {
+                    btnSearch.title = 'Klik untuk mencari ID SatuSehat Anda';
+                } else {
+                    btnSearch.title = 'Aktifkan SatuSehat terlebih dahulu';
+                }
                 
                 if (profile.avatar_url) {
                     this.displayAvatar(profile.avatar_url);
@@ -958,7 +1626,6 @@ class ProfileFragment {
                     this.displayAvatar(null);
                 }
                 
-                // ⭐ UPDATE TOP BAR
                 this.dispatchProfileUpdate(
                     profile.nama_lengkap,
                     profile.email,
@@ -973,7 +1640,9 @@ class ProfileFragment {
                 }
             }
         } catch (error) {
-            console.error('Error loading profile:', error);
+            console.error('❌ Error loading profile:', error);
+            console.error('Error details:', error.message, error.stack);
+            alert('Gagal memuat profil. Silakan refresh halaman.');
         }
     }
 
@@ -988,6 +1657,7 @@ class ProfileFragment {
             username: document.getElementById('username').value,
             jenis_kelamin: document.getElementById('jenis_kelamin').value,
             no_telp: document.getElementById('no_telp').value,
+            nik: document.getElementById('nik').value,
             rfid: document.getElementById('rfid').value,
             jam_kerja: document.getElementById('jam_kerja').value,
             alamat: document.getElementById('alamat').value
@@ -1008,7 +1678,6 @@ class ProfileFragment {
                 user.nama_faskes = formData.nama_faskes;
                 localStorage.setItem('user', JSON.stringify(user));
                 
-                // ⭐ UPDATE TOP BAR
                 this.dispatchProfileUpdate(formData.nama_lengkap, formData.email, undefined);
                 
                 this.cancelEdit();

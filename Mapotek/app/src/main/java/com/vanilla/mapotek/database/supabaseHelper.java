@@ -109,6 +109,39 @@ public class supabaseHelper {
         executeRequest(request, callback);
     }
 
+    public static void selectRiwayat(Context context, String table, String selectColumns,
+                              String filterParams, String accessToken, SupabaseCallback callback) {
+        String url = SUPABASE_URL + "/rest/v1/" + table;
+
+        // Build query parameters
+        StringBuilder queryParams = new StringBuilder();
+
+        // Add select parameter (columns to return)
+        if (selectColumns != null && !selectColumns.isEmpty()) {
+            queryParams.append("?select=").append(selectColumns);
+        } else {
+            queryParams.append("?select=*");  // Default: select all columns
+        }
+
+        // Add filter parameters
+        if (filterParams != null && !filterParams.isEmpty()) {
+            queryParams.append("&").append(filterParams);
+        }
+
+        url += queryParams.toString();
+
+        android.util.Log.d("SupabaseHelper", "GET URL: " + url);
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer " + accessToken)
+                .get()
+                .build();
+
+        executeRequest(request, callback);
+    }
+
     /**
      * PATCH - Update data in table
      */

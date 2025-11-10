@@ -1,4 +1,1197 @@
-console.log("🔥 PEMERIKSAAN SYSTEM - FIXED VERSION 🔥");
+console.log("🔥 PEMERIKSAAN SYSTEM - WITH SKELETON LOADERS 🔥");
+
+// ========================================
+// SKELETON LOADER STYLES & UTILITIES
+// ========================================
+const skeletonStyles = `
+  <style>
+    /* Skeleton Loading Styles */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes skeleton-loading {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    .skeleton-text {
+      height: 16px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+
+    .skeleton-text.large {
+      height: 24px;
+    }
+
+    .skeleton-text.small {
+      height: 12px;
+    }
+
+    .skeleton-circle {
+      border-radius: 50%;
+    }
+
+    .skeleton-rect {
+      border-radius: 4px;
+    }
+
+    /* Wave effect variant */
+    .skeleton-wave {
+      position: relative;
+      overflow: hidden;
+      background: #f0f0f0;
+    }
+
+    .skeleton-wave::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.3) 20%,
+        rgba(255, 255, 255, 0.5) 60%,
+        rgba(255, 255, 255, 0)
+      );
+      animation: skeleton-wave 2s infinite;
+    }
+
+    @keyframes skeleton-wave {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    /* Pulse effect variant */
+    .skeleton-pulse {
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes skeleton-pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.4;
+      }
+    }
+  </style>
+`;
+
+// Skeleton Loader Utility Functions
+const SkeletonLoader = {
+  // Generate table skeleton
+  tableRows(columns, rows = 5) {
+    let html = '';
+    for (let i = 0; i < rows; i++) {
+      html += '<tr>';
+      for (let j = 0; j < columns; j++) {
+        html += `
+          <td style="padding: 12px;">
+            <div class="skeleton skeleton-text" style="width: ${60 + Math.random() * 40}%;"></div>
+          </td>
+        `;
+      }
+      html += '</tr>';
+    }
+    return html;
+  },
+
+  // Generate search results skeleton
+  searchResults(count = 5) {
+    let html = '';
+    for (let i = 0; i < count; i++) {
+      html += `
+        <tr>
+          <td style="padding: 12px;">
+            <div class="skeleton skeleton-text" style="width: 80px;"></div>
+          </td>
+          <td style="padding: 12px;">
+            <div class="skeleton skeleton-text large" style="width: 90%; margin-bottom: 4px;"></div>
+            <div class="skeleton skeleton-text small" style="width: 60%;"></div>
+          </td>
+        </tr>
+      `;
+    }
+    return html;
+  },
+
+  // Generate card skeleton
+  card() {
+    return `
+      <div style="padding: 20px;">
+        <div class="skeleton skeleton-text large" style="width: 40%; margin-bottom: 16px;"></div>
+        <div class="skeleton skeleton-text" style="width: 90%; margin-bottom: 8px;"></div>
+        <div class="skeleton skeleton-text" style="width: 80%; margin-bottom: 8px;"></div>
+        <div class="skeleton skeleton-text" style="width: 70%;"></div>
+      </div>
+    `;
+  }
+};
+
+// ========================================
+// ICDX SELECTION MODAL CLASS
+// ========================================
+class ICDXSelectionModal {
+  constructor(pemeriksaanModal) {
+    this.pemeriksaanModal = pemeriksaanModal;
+    this.allICDXData = [];
+    this.filteredICDXData = [];
+    this.selectedICDX = null;
+    this.dataLoaded = false;
+    this.searchTimeout = null;
+  }
+
+  async show() {
+    this.createModal();
+    await this.loadICDXData();
+  }
+
+  async loadICDXData() {
+    if (this.dataLoaded && this.allICDXData.length > 0) {
+      console.log("✅ ICDX data already loaded from cache");
+      return;
+    }
+
+    console.log("📦 Loading ICDX data from JSON file...");
+    const tbody = document.getElementById("icdxTableBody");
+    
+    // ✅ Show skeleton loading
+    tbody.innerHTML = SkeletonLoader.searchResults(8);
+    
+    try {
+      const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd10.json');
+      if (!response.ok) throw new Error('Failed to load icd10.json');
+      
+      const jsonData = await response.json();
+      
+      this.allICDXData = jsonData.map(item => ({
+        code: item.CODE || '',
+        display: item.DISPLAY || '',
+        name_en: item.DISPLAY || ''
+      }));
+
+      this.filteredICDXData = [...this.allICDXData];
+      this.dataLoaded = true;
+      
+      console.log(`✅ Loaded ${this.allICDXData.length} ICDX records from JSON`);
+      
+      // Show initial message
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
+            <i class="bi bi-search" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            ${this.allICDXData.length} data ICDX tersedia<br>
+            <small>Masukkan kata kunci untuk mencari</small>
+          </td>
+        </tr>
+      `;
+    } catch (error) {
+      console.error("❌ Error loading ICDX data:", error);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #dc3545;">
+            <i class="bi bi-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            Gagal memuat data ICDX: ${error.message}
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  createModal() {
+    const existingModal = document.getElementById("icdxSelectionModal");
+    if (existingModal) existingModal.remove();
+
+    const modalHTML = `
+      <div id="icdxSelectionModal" class="modal-overlay" style="z-index: 1060;">
+        <div class="icdx-modal-container">
+          <div class="modal-header">
+            <h3>🔍 Pencarian ICDX (Diagnosa Penyakit)</h3>
+            <button class="close-btn" onclick="icdxSelectionModal.close()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="icdx-modal-body">
+            <!-- Search Section -->
+            <div class="search-section" style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <input type="text" 
+                     id="icdxSearchInput" 
+                     class="form-control" 
+                     placeholder="🔍 Cari ICDX berdasarkan kode atau deskripsi..."
+                     style="flex: 1;"
+                     oninput="icdxSelectionModal.handleSearchInput()">
+              <button class="btn-primary" onclick="icdxSelectionModal.searchICDX()" style="padding: 0.5rem 1.5rem;">
+                <i class="bi bi-search me-1"></i>Cari
+              </button>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover">
+                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                  <tr>
+                    <th style="color: white; width: 120px;">Kode ICDX</th>
+                    <th style="color: white;">Deskripsi</th>
+                  </tr>
+                </thead>
+                <tbody id="icdxTableBody">
+                  ${SkeletonLoader.searchResults(8)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="icdxSelectionModal.close()">
+              <i class="bi bi-x-circle me-1"></i>Batal
+            </button>
+            <button class="btn-success" onclick="icdxSelectionModal.selectICDX()">
+              <i class="bi bi-check-circle me-1"></i>Pilih
+            </button>
+          </div>
+        </div>
+      </div>
+
+      ${skeletonStyles}
+
+      <style>
+        .icdx-modal-container {
+          background: white;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 900px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s;
+        }
+
+        .icdx-modal-body {
+          padding: 2rem;
+          overflow-y: auto;
+          flex: 1;
+        }
+
+        .table tbody tr {
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .table tbody tr:hover:not(.skeleton-row) {
+          background: #f0f9ff !important;
+        }
+
+        .table tbody tr.selected {
+          background: #dbeafe !important;
+          border-left: 4px solid #6366f1;
+        }
+      </style>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+    this.attachTableEvents();
+  }
+
+  handleSearchInput() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    // ✅ Show skeleton while searching
+    const tbody = document.getElementById("icdxTableBody");
+    tbody.innerHTML = SkeletonLoader.searchResults(5);
+
+    this.searchTimeout = setTimeout(() => {
+      this.searchICDX();
+    }, 300);
+  }
+
+  searchICDX() {
+    const keyword = document.getElementById("icdxSearchInput")?.value.trim().toLowerCase();
+    
+    if (!keyword) {
+      this.filteredICDXData = [...this.allICDXData];
+      this.renderICDXTable();
+      return;
+    }
+
+    const keywords = keyword.split(' ').filter(k => k.length > 0);
+    
+    this.filteredICDXData = this.allICDXData.filter(icdx => {
+      const code = (icdx.code || '').toLowerCase();
+      const display = (icdx.display || '').toLowerCase();
+      const name_en = (icdx.name_en || '').toLowerCase();
+      const searchText = `${code} ${display} ${name_en}`;
+      
+      return keywords.every(kw => searchText.includes(kw));
+    });
+
+    console.log(`🔍 Found ${this.filteredICDXData.length} results for "${keyword}"`);
+    this.renderICDXTable();
+  }
+
+  renderICDXTable() {
+    const tbody = document.getElementById("icdxTableBody");
+    
+    if (this.filteredICDXData.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
+            <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            Tidak ada data ICDX ditemukan
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    const maxResults = 100;
+    const dataToShow = this.filteredICDXData.slice(0, maxResults);
+
+    dataToShow.forEach((icdx, index) => {
+      const tr = document.createElement('tr');
+      tr.dataset.index = index;
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td><strong>${icdx.code || 'N/A'}</strong></td>
+        <td>${icdx.display || icdx.name_en || 'N/A'}</td>
+      `;
+      fragment.appendChild(tr);
+    });
+
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+
+    if (this.filteredICDXData.length > maxResults) {
+      const infoRow = document.createElement('tr');
+      infoRow.innerHTML = `
+        <td colspan="2" style="text-align: center; padding: 15px; background: #fff3cd; color: #856404;">
+          <i class="bi bi-info-circle me-2"></i>
+          Menampilkan ${maxResults} dari ${this.filteredICDXData.length} hasil. Gunakan kata kunci lebih spesifik.
+        </td>
+      `;
+      tbody.appendChild(infoRow);
+    }
+  }
+
+  attachTableEvents() {
+    setTimeout(() => {
+      const tbody = document.getElementById("icdxTableBody");
+      if (!tbody) return;
+
+      tbody.addEventListener("click", (e) => {
+        const row = e.target.closest("tr");
+        if (!row || !row.dataset.index) return;
+
+        tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("selected"));
+        row.classList.add("selected");
+
+        const index = parseInt(row.dataset.index);
+        this.selectedICDX = this.filteredICDXData[index];
+      });
+    }, 100);
+  }
+
+  selectICDX() {
+    if (!this.selectedICDX) {
+      alert("⚠️ Pilih salah satu data ICDX!");
+      return;
+    }
+
+    const kode = this.selectedICDX.code;
+    const deskripsi = this.selectedICDX.display || this.selectedICDX.name_en;
+
+    this.pemeriksaanModal.icdxTableData.push({ kode, deskripsi });
+    this.pemeriksaanModal.renderICDXTable();
+    
+    alert(`✅ ICDX "${kode}" berhasil ditambahkan!`);
+    this.close();
+  }
+
+  close() {
+    const modal = document.getElementById("icdxSelectionModal");
+    if (modal) {
+      modal.style.animation = "fadeOut 0.2s";
+      setTimeout(() => modal.remove(), 200);
+    }
+  }
+}
+
+// ========================================
+// ICDIX SELECTION MODAL CLASS
+// ========================================
+class ICDIXSelectionModal {
+  constructor(pemeriksaanModal) {
+    this.pemeriksaanModal = pemeriksaanModal;
+    this.allICDIXData = [];
+    this.filteredICDIXData = [];
+    this.selectedICDIX = null;
+    this.dataLoaded = false;
+    this.searchTimeout = null;
+  }
+
+  async show() {
+    this.createModal();
+    await this.loadICDIXData();
+  }
+
+  async loadICDIXData() {
+    if (this.dataLoaded && this.allICDIXData.length > 0) {
+      console.log("✅ ICDIX data already loaded from cache");
+      return;
+    }
+
+    console.log("📦 Loading ICDIX data from JSON file...");
+    const tbody = document.getElementById("icdixTableBody");
+    
+    // ✅ Show skeleton loading
+    tbody.innerHTML = SkeletonLoader.searchResults(8);
+    
+    try {
+      const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd9.json');
+      if (!response.ok) throw new Error('Failed to load icd9.json');
+      
+      const jsonData = await response.json();
+      
+      this.allICDIXData = jsonData.map(item => ({
+        code: item.CODE || '',
+        display: item.DISPLAY || ''
+      }));
+
+      this.filteredICDIXData = [...this.allICDIXData];
+      this.dataLoaded = true;
+      
+      console.log(`✅ Loaded ${this.allICDIXData.length} ICDIX records from JSON`);
+      
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
+            <i class="bi bi-search" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            ${this.allICDIXData.length} data ICDIX tersedia<br>
+            <small>Masukkan kata kunci untuk mencari</small>
+          </td>
+        </tr>
+      `;
+    } catch (error) {
+      console.error("❌ Error loading ICDIX data:", error);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #dc3545;">
+            <i class="bi bi-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            Gagal memuat data ICDIX: ${error.message}
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  createModal() {
+    const existingModal = document.getElementById("icdixSelectionModal");
+    if (existingModal) existingModal.remove();
+
+    const modalHTML = `
+      <div id="icdixSelectionModal" class="modal-overlay" style="z-index: 1060;">
+        <div class="icdix-modal-container">
+          <div class="modal-header">
+            <h3>🔍 Pencarian ICDIX (Prosedur Medis)</h3>
+            <button class="close-btn" onclick="icdixSelectionModal.close()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="icdix-modal-body">
+            <!-- Search Section -->
+            <div class="search-section" style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <input type="text" 
+                     id="icdixSearchInput" 
+                     class="form-control" 
+                     placeholder="🔍 Cari ICDIX berdasarkan kode atau deskripsi..."
+                     style="flex: 1;"
+                     oninput="icdixSelectionModal.handleSearchInput()">
+              <button class="btn-primary" onclick="icdixSelectionModal.searchICDIX()" style="padding: 0.5rem 1.5rem;">
+                <i class="bi bi-search me-1"></i>Cari
+              </button>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+              <table class="table table-hover">
+                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                  <tr>
+                    <th style="color: white; width: 120px;">Kode ICDIX</th>
+                    <th style="color: white;">Deskripsi</th>
+                  </tr>
+                </thead>
+                <tbody id="icdixTableBody">
+                  ${SkeletonLoader.searchResults(8)}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="icdixSelectionModal.close()">
+              <i class="bi bi-x-circle me-1"></i>Batal
+            </button>
+            <button class="btn-success" onclick="icdixSelectionModal.selectICDIX()">
+              <i class="bi bi-check-circle me-1"></i>Pilih
+            </button>
+          </div>
+        </div>
+      </div>
+
+      ${skeletonStyles}
+
+      <style>
+        .icdix-modal-container {
+          background: white;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 900px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s;
+        }
+
+        .icdix-modal-body {
+          padding: 2rem;
+          overflow-y: auto;
+          flex: 1;
+        }
+
+        .table tbody tr {
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .table tbody tr:hover:not(.skeleton-row) {
+          background: #f0f9ff !important;
+        }
+
+        .table tbody tr.selected {
+          background: #dbeafe !important;
+          border-left: 4px solid #6366f1;
+        }
+      </style>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+    this.attachTableEvents();
+  }
+
+  handleSearchInput() {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    const tbody = document.getElementById("icdixTableBody");
+    tbody.innerHTML = SkeletonLoader.searchResults(5);
+
+    this.searchTimeout = setTimeout(() => {
+      this.searchICDIX();
+    }, 300);
+  }
+
+  searchICDIX() {
+    const keyword = document.getElementById("icdixSearchInput")?.value.trim().toLowerCase();
+    
+    if (!keyword) {
+      this.filteredICDIXData = [...this.allICDIXData];
+      this.renderICDIXTable();
+      return;
+    }
+
+    const keywords = keyword.split(' ').filter(k => k.length > 0);
+    
+    this.filteredICDIXData = this.allICDIXData.filter(icdix => {
+      const code = (icdix.code || '').toLowerCase();
+      const display = (icdix.display || '').toLowerCase();
+      const searchText = `${code} ${display}`;
+      
+      return keywords.every(kw => searchText.includes(kw));
+    });
+
+    console.log(`🔍 Found ${this.filteredICDIXData.length} results for "${keyword}"`);
+    this.renderICDIXTable();
+  }
+
+  renderICDIXTable() {
+    const tbody = document.getElementById("icdixTableBody");
+    
+    if (this.filteredICDIXData.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
+            <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            Tidak ada data ICDIX ditemukan
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    const maxResults = 100;
+    const dataToShow = this.filteredICDIXData.slice(0, maxResults);
+
+    dataToShow.forEach((icdix, index) => {
+      const tr = document.createElement('tr');
+      tr.dataset.index = index;
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td><strong>${icdix.code || 'N/A'}</strong></td>
+        <td>${icdix.display || 'N/A'}</td>
+      `;
+      fragment.appendChild(tr);
+    });
+
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+
+    if (this.filteredICDIXData.length > maxResults) {
+      const infoRow = document.createElement('tr');
+      infoRow.innerHTML = `
+        <td colspan="2" style="text-align: center; padding: 15px; background: #fff3cd; color: #856404;">
+          <i class="bi bi-info-circle me-2"></i>
+          Menampilkan ${maxResults} dari ${this.filteredICDIXData.length} hasil.
+        </td>
+      `;
+      tbody.appendChild(infoRow);
+    }
+  }
+
+  attachTableEvents() {
+    setTimeout(() => {
+      const tbody = document.getElementById("icdixTableBody");
+      if (!tbody) return;
+
+      tbody.addEventListener("click", (e) => {
+        const row = e.target.closest("tr");
+        if (!row || !row.dataset.index) return;
+
+        tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("selected"));
+        row.classList.add("selected");
+
+        const index = parseInt(row.dataset.index);
+        this.selectedICDIX = this.filteredICDIXData[index];
+      });
+    }, 100);
+  }
+
+  selectICDIX() {
+    if (!this.selectedICDIX) {
+      alert("⚠️ Pilih salah satu data ICDIX!");
+      return;
+    }
+
+    const kode = this.selectedICDIX.code;
+    const deskripsi = this.selectedICDIX.display;
+
+    this.pemeriksaanModal.icdixTableData.push({ kode, deskripsi });
+    this.pemeriksaanModal.renderICDIXTable();
+    
+    alert(`✅ ICDIX "${kode}" berhasil ditambahkan!`);
+    this.close();
+  }
+
+  close() {
+    const modal = document.getElementById("icdixSelectionModal");
+    if (modal) {
+      modal.style.animation = "fadeOut 0.2s";
+      setTimeout(() => modal.remove(), 200);
+    }
+  }
+}
+
+// ========================================
+// OBAT SELECTION MODAL CLASS
+// ========================================
+class ObatSelectionModal {
+  constructor(pemeriksaanModal) {
+    this.pemeriksaanModal = pemeriksaanModal;
+    this.allObatData = [];
+    this.filteredObatData = [];
+    this.selectedObat = null;
+    this.jumlah = 1;
+    this.signa = "";
+    this.isLoading = true;
+  }
+
+  async show() {
+    this.createModal();
+    await this.loadObatData();
+  }
+
+  async loadObatData() {
+    console.log("📦 Loading obat data...");
+    
+    try {
+      const response = await fetch('../API/auth/obat.php?action=get_all');
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data)) {
+        this.allObatData = result.data;
+        this.filteredObatData = [...this.allObatData];
+        console.log("✅ Loaded", this.allObatData.length, "obat");
+      } else {
+        console.error("❌ Failed to load obat data");
+        this.allObatData = [];
+        this.filteredObatData = [];
+      }
+    } catch (error) {
+      console.error("❌ Error loading obat:", error);
+      this.allObatData = [];
+      this.filteredObatData = [];
+    }
+    
+    this.isLoading = false;
+    this.updateTable();
+  }
+
+  createModal() {
+    const existingModal = document.getElementById("obatSelectionModal");
+    if (existingModal) existingModal.remove();
+
+    const modalHTML = `
+      <div id="obatSelectionModal" class="modal-overlay" style="z-index: 1060;">
+        <div class="obat-modal-container">
+          <div class="modal-header">
+            <h3>💊 Pilih Obat</h3>
+            <button class="close-btn" onclick="obatSelectionModal.close()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="obat-modal-body">
+            <!-- Search Section -->
+            <div class="search-section">
+              <input type="text" 
+                     id="obatSearchInput" 
+                     class="form-control" 
+                     placeholder="🔍 Cari obat berdasarkan nama atau barcode..."
+                     oninput="obatSelectionModal.filterObat(this.value)">
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-container" style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
+              <table class="table table-hover">
+                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                  <tr>
+                    <th style="color: white;">NO</th>
+                    <th style="color: white;">BARCODE</th>
+                    <th style="color: white;">NAMA OBAT</th>
+                    <th style="color: white;">JENIS OBAT</th>
+                    <th style="color: white;">HARGA</th>
+                    <th style="color: white;">STOCK</th>
+                  </tr>
+                </thead>
+                <tbody id="obatTableBody">
+                  ${SkeletonLoader.tableRows(6, 5)}
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Selected Obat Info -->
+            <div id="selectedObatInfo" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); border-radius: 8px; border: 2px solid #6366f1;">
+              <h4 style="color: #6366f1; margin-bottom: 15px;">📋 Informasi Obat Terpilih</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <div><strong>Nama Obat:</strong> <span id="selectedNama">-</span></div>
+                <div><strong>Jenis:</strong> <span id="selectedJenis">-</span></div>
+                <div><strong>Harga:</strong> Rp <span id="selectedHarga">0</span></div>
+                <div><strong>Stock Tersedia:</strong> <span id="selectedStock">0</span></div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-weight: 600; margin-bottom: 8px; display: block;">Jumlah *</label>
+                  <input type="number" 
+                         id="obatJumlahInput" 
+                         class="form-control" 
+                         min="1" 
+                         value="1"
+                         placeholder="Masukkan jumlah">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label style="font-weight: 600; margin-bottom: 8px; display: block;">Signa (Aturan Pakai) *</label>
+                  <input type="text" 
+                         id="obatSignaInput" 
+                         class="form-control" 
+                         placeholder="Contoh: 3x1 sehari sesudah makan">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="obatSelectionModal.close()">
+              <i class="bi bi-x-circle me-1"></i>Batal
+            </button>
+            <button class="btn-success" onclick="obatSelectionModal.addObat()">
+              <i class="bi bi-check-circle me-1"></i>Tambahkan Obat
+            </button>
+          </div>
+        </div>
+      </div>
+
+      ${skeletonStyles}
+
+      <style>
+        .obat-modal-container {
+          background: white;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 1000px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s;
+        }
+
+        .obat-modal-body {
+          padding: 2rem;
+          overflow-y: auto;
+          flex: 1;
+        }
+
+        .search-section {
+          margin-bottom: 15px;
+        }
+
+        .table tbody tr {
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .table tbody tr:hover:not(.skeleton-row) {
+          background: #f0f9ff !important;
+        }
+
+        .table tbody tr.selected {
+          background: #dbeafe !important;
+          border-left: 4px solid #6366f1;
+        }
+      </style>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+  }
+
+  updateTable() {
+    const tbody = document.getElementById("obatTableBody");
+    if (tbody) {
+      tbody.innerHTML = this.renderObatTableRows();
+      this.attachTableEvents();
+    }
+  }
+
+  renderObatTableRows() {
+    if (this.isLoading) {
+      return SkeletonLoader.tableRows(6, 5);
+    }
+
+    if (this.filteredObatData.length === 0) {
+      return `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
+            <i class="bi bi-inbox" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+            Tidak ada data obat
+          </td>
+        </tr>
+      `;
+    }
+
+    return this.filteredObatData.map((obat, index) => `
+      <tr data-index="${index}" data-id="${obat.id_obat}">
+        <td>${index + 1}</td>
+        <td>${obat.barcode || '-'}</td>
+        <td><strong>${obat.nama_obat}</strong></td>
+        <td>${obat.jenis_obat || '-'}</td>
+        <td>Rp ${parseFloat(obat.harga_jual || 0).toLocaleString('id-ID')}</td>
+        <td><span class="badge ${obat.stock > 0 ? 'bg-success' : 'bg-danger'}">${obat.stock || 0}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  attachTableEvents() {
+    const tbody = document.getElementById("obatTableBody");
+    if (!tbody) return;
+
+    tbody.addEventListener("click", (e) => {
+      const row = e.target.closest("tr");
+      if (!row || !row.dataset.index) return;
+
+      tbody.querySelectorAll("tr").forEach(tr => tr.classList.remove("selected"));
+      row.classList.add("selected");
+
+      const index = parseInt(row.dataset.index);
+      this.selectedObat = this.filteredObatData[index];
+      
+      this.showSelectedObatInfo();
+    });
+  }
+
+  showSelectedObatInfo() {
+    if (!this.selectedObat) return;
+
+    const infoDiv = document.getElementById("selectedObatInfo");
+    infoDiv.style.display = "block";
+
+    document.getElementById("selectedNama").textContent = this.selectedObat.nama_obat;
+    document.getElementById("selectedJenis").textContent = this.selectedObat.jenis_obat || '-';
+    document.getElementById("selectedHarga").textContent = parseFloat(this.selectedObat.harga_jual || 0).toLocaleString('id-ID');
+    document.getElementById("selectedStock").textContent = this.selectedObat.stock || 0;
+
+    document.getElementById("obatJumlahInput").value = 1;
+    document.getElementById("obatSignaInput").value = "";
+  }
+
+  filterObat(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    
+    if (!term) {
+      this.filteredObatData = [...this.allObatData];
+    } else {
+      this.filteredObatData = this.allObatData.filter(obat => 
+        (obat.nama_obat && obat.nama_obat.toLowerCase().includes(term)) ||
+        (obat.barcode && obat.barcode.toLowerCase().includes(term))
+      );
+    }
+
+    this.updateTable();
+
+    if (this.selectedObat) {
+      const stillExists = this.filteredObatData.find(o => o.id_obat === this.selectedObat.id_obat);
+      if (!stillExists) {
+        document.getElementById("selectedObatInfo").style.display = "none";
+        this.selectedObat = null;
+      }
+    }
+  }
+
+  addObat() {
+    if (!this.selectedObat) {
+      alert("⚠️ Silakan pilih obat terlebih dahulu!");
+      return;
+    }
+
+    const jumlahInput = document.getElementById("obatJumlahInput");
+    const signaInput = document.getElementById("obatSignaInput");
+
+    const jumlah = parseInt(jumlahInput.value);
+    const signa = signaInput.value.trim();
+
+    if (!jumlah || jumlah <= 0) {
+      alert("⚠️ Jumlah harus lebih dari 0!");
+      jumlahInput.focus();
+      return;
+    }
+
+    if (jumlah > this.selectedObat.stock) {
+      alert(`⚠️ Stock tidak mencukupi!\nStock tersedia: ${this.selectedObat.stock}`);
+      jumlahInput.focus();
+      return;
+    }
+
+    if (!signa) {
+      alert("⚠️ Signa (aturan pakai) harus diisi!");
+      signaInput.focus();
+      return;
+    }
+
+    const obatData = {
+      id_obat: this.selectedObat.id_obat,
+      nama: this.selectedObat.nama_obat,
+      jenis: this.selectedObat.jenis_obat || '-',
+      jumlah: jumlah,
+      harga: parseFloat(this.selectedObat.harga_jual || 0),
+      signa: signa
+    };
+
+    this.pemeriksaanModal.addOrUpdateDrug(obatData);
+    
+    alert(`✅ Obat "${obatData.nama}" berhasil ditambahkan!`);
+    this.close();
+  }
+
+  close() {
+    const modal = document.getElementById("obatSelectionModal");
+    if (modal) {
+      modal.style.animation = "fadeOut 0.2s";
+      setTimeout(() => modal.remove(), 200);
+    }
+  }
+}
+
+// ========================================
+// RESEP MODAL CLASS
+// ========================================
+class ResepModal {
+  constructor(pemeriksaanModal) {
+    this.pemeriksaanModal = pemeriksaanModal;
+  }
+
+  show() {
+    this.createModal();
+  }
+
+  createModal() {
+    const existingModal = document.getElementById("resepModal");
+    if (existingModal) existingModal.remove();
+
+    const currentResep = this.pemeriksaanModal.resepData;
+
+    const modalHTML = `
+      <div id="resepModal" class="modal-overlay" style="z-index: 1060;">
+        <div class="resep-modal-container">
+          <div class="modal-header">
+            <h3>📝 Resep Obat</h3>
+            <button class="close-btn" onclick="resepModal.close()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="resep-modal-body">
+            <div class="alert alert-info" style="background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+              <i class="bi bi-info-circle me-2"></i>
+              <strong>Info:</strong> Resep ini adalah catatan terpisah dari daftar obat. Resep bersifat opsional.
+            </div>
+
+            <div class="form-group">
+              <label>Nama Resep *</label>
+              <input type="text" 
+                     id="resepNama" 
+                     class="form-control" 
+                     placeholder="Contoh: Resep untuk Demam dan Batuk"
+                     value="${currentResep.nama || ''}">
+            </div>
+
+            <div class="form-group">
+              <label>Catatan Resep</label>
+              <textarea id="resepCatatan" 
+                        class="form-control" 
+                        rows="4"
+                        placeholder="Catatan khusus untuk resep ini...">${currentResep.catatan || ''}</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Detail Resep Obat *</label>
+              <textarea id="resepDetail" 
+                        class="form-control" 
+                        rows="6"
+                        placeholder="Contoh:&#10;1. Paracetamol 500mg - 3x1 sehari sesudah makan&#10;2. Amoxicillin 500mg - 3x1 sehari sesudah makan&#10;3. OBH Sirup 60ml - 3x1 sendok makan">${currentResep.detail || ''}</textarea>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-secondary" onclick="resepModal.close()">
+              <i class="bi bi-x-circle me-1"></i>Batal
+            </button>
+            <button class="btn-danger" onclick="resepModal.clearResep()" style="margin-right: auto;">
+              <i class="bi bi-trash me-1"></i>Hapus Resep
+            </button>
+            <button class="btn-success" onclick="resepModal.saveResep()">
+              <i class="bi bi-check-circle me-1"></i>Simpan Resep
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <style>
+        .resep-modal-container {
+          background: white;
+          border-radius: 12px;
+          width: 90%;
+          max-width: 700px;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+          animation: slideUp 0.3s;
+        }
+
+        .resep-modal-body {
+          padding: 2rem;
+          overflow-y: auto;
+          flex: 1;
+        }
+      </style>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+  }
+
+  saveResep() {
+    const nama = document.getElementById("resepNama")?.value.trim();
+    const catatan = document.getElementById("resepCatatan")?.value.trim();
+    const detail = document.getElementById("resepDetail")?.value.trim();
+
+    if (!nama) {
+      alert("⚠️ Nama resep harus diisi!");
+      document.getElementById("resepNama")?.focus();
+      return;
+    }
+
+    if (!detail) {
+      alert("⚠️ Detail resep obat harus diisi!");
+      document.getElementById("resepDetail")?.focus();
+      return;
+    }
+
+    this.pemeriksaanModal.resepData = {
+      nama: nama,
+      catatan: catatan,
+      detail: detail
+    };
+
+    alert(`✅ Resep "${nama}" berhasil disimpan!`);
+    this.pemeriksaanModal.renderStepContent();
+    this.close();
+  }
+
+  clearResep() {
+    if (!confirm("⚠️ Hapus resep yang sudah diisi?\n\nData resep akan dihapus.")) {
+      return;
+    }
+
+    this.pemeriksaanModal.resepData = {
+      nama: '',
+      catatan: '',
+      detail: ''
+    };
+
+    alert("✅ Resep berhasil dihapus!");
+    this.pemeriksaanModal.renderStepContent();
+    this.close();
+  }
+
+  close() {
+    const modal = document.getElementById("resepModal");
+    if (modal) {
+      modal.style.animation = "fadeOut 0.2s";
+      setTimeout(() => modal.remove(), 200);
+    }
+  }
+}
 
 // ========================================
 // PEMERIKSAAN MODAL CLASS
@@ -12,6 +1205,11 @@ class PemeriksaanModal {
     this.icdixTableData = [];
     this.totalHarga = 0;
     this.hargaJasa = 0;
+    this.resepData = {
+      nama: '',
+      catatan: '',
+      detail: ''
+    };
   }
 
   show(queueData) {
@@ -81,39 +1279,44 @@ class PemeriksaanModal {
 
       <style>
       .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.5);  /* Changed from 0.6 to 0.5 */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1055;  /* Bootstrap's modal z-index */
-      overflow-y: auto;
-      padding: 0;  /* Remove padding */
-      animation: fadeIn 0.15s;  /* Faster animation */
-    }
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1055;
+        overflow-y: auto;
+        padding: 0;
+        animation: fadeIn 0.15s;
+      }
 
       @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
       }
 
+      @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+
       .modal-container {
-      background: white;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 800px;  /* Match Bootstrap's default */
-      margin: 1.75rem auto;
-      max-height: calc(100vh - 3.5rem);
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-      animation: slideUp 0.3s;
-      position: relative;  /* Add this */
-    }
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 800px;
+        margin: 1.75rem auto;
+        max-height: calc(100vh - 3.5rem);
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        animation: slideUp 0.3s;
+        position: relative;
+      }
 
       @keyframes slideUp {
         from {
@@ -132,7 +1335,7 @@ class PemeriksaanModal {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
         border-radius: 12px 12px 0 0;
       }
@@ -291,7 +1494,7 @@ class PemeriksaanModal {
       }
 
       .info-card {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
         border-radius: 0.5rem;
         padding: 1.5rem;
@@ -329,7 +1532,7 @@ class PemeriksaanModal {
       }
 
       .table-container th {
-        background: #6366f1;
+        background: #059669;
         color: white;
         padding: 14px 12px;
         text-align: left;
@@ -374,12 +1577,12 @@ class PemeriksaanModal {
       }
 
       .btn-primary {
-        background: #6366f1;
+        background: #14b8a6;
         color: white;
       }
 
       .btn-primary:hover {
-        background: #4f46e5;
+        background: #0d9488;
       }
 
       .btn-secondary {
@@ -412,7 +1615,7 @@ class PemeriksaanModal {
       }
 
       .btn-add {
-        background: #6366f1;
+        background: #14b8a6;
         color: white;
         padding: 10px 20px;
         margin-top: 10px;
@@ -435,7 +1638,7 @@ class PemeriksaanModal {
       }
 
       .total-section {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
         padding: 1.5rem;
         border-radius: 0.5rem;
@@ -547,15 +1750,11 @@ class PemeriksaanModal {
           </div>
           <div class="info-row">
             <div class="info-label">🎫 No. Antrian:</div>
-            <div class="info-value"><strong>${
-              this.queueData.no_antrian || "-"
-            }</strong></div>
+            <div class="info-value"><strong>${this.queueData.no_antrian || "-"}</strong></div>
           </div>
           <div class="info-row">
             <div class="info-label">📅 Tanggal:</div>
-            <div class="info-value">${
-              this.queueData.tanggal_antrian || "-"
-            }</div>
+            <div class="info-value">${this.queueData.tanggal_antrian || "-"}</div>
           </div>
           <div class="info-row">
             <div class="info-label">🕐 Jam:</div>
@@ -651,22 +1850,22 @@ class PemeriksaanModal {
         <div class="grid-2">
           <div class="form-group">
             <label>⚖️ Berat Badan (kg)</label>
-            <input type="number" id="bodyWeight" step="0.1" placeholder="Contoh: 65.5">
+            <input type="text" id="bodyWeight" placeholder="Contoh: 65.5">
           </div>
 
           <div class="form-group">
             <label>💨 Saturasi Oksigen (%)</label>
-            <input type="number" id="oxygenSat" step="0.1" placeholder="Contoh: 98">
+            <input type="text" id="oxygenSat" placeholder="Contoh: 98">
           </div>
 
           <div class="form-group">
             <label>📏 Tinggi Badan (cm)</label>
-            <input type="number" id="bodyHeight" step="0.1" placeholder="Contoh: 170">
+            <input type="text" id="bodyHeight" placeholder="Contoh: 170">
           </div>
 
           <div class="form-group">
             <label>🌡️ Suhu Tubuh (°C)</label>
-            <input type="number" id="bodyTemp" step="0.1" placeholder="Contoh: 36.5">
+            <input type="text" id="bodyTemp" placeholder="Contoh: 36.5">
           </div>
 
           <div class="form-group">
@@ -676,12 +1875,12 @@ class PemeriksaanModal {
 
           <div class="form-group">
             <label>💓 Denyut Nadi (bpm)</label>
-            <input type="number" id="heartRate" placeholder="Contoh: 72">
+            <input type="text" id="heartRate" placeholder="Contoh: 72">
           </div>
 
           <div class="form-group">
             <label>🫁 Laju Pernapasan (x/min)</label>
-            <input type="number" id="respRate" placeholder="Contoh: 16">
+            <input type="text" id="respRate" placeholder="Contoh: 16">
           </div>
         </div>
       </div>
@@ -748,27 +1947,47 @@ class PemeriksaanModal {
 
   renderDrugs() {
     const totalHargaObat = this.drugTableData.reduce(
-      (sum, drug) => sum + drug.harga * drug.jumlah,
+      (sum, drug) => sum + (drug.harga * drug.jumlah),
       0
     );
     const total = totalHargaObat + this.hargaJasa;
 
+    const hasResep = this.resepData.nama && this.resepData.detail;
+
     return `
       <div class="form-section">
-        <h3>💊 Daftar Obat</h3>
+        <h3>💊 Daftar Obat & Resep</h3>
         
-        <button class="btn-add" onclick="pemeriksaanModal.addDrug()">
-          <i class="bi bi-plus-circle me-2"></i>Tambah Obat
-        </button>
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <button class="btn-add" onclick="pemeriksaanModal.showObatSelectionModal()" style="flex: 1;">
+            <i class="bi bi-plus-circle me-2"></i>Tambah Obat
+          </button>
+          <button class="btn-add" onclick="pemeriksaanModal.showResepModal()" style="flex: 1; background: ${hasResep ? '#10b981' : '#0d9488'};">
+            <i class="bi bi-file-earmark-medical me-2"></i>${hasResep ? '✓ Edit Resep' : 'Tambah Resep'}
+          </button>
+        </div>
 
-        <div class="table-container" style="margin-top: 15px;">
+        ${hasResep ? `
+        <div class="resep-indicator" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <strong>Resep: ${this.resepData.nama}</strong>
+              ${this.resepData.catatan ? `<br><small style="opacity: 0.9; margin-left: 28px;">${this.resepData.catatan}</small>` : ''}
+            </div>
+            <button onclick="pemeriksaanModal.showResepModal()" style="background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+              <i class="bi bi-pencil me-1"></i>Edit
+            </button>
+          </div>
+        </div>
+        ` : ''}
+
+        <div class="table-container">
           <table id="drugTable">
             <thead>
               <tr>
                 <th>Nama Obat</th>
-                <th width="120">Jenis</th>
                 <th width="80">Jumlah</th>
-                <th width="120">Harga</th>
                 <th width="150">Signa</th>
                 <th width="100">Aksi</th>
               </tr>
@@ -776,15 +1995,13 @@ class PemeriksaanModal {
             <tbody>
               ${
                 this.drugTableData.length === 0
-                  ? '<tr><td colspan="6" style="text-align: center; color: #999; padding: 30px;">Belum ada obat ditambahkan</td></tr>'
+                  ? '<tr><td colspan="4" style="text-align: center; color: #999; padding: 30px;">Belum ada obat ditambahkan</td></tr>'
                   : this.drugTableData
                       .map(
                         (drug, index) => `
                   <tr>
                     <td><strong>${drug.nama}</strong></td>
-                    <td>${drug.jenis}</td>
                     <td style="text-align: center;">${drug.jumlah}</td>
-                    <td>Rp ${drug.harga.toLocaleString("id-ID")}</td>
                     <td><em>${drug.signa}</em></td>
                     <td>
                       <button class="btn-danger" onclick="pemeriksaanModal.removeDrug(${index})">
@@ -804,7 +2021,7 @@ class PemeriksaanModal {
           <div>
             <div class="form-group" style="margin-bottom: 0;">
               <label>💰 Harga Jasa Dokter</label>
-              <input type="number" id="hargaJasa" value="${this.hargaJasa}" 
+              <input type="text" id="hargaJasa" value="${this.hargaJasa}" 
                      oninput="pemeriksaanModal.updateHargaJasa(this.value)" 
                      placeholder="0" style="width: 250px;">
             </div>
@@ -821,6 +2038,43 @@ class PemeriksaanModal {
         </div>
       </div>
     `;
+  }
+
+  showResepModal() {
+    window.resepModal = new ResepModal(this);
+    window.resepModal.show();
+  }
+
+  showObatSelectionModal() {
+    window.obatSelectionModal = new ObatSelectionModal(this);
+    window.obatSelectionModal.show();
+  }
+
+  addOrUpdateDrug(obatData) {
+    const existingIndex = this.drugTableData.findIndex(
+      drug => drug.id_obat === obatData.id_obat
+    );
+
+    if (existingIndex >= 0) {
+      this.drugTableData[existingIndex] = obatData;
+    } else {
+      this.drugTableData.push(obatData);
+    }
+
+    this.renderStepContent();
+  }
+
+  removeDrug(index) {
+    if (confirm("Hapus obat ini?")) {
+      this.drugTableData.splice(index, 1);
+      this.renderStepContent();
+    }
+  }
+
+  updateHargaJasa(value) {
+    const numericValue = value.replace(/[^0-9]/g, '');
+    this.hargaJasa = parseFloat(numericValue) || 0;
+    this.renderStepContent();
   }
 
   attachDiagnosisEvents() {
@@ -877,13 +2131,8 @@ class PemeriksaanModal {
   }
 
   addICDX() {
-    const kode = prompt("Masukkan Kode ICDX (contoh: A00.0):");
-    if (!kode) return;
-    const deskripsi = prompt("Masukkan Deskripsi Diagnosa:");
-    if (!deskripsi) return;
-
-    this.icdxTableData.push({ kode: kode.trim(), deskripsi: deskripsi.trim() });
-    this.renderICDXTable();
+    window.icdxSelectionModal = new ICDXSelectionModal(this);
+    window.icdxSelectionModal.show();
   }
 
   removeICDX(index) {
@@ -894,16 +2143,8 @@ class PemeriksaanModal {
   }
 
   addICDIX() {
-    const kode = prompt("Masukkan Kode ICDIX (contoh: 01.00):");
-    if (!kode) return;
-    const deskripsi = prompt("Masukkan Deskripsi Prosedur:");
-    if (!deskripsi) return;
-
-    this.icdixTableData.push({
-      kode: kode.trim(),
-      deskripsi: deskripsi.trim(),
-    });
-    this.renderICDIXTable();
+    window.icdixSelectionModal = new ICDIXSelectionModal(this);
+    window.icdixSelectionModal.show();
   }
 
   removeICDIX(index) {
@@ -911,46 +2152,6 @@ class PemeriksaanModal {
       this.icdixTableData.splice(index, 1);
       this.renderICDIXTable();
     }
-  }
-
-  addDrug() {
-    const nama = prompt("Nama Obat:");
-    if (!nama) return;
-    const jenis = prompt("Jenis Obat (contoh: Tablet, Kapsul, Sirup):");
-    if (!jenis) return;
-    const jumlah = parseInt(prompt("Jumlah:"));
-    if (!jumlah || jumlah <= 0) {
-      alert("Jumlah harus lebih dari 0!");
-      return;
-    }
-    const harga = parseFloat(prompt("Harga per unit:"));
-    if (!harga || harga < 0) {
-      alert("Harga tidak valid!");
-      return;
-    }
-    const signa = prompt("Signa (aturan pakai):");
-    if (!signa) return;
-
-    this.drugTableData.push({
-      nama: nama.trim(),
-      jenis: jenis.trim(),
-      jumlah,
-      harga,
-      signa: signa.trim(),
-    });
-    this.renderStepContent();
-  }
-
-  removeDrug(index) {
-    if (confirm("Hapus obat ini?")) {
-      this.drugTableData.splice(index, 1);
-      this.renderStepContent();
-    }
-  }
-
-  updateHargaJasa(value) {
-    this.hargaJasa = parseFloat(value) || 0;
-    this.renderStepContent();
   }
 
   updateNavigationButtons() {
@@ -1046,6 +2247,7 @@ class PemeriksaanModal {
       icdix: this.icdixTableData,
 
       obat: this.drugTableData,
+      resep: this.resepData,
       harga_jasa: this.hargaJasa,
       total:
         this.drugTableData.reduce(
@@ -1155,18 +2357,15 @@ class PemeriksaanFragment {
                   </tr>
                 </thead>
                 <tbody id="queueTableBody">
-                  <tr>
-                    <td colspan="8" class="text-center py-4">
-                      <div class="spinner-border text-primary" role="status"></div>
-                      <p class="mt-2">Loading data...</p>
-                    </td>
-                  </tr>
+                  ${SkeletonLoader.tableRows(8, 5)}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
+
+      ${skeletonStyles}
 
       <style>
         .btn-periksa { 
@@ -1239,7 +2438,7 @@ class PemeriksaanFragment {
         const statusClass = `status-${queue.status_antrian
           .toLowerCase()
           .replace(" ", "-")}`;
-        const hasEncounter = queue.id_encounter_satusehat; // ✅ FIXED: Correct column name
+        const hasEncounter = queue.id_encounter_satusehat;
 
         let actionButtons = "";
 
@@ -1258,7 +2457,6 @@ class PemeriksaanFragment {
           `;
           }
         } else if (queue.status_antrian.toLowerCase() === "sedang diperiksa") {
-          // ✅ FIXED: Removed KELUAR button, only show LANJUT
           actionButtons = `
           <button class="btn btn-continue btn-sm" onclick="window.currentFragment.continueExamination('${queue.id_antrian}')" title="Lanjutkan Pemeriksaan">
             <i class="bi bi-clipboard-pulse me-1"></i>LANJUT
@@ -1405,6 +2603,12 @@ class PemeriksaanFragment {
   }
 
   async periksaQueue(id) {
+    const queueData = this.queues.find((q) => q.id_antrian === id);
+    if (!queueData) {
+      alert("❌ Data antrian tidak ditemukan");
+      return;
+    }
+
     if (
       !confirm(
         "Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT."
@@ -1434,14 +2638,12 @@ class PemeriksaanFragment {
         console.log("🔗 Hash:", result.hash);
         console.log("=".repeat(50));
 
-        await this.loadQueues();
+        queueData.id_encounter_satusehat = result.id_encounter_satusehat;
+        queueData.status_antrian = "Sedang Diperiksa";
 
-        const queueData = this.queues.find((q) => q.id_antrian === id);
-        if (queueData) {
-          window.pemeriksaanModal.show(queueData);
-        } else {
-          alert("❌ Data antrian tidak ditemukan");
-        }
+        this.loadQueues().catch(err => console.error("Error reloading queues:", err));
+
+        window.pemeriksaanModal.show(queueData);
       } else {
         alert(
           "❌ Gagal memulai pemeriksaan: " +
@@ -1455,6 +2657,12 @@ class PemeriksaanFragment {
   }
 
   async resumeQueue(id) {
+    const queueData = this.queues.find((q) => q.id_antrian === id);
+    if (!queueData) {
+      alert("❌ Data antrian tidak ditemukan");
+      return;
+    }
+
     if (
       !confirm(
         "Lanjutkan pemeriksaan pasien ini?\n\nAnda akan melanjutkan pemeriksaan yang sudah dimulai sebelumnya."
@@ -1487,14 +2695,11 @@ class PemeriksaanFragment {
         console.log("🔗 Hash:", result.hash);
         console.log("=".repeat(50));
 
-        await this.loadQueues();
+        queueData.status_antrian = "Sedang Diperiksa";
 
-        const queueData = this.queues.find((q) => q.id_antrian === id);
-        if (queueData) {
-          window.pemeriksaanModal.show(queueData);
-        } else {
-          alert("❌ Data antrian tidak ditemukan");
-        }
+        this.loadQueues().catch(err => console.error("Error reloading queues:", err));
+
+        window.pemeriksaanModal.show(queueData);
       } else {
         alert(
           "❌ Gagal melanjutkan pemeriksaan: " +
@@ -1520,6 +2725,6 @@ class PemeriksaanFragment {
   }
 }
 
-console.log("✅ Pemeriksaan System loaded successfully");
+console.log("✅ Pemeriksaan System loaded with Skeleton Loaders");
 
 window.PemeriksaanFragment = PemeriksaanFragment;

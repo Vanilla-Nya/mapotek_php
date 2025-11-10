@@ -226,7 +226,7 @@
                 <div class="modal fade" id="modalRiwayatPasien" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content">
-                            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="modal-header bg-gradient" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
                                 <h5 class="modal-title text-white">
                                     <i class="bi bi-clock-history me-2"></i>Riwayat Pemeriksaan Pasien
                                 </h5>

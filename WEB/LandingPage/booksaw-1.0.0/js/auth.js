@@ -1,11 +1,41 @@
 // ========================================
-// FILE: auth.js - Complete Authentication Handler
+// FILE: auth.js - Complete Authentication Handler (FIXED for Pembukuan)
 // ========================================
 
 console.log("🔐 Auth script loaded");
 
 // Wait for DOM to be fully loaded
 document.addEventListener("DOMContentLoaded", function () {
+  // ========================================
+  // CHECK IF USER IS ALREADY LOGGED IN
+  // ========================================
+  async function checkUserSession() {
+    try {
+      const { data: { session }, error } = await supabaseClient.auth.getSession();
+      
+      if (session && session.user) {
+        console.log("✅ User already logged in:", session.user);
+        localStorage.setItem("access_token", session.access_token);
+        localStorage.setItem("user", JSON.stringify(session.user));
+        localStorage.setItem("isLoggedIn", "true");
+        
+        // 🔑 CRITICAL FIX: Store id_dokter
+        localStorage.setItem("id_dokter", session.user.id);
+        console.log("🔑 Restored id_dokter from session:", session.user.id);
+        
+        return session.user;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("❌ Error checking session:", error);
+      return null;
+    }
+  }
+
+  // Check session on page load
+  checkUserSession();
+
   // ========================================
   // MODAL CONTROLS
   // ========================================
@@ -71,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // ========================================
-  // HANDLE LOGIN
+  // HANDLE LOGIN (FIXED FOR PEMBUKUAN)
   // ========================================
   const loginFormElement = loginForm ? loginForm.querySelector("form") : null;
   if (loginFormElement) {
@@ -84,263 +114,165 @@ document.addEventListener("DOMContentLoaded", function () {
       submitBtn.textContent = "Logging in...";
 
       const formData = {
-        action: "login",
         email: e.target.querySelector('input[type="email"]').value,
         password: e.target.querySelector('input[type="password"]').value,
       };
 
-      console.log("📤 Attempting login...");
+      console.log("📤 Attempting login for:", formData.email);
 
       try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
-      });
-      
-      if (error) {
-        throw error; // Langsung throw, biar di-handle di catch
-      }
-      
-      const user = data.user;
-      const access_token = data.session?.access_token;
-      
-      if (!user || !access_token) {
-        throw new Error("Tidak ada token atau user."); // Throw error baru
-      }
-      
-      // Store user info
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("isLoggedIn", "true");
-      
-      console.log("✅ Login successful!", user);
-      alert("Login berhasil! Selamat datang, " + (user.email || "User"));
-      
-      modal.style.display = "none";
-      window.location.replace("/mapotek_php/WEB/Dashboard/index.html");
-      
-    } catch (error) {
-      console.error("❌ Error:", error);
-      alert("Login gagal: " + error.message);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-    }
-    });
-  }
-
-  // ========================================
-  // DOCTOR REGISTRATION - SEARCH & COMPLETE
-  // ========================================
-  let practitionerData = null;
-
-  const searchMethod = document.getElementById("searchMethod");
-  const dynamicSearchInputs = document.getElementById("dynamicSearchInputs");
-  const btnSearchPractitioner = document.getElementById(
-    "btnSearchPractitioner"
-  );
-  const searchResult = document.getElementById("searchResult");
-  const searchStep = document.getElementById("searchStep");
-  const dokterCompleteForm = document.getElementById("dokterCompleteForm");
-  const btnBackToSearch = document.getElementById("btnBackToSearch");
-
-  // Change search inputs based on method
-  if (searchMethod && dynamicSearchInputs && btnSearchPractitioner) {
-    searchMethod.addEventListener("change", function () {
-      const method = this.value;
-      dynamicSearchInputs.innerHTML = "";
-      if (searchResult) searchResult.style.display = "none";
-      practitionerData = null;
-
-      if (method === "nik") {
-        dynamicSearchInputs.innerHTML = `
-                <label class="form-label">NIK (16 digit):</label>
-                <input type="text" class="form-control" id="inputNIK" placeholder="Masukkan NIK 16 digit" maxlength="16" pattern="[0-9]{16}">
-                <small class="text-muted">Masukkan NIK sesuai KTP</small>
-            `;
-        btnSearchPractitioner.style.display = "block";
-      } else if (method === "detail") {
-        dynamicSearchInputs.innerHTML = `
-                <div class="mb-2">
-                    <label class="form-label">Nama Lengkap:</label>
-                    <input type="text" class="form-control" id="inputNama" placeholder="Masukkan Nama Lengkap">
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Tanggal Lahir:</label>
-                    <input type="date" class="form-control" id="inputTanggalLahir">
-                </div>
-                <div class="mb-2">
-                    <label class="form-label">Jenis Kelamin:</label>
-                    <select class="form-select" id="inputGender">
-                        <option value="">-- Pilih --</option>
-                        <option value="male">Laki-Laki</option>
-                        <option value="female">Perempuan</option>
-                    </select>
-                </div>
-            `;
-        btnSearchPractitioner.style.display = "block";
-      } else {
-        btnSearchPractitioner.style.display = "none";
-      }
-    });
-  }
-
-  // Search practitioner from SatuSehat
-  if (btnSearchPractitioner) {
-    btnSearchPractitioner.addEventListener("click", async function () {
-      const method = searchMethod ? searchMethod.value : "";
-
-      btnSearchPractitioner.disabled = true;
-      btnSearchPractitioner.innerHTML =
-        '<span class="spinner-border spinner-border-sm me-2"></span>Mencari data...';
-
-      try {
-        let searchData = { action: "search_practitioner", method };
-
-        if (method === "nik") {
-          const nikInput = document.getElementById("inputNIK");
-          const nik = nikInput ? nikInput.value.trim() : "";
-          if (nik.length !== 16) {
-            alert("NIK harus 16 digit!");
-            return;
-          }
-          if (!/^\d{16}$/.test(nik)) {
-            alert("NIK harus berupa angka!");
-            return;
-          }
-          searchData.nik = nik;
-        } else if (method === "detail") {
-          const namaInput = document.getElementById("inputNama");
-          const tglLahirInput = document.getElementById("inputTanggalLahir");
-          const genderInput = document.getElementById("inputGender");
-
-          const nama = namaInput ? namaInput.value.trim() : "";
-          const tglLahir = tglLahirInput ? tglLahirInput.value : "";
-          const gender = genderInput ? genderInput.value : "";
-
-          if (!nama || !tglLahir || !gender) {
-            alert("Semua field harus diisi!");
-            return;
-          }
-
-          searchData.nama = nama;
-          searchData.tanggal_lahir = tglLahir;
-          searchData.gender = gender;
+        // Sign in with Supabase
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password
+        });
+        
+        if (error) {
+          throw error;
         }
-
-        console.log("🔍 Searching with data:", searchData);
-
-        const response = await fetch(
-          "../../API/auth/register_practitioner.php",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(searchData),
-          }
-        );
-
-        const result = await response.json();
-
-        console.log("🔍 Search result:", result);
-
-        if (result.success && result.data) {
-          practitionerData = result.data;
-
-          // Show success message
-          if (searchResult) {
-            searchResult.innerHTML = `✅ <strong>Data Dokter Ditemukan!</strong>
-
-Nama          : ${result.data.nama}
-Gender        : ${result.data.gender}
-Alamat        : ${result.data.alamat || "(Belum ada)"}
-
-Silakan tunggu, form registrasi akan muncul...`;
-            searchResult.style.display = "block";
-          }
-
-          // Auto-fill the registration form
-          if (dokterCompleteForm) {
-            document.getElementById("dokterIdSatusehat").value =
-              result.data.id_satusehat;
-            document.getElementById("dokterNama").value = result.data.nama;
-            document.getElementById("dokterGender").value = result.data.gender;
-            document.getElementById("dokterAlamat").value =
-              result.data.alamat || "";
-
-            // Generate username from name
-            const usernameSuggestion = result.data.nama
-              .toLowerCase()
-              .replace(/\s+/g, "")
-              .replace(/[^a-z0-9]/g, "");
-            document.getElementById("dokterUsername").value =
-              usernameSuggestion;
-
-            // Generate default email from name
-            const emailSuggestion = usernameSuggestion + "@mapotek.com";
-            document.getElementById("dokterEmail").value = emailSuggestion;
-
-            // Show the form after 1.5 seconds
-            setTimeout(() => {
-              if (searchResult) searchResult.style.display = "none";
-              if (searchStep) searchStep.style.display = "none";
-              dokterCompleteForm.style.display = "block";
-            }, 1500);
-          }
-        } else {
-          if (searchResult) {
-            searchResult.innerHTML =
-              "⚠️ <strong>Data tidak ditemukan</strong>\n\n" +
-              (result.message ||
-                "Pastikan data yang Anda masukkan benar dan terdaftar di SatuSehat.");
-            searchResult.style.display = "block";
-          }
+        
+        const user = data.user;
+        const session = data.session;
+        
+        if (!user || !session) {
+          throw new Error("Tidak ada session atau user.");
         }
+        
+        console.log("✅ Login successful!", user);
+        console.log("📋 Session:", session);
+        
+        // Store user info and token
+        localStorage.setItem("access_token", session.access_token);
+        localStorage.setItem("refresh_token", session.refresh_token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("isLoggedIn", "true");
+        
+        // 🔑 CRITICAL FIX: Store id_dokter for API calls (Pembukuan, etc.)
+        localStorage.setItem("id_dokter", user.id);
+        
+        console.log("🔑 Stored id_dokter:", user.id);
+        console.log("✅ This will be used by Pembukuan API!");
+        
+        // Get user metadata to determine role
+        const userMetadata = user.user_metadata || {};
+        const userRole = userMetadata.role || 'user';
+        
+        console.log("👤 User role:", userRole);
+        
+        // Fetch additional user data from dokter table
+        try {
+          const { data: dokterData, error: dokterError } = await supabaseClient
+            .from('dokter')
+            .select('*')
+            .eq('id_dokter', user.id)
+            .single();
+          
+          if (!dokterError && dokterData) {
+            console.log("👨‍⚕️ Doctor data loaded:", dokterData);
+            localStorage.setItem("dokter_data", JSON.stringify(dokterData));
+            
+            // Double-check id_dokter is stored (use dokter table ID if different)
+            localStorage.setItem("id_dokter", dokterData.id_dokter);
+            console.log("✅ Confirmed id_dokter from dokter table:", dokterData.id_dokter);
+          }
+        } catch (err) {
+          console.warn("⚠️ Could not load doctor data:", err);
+          console.warn("⚠️ Will use auth user ID as fallback");
+        }
+        
+        // Final verification
+        const storedId = localStorage.getItem("id_dokter");
+        console.log("🎯 FINAL CHECK - id_dokter in localStorage:", storedId);
+        
+        if (!storedId) {
+          console.error("❌ CRITICAL: id_dokter NOT stored!");
+          alert("Warning: Doctor ID not stored. Pembukuan might not work.");
+        }
+        
+        alert("Login berhasil! Selamat datang, " + (user.email || "User"));
+        
+        // Close modal
+        modal.style.display = "none";
+        
+        // Wait a bit for session to be fully established
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Redirect to dashboard
+        window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
+        
       } catch (error) {
-        console.error("❌ Error:", error);
-        alert("Terjadi kesalahan: " + error.message);
+        console.error("❌ Login Error:", error);
+        
+        let errorMessage = "Login gagal: ";
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage += "Email atau password salah!";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage += "Email belum dikonfirmasi!";
+        } else {
+          errorMessage += error.message;
+        }
+        
+        alert(errorMessage);
       } finally {
-        btnSearchPractitioner.disabled = false;
-        btnSearchPractitioner.innerHTML =
-          '<i class="bi bi-search"></i> Cari Data Dokter';
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
     });
   }
 
-  // Back to search button
-  if (btnBackToSearch) {
-    btnBackToSearch.addEventListener("click", function () {
-      // Reset form
-      if (dokterCompleteForm) {
-        dokterCompleteForm.reset();
-        dokterCompleteForm.style.display = "none";
-      }
-      if (searchStep) searchStep.style.display = "block";
-
-      // Reset search
-      if (searchMethod) searchMethod.value = "";
-      if (dynamicSearchInputs) dynamicSearchInputs.innerHTML = "";
-      if (searchResult) searchResult.style.display = "none";
-      if (btnSearchPractitioner) btnSearchPractitioner.style.display = "none";
-
-      practitionerData = null;
-    });
-  }
-
   // ========================================
-  // ✅ UPDATED: Submit complete doctor registration with better debugging
+  // DIRECT DOCTOR REGISTRATION (NO SATUSEHAT)
   // ========================================
-  if (dokterCompleteForm) {
-    dokterCompleteForm.addEventListener("submit", async function (e) {
+  const dokterRegistrationForm = document.getElementById("dokterRegistrationForm");
+  
+  if (dokterRegistrationForm) {
+    // Auto-generate username from name input
+    const namaInput = document.getElementById("dokterNama");
+    const usernameInput = document.getElementById("dokterUsername");
+    
+    if (namaInput && usernameInput) {
+      namaInput.addEventListener("input", function() {
+        const nama = this.value.trim();
+        if (nama) {
+          const username = nama
+            .toLowerCase()
+            .replace(/\s+/g, "")
+            .replace(/[^a-z0-9]/g, "");
+          usernameInput.value = username;
+        }
+      });
+    }
+
+    // Handle form submission
+    dokterRegistrationForm.addEventListener("submit", async function (e) {
       e.preventDefault();
+
+      // Validate NIK (must be 16 digits)
+      const nik = document.getElementById("dokterNIK").value.trim();
+      if (nik.length !== 16 || !/^\d{16}$/.test(nik)) {
+        alert("NIK harus 16 digit angka!");
+        return;
+      }
 
       // Validate password match
       const password = document.getElementById("dokterPassword").value;
-      const passwordConfirm = document.getElementById(
-        "dokterPasswordConfirm"
-      ).value;
+      const passwordConfirm = document.getElementById("dokterPasswordConfirm").value;
+
+      if (password.length < 6) {
+        alert("Password minimal 6 karakter!");
+        return;
+      }
 
       if (password !== passwordConfirm) {
         alert("Password dan Konfirmasi Password tidak sama!");
+        return;
+      }
+
+      // Validate phone number
+      const phone = document.getElementById("dokterPhone").value.trim();
+      if (!/^[0-9+\-\s()]+$/.test(phone)) {
+        alert("Nomor telepon tidak valid!");
         return;
       }
 
@@ -350,38 +282,38 @@ Silakan tunggu, form registrasi akan muncul...`;
       submitBtn.innerHTML =
         '<span class="spinner-border spinner-border-sm me-2"></span>Mendaftar...';
 
-      const formData = {
-        action: "save_practitioner",
+      // Prepare data for registration (NO SATUSEHAT - DIRECT TO DATABASE)
+      const registrationData = {
+        action: "register_doctor_direct",
         data: {
-          id_satusehat: document.getElementById("dokterIdSatusehat").value,
-          nama: document.getElementById("dokterNama").value,
+          nik: nik,
+          nama: document.getElementById("dokterNama").value.trim(),
+          tanggal_lahir: document.getElementById("dokterTanggalLahir").value,
           gender: document.getElementById("dokterGender").value,
-          username: document.getElementById("dokterUsername").value,
-          alamat: document.getElementById("dokterAlamat").value,
-          no_telp: document.getElementById("dokterPhone").value,
-          email: document.getElementById("dokterEmail").value,
+          username: document.getElementById("dokterUsername").value.trim(),
+          email: document.getElementById("dokterEmail").value.trim(),
+          alamat: document.getElementById("dokterAlamat").value.trim(),
+          no_telp: phone,
           password: password,
         },
       };
 
-      console.log("💾 Registering doctor with data:", formData);
+      console.log("💾 Registering doctor with data:", registrationData);
 
       try {
         const response = await fetch(
-          "../../API/auth/register_practitioner.php",
+          "/MAPOTEK_PHP/WEB/API/auth/auth.php",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData),
+            body: JSON.stringify(registrationData),
           }
         );
 
         const result = await response.json();
         console.log("💾 Full registration result:", result);
 
-        // ✅ ENHANCED: Better success/error handling with detailed feedback
         if (result.success) {
-          // Check if id_dokter is actually set
           if (result.data && result.data.id_dokter) {
             console.log(
               "✅ SUCCESS: Doctor registered with ID:",
@@ -390,41 +322,30 @@ Silakan tunggu, form registrasi akan muncul...`;
 
             alert(
               `✅ Registrasi Berhasil!\n\n` +
-                `Selamat datang, ${formData.data.nama}!\n\n` +
-                `Email: ${formData.data.email}\n` +
-                `Username: ${formData.data.username}\n` +
+                `Selamat datang, ${registrationData.data.nama}!\n\n` +
+                `Email: ${registrationData.data.email}\n` +
+                `Username: ${registrationData.data.username}\n` +
                 `ID Dokter: ${result.data.id_dokter}\n\n` +
                 `Silakan login untuk melanjutkan.`
             );
 
-            // Reset and switch to login
-            dokterCompleteForm.reset();
-            dokterCompleteForm.style.display = "none";
-            if (searchStep) searchStep.style.display = "block";
-
-            if (searchMethod) searchMethod.value = "";
-            if (dynamicSearchInputs) dynamicSearchInputs.innerHTML = "";
-            if (btnSearchPractitioner)
-              btnSearchPractitioner.style.display = "none";
-
-            // Switch to login form
+            // Reset form and switch to login
+            dokterRegistrationForm.reset();
             registerForm.style.display = "none";
             loginForm.style.display = "block";
-
-            practitionerData = null;
           } else {
-            // Success but no id_dokter - show debug info
+            // Success but no id_dokter
             console.warn("⚠️ User created but doctor record not inserted");
             console.warn("Response:", result);
 
             let debugMsg = `⚠️ User Created but Doctor Record Failed!\n\n`;
-            debugMsg += `✅ User ID: ${result.data.user_id}\n`;
-            debugMsg += `✅ Email: ${result.data.email}\n`;
+            debugMsg += `✅ User ID: ${result.data?.user_id || "N/A"}\n`;
+            debugMsg += `✅ Email: ${result.data?.email || "N/A"}\n`;
             debugMsg += `❌ ID Dokter: NULL\n\n`;
             debugMsg += `🔍 TROUBLESHOOTING:\n`;
             debugMsg += `1. Check browser console (F12) for details\n`;
             debugMsg += `2. Check PHP error logs\n`;
-            debugMsg += `3. Check Supabase logs for 400 errors\n\n`;
+            debugMsg += `3. Check database connection\n\n`;
 
             if (result.debug) {
               debugMsg += `📋 Debug Info:\n${JSON.stringify(

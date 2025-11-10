@@ -109,13 +109,13 @@ h6.text-primary i {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
     border: none;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5568d3 0%, #6941a0 100%);
+    background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }

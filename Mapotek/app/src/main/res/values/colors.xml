@@ -47,4 +47,11 @@
 
     <!-- Divider -->
     <color name="divider">#E0E0E0</color>
+
+    <!-- Add this color for medicine type badges -->
+    <color name="info_color">#2E7D99</color>
+
+    <!-- Optional: Add divider_color alias for consistency -->
+    <color name="divider_color">@color/divider</color>
 </resources>
+

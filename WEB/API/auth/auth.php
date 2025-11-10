@@ -1,162 +1,296 @@
 <?php
+// ========================================
+// BACKEND: Direct Doctor Registration (NO SATUSEHAT)
+// File: register_practitioner.php
+// ========================================
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    // Preflight request (CORS)
-    http_response_code(200);
+// Include your Supabase client
+require_once __DIR__ . '/../config/supabase.php';
+
+// Get JSON input
+$input = file_get_contents('php://input');
+$data = json_decode($input, true);
+
+if (!$data || !isset($data['action'])) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Invalid request'
+    ]);
     exit;
 }
 
-require_once '../database.php';
-
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents('php://input'), true);
-
-if ($requestMethod === 'POST') {
-    $action = $input['action'] ?? '';
-
-    switch ($action) {
-        case 'register':
-        $authData = [
-            'email' => $input['email'],
-            'password' => $input['password']
-        ];
-        
-        $authResult = supabaseAuthRegister($authData);
-        error_log("1. Auth Register: " . json_encode($authResult));
-        
-        if ($authResult['success']) {
-            $loginResult = supabaseAuthLogin($authData);
-            error_log("2. Login Result: " . json_encode($loginResult));
-            
-            if ($loginResult['success']) {
-                $dokterData = [
-                    'nama_faskes' => $input['nama_faskes'],
-                    'nama_lengkap' => $input['nama_lengkap'],
-                    'username' => $input['username'],
-                    'jenis_kelamin' => $input['jenis_kelamin'],
-                    'alamat' => $input['alamat'],
-                    'no_telp' => $input['no_telp'],
-                    'email' => $input['email']
-                ];
-                
-                error_log("3. Data to insert: " . json_encode($dokterData));
-                
-                $insertResult = supabase('POST', 'dokter', '', $dokterData, $loginResult['access_token']);
-                
-                error_log("4. Insert Result: " . json_encode($insertResult));
-                
-                // Check for errors in response
-                if (isset($insertResult['code'])) {
-                    error_log("ERROR CODE: " . $insertResult['code']);
-                    error_log("ERROR MESSAGE: " . $insertResult['message']);
-                    echo json_encode(['success' => false, 'message' => $insertResult['message']]);
-                } else if (!empty($insertResult)) {
-                    echo json_encode([
-                        'success' => true,
-                        'message' => 'Registrasi berhasil',
-                        'access_token' => $loginResult['access_token'],
-                        'user' => $insertResult[0] // Return actual inserted data
-                    ]);
-                } else {
-                    echo json_encode(['success' => false, 'message' => 'Insert returned empty']);
-                }
-            }
+// ========================================
+// DIRECT DOCTOR REGISTRATION (NO SATUSEHAT)
+// ========================================
+if ($data['action'] === 'register_doctor_direct') {
+    
+    $doctorData = $data['data'];
+    
+    // Validate required fields
+    $required = ['nik', 'nama', 'tanggal_lahir', 'gender', 'email', 'username', 'alamat', 'no_telp', 'password'];
+    foreach ($required as $field) {
+        if (empty($doctorData[$field])) {
+            echo json_encode([
+                'success' => false,
+                'message' => "Field '$field' harus diisi"
+            ]);
+            exit;
         }
-        break;
-        case 'login':
-        $authData = [
-            'email' => $input['email'],
-            'password' => $input['password']
-        ];
-        
-        $loginResult = supabaseAuthLogin($authData);
-        
-        if ($loginResult['success']) {
-            // Use ilike for case-insensitive search
-            $email = $input['email'];
-            $dokterData = supabase('GET', 'dokter', "email=ilike." . $email, null, $loginResult['access_token']);
-            
-            if (!empty($dokterData) && !isset($dokterData['code'])) {
-                echo json_encode([
-                    'success' => true,
-                    'message' => 'Login berhasil',
-                    'access_token' => $loginResult['access_token'],
-                    'user' => $dokterData[0]
-                ]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Data dokter tidak ditemukan']);
-            }
-        } else {
-            echo json_encode(['success' => false, 'message' => $loginResult['message']]);
-        }
-        break;
-        
-        default:
-            echo json_encode(['success' => false, 'message' => 'Action tidak valid']);
     }
-}
+    
+    // Validate NIK (16 digits)
+    if (!preg_match('/^\d{16}$/', $doctorData['nik'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'NIK harus 16 digit angka'
+        ]);
+        exit;
+    }
+    
+    // Validate email format
+    if (!filter_var($doctorData['email'], FILTER_VALIDATE_EMAIL)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Format email tidak valid'
+        ]);
+        exit;
+    }
+    
+    // Validate password length
+    if (strlen($doctorData['password']) < 6) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Password minimal 6 karakter'
+        ]);
+        exit;
+    }
+    
+    // Validate username (alphanumeric only)
+    if (!preg_match('/^[a-z0-9]+$/', $doctorData['username'])) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Username hanya boleh huruf kecil dan angka'
+        ]);
+        exit;
+    }
 
-function supabaseAuthRegister($data) {
-    global $SUPABASE_URL, $SUPABASE_KEY;
-    
-    $url = $SUPABASE_URL . "/auth/v1/signup";
-    
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "apikey: $SUPABASE_KEY",
-        "Content-Type: application/json"
-    ]);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    $result = json_decode($response, true);
-    
-    if ($httpCode === 200 || $httpCode === 201) {
-        return ['success' => true, 'data' => $result];
+    // ========================================
+    // Normalize gender to Indonesian format
+    // ========================================
+    $gender = strtolower(trim($doctorData['gender']));
+    if (in_array($gender, ['male', 'laki-laki', 'laki laki', 'l', 'pria'])) {
+        $normalizedGender = 'Laki-Laki';
+    } elseif (in_array($gender, ['female', 'perempuan', 'p', 'wanita'])) {
+        $normalizedGender = 'Perempuan';
     } else {
-        $errorMsg = $result['msg'] ?? $result['error_description'] ?? 'Registration failed';
-        return ['success' => false, 'message' => $errorMsg];
+        echo json_encode([
+            'success' => false,
+            'message' => 'Gender harus Male atau Female'
+        ]);
+        exit;
     }
-}
-
-function supabaseAuthLogin($data) {
-    global $SUPABASE_URL, $SUPABASE_KEY;
     
-    $url = $SUPABASE_URL . "/auth/v1/token?grant_type=password";
-    
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "apikey: $SUPABASE_KEY",
-        "Content-Type: application/json"
-    ]);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    $result = json_decode($response, true);
-    
-    if ($httpCode === 200 && isset($result['access_token'])) {
-        return [
+    try {
+        // ========================================
+        // STEP 1: Check if NIK already exists
+        // ========================================
+        $checkNIK = supabase('GET', 'dokter', 'nik=eq.' . $doctorData['nik'] . '&select=nik');
+        
+        if (isset($checkNIK['error'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error checking NIK: ' . $checkNIK['error']
+            ]);
+            exit;
+        }
+        
+        if (!empty($checkNIK) && count($checkNIK) > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'NIK sudah terdaftar'
+            ]);
+            exit;
+        }
+        
+        // ========================================
+        // STEP 2: Check if email already exists
+        // ========================================
+        $checkEmail = supabase('GET', 'dokter', 'email=eq.' . $doctorData['email'] . '&select=email');
+        
+        if (isset($checkEmail['error'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error checking email: ' . $checkEmail['error']
+            ]);
+            exit;
+        }
+        
+        if (!empty($checkEmail) && count($checkEmail) > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Email sudah terdaftar'
+            ]);
+            exit;
+        }
+        
+        // ========================================
+        // STEP 3: Check if username already exists
+        // ========================================
+        $checkUsername = supabase('GET', 'dokter', 'username=eq.' . $doctorData['username'] . '&select=username');
+        
+        if (isset($checkUsername['error'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error checking username: ' . $checkUsername['error']
+            ]);
+            exit;
+        }
+        
+        if (!empty($checkUsername) && count($checkUsername) > 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Username sudah digunakan'
+            ]);
+            exit;
+        }
+        
+        // ========================================
+        // STEP 4: Create Supabase Auth User
+        // ========================================
+        $authResponse = supabaseAuthSignUp(
+            $doctorData['email'],
+            $doctorData['password'],
+            [
+                'nama_lengkap' => $doctorData['nama'],
+                'role' => 'dokter'
+            ]
+        );
+        
+        if (!$authResponse['success']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Gagal membuat akun: ' . ($authResponse['error']['message'] ?? 'Unknown error'),
+                'error_details' => $authResponse['error']
+            ]);
+            exit;
+        }
+        
+        $user = $authResponse['user'];
+        $user_id = $user['id'];
+        
+        error_log("✅ Auth user created: $user_id");
+        
+        // ========================================
+        // STEP 5: Insert into dokter table
+        // ========================================
+        $insertData = [
+            'id_dokter' => $user_id,
+            'nik' => $doctorData['nik'],
+            'nama_lengkap' => $doctorData['nama'],
+            'jenis_kelamin' => $normalizedGender,
+            'username' => $doctorData['username'],
+            'email' => $doctorData['email'],
+            'alamat' => $doctorData['alamat'],
+            'no_telp' => $doctorData['no_telp'],
+            'tanggal_lahir' => $doctorData['tanggal_lahir']
+        ];
+        
+        $insertResponse = supabase('POST', 'dokter', '', $insertData);
+        
+        error_log("📋 Insert response: " . json_encode($insertResponse));
+        
+        if (isset($insertResponse['error'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'User created but failed to save doctor data',
+                'error_details' => $insertResponse['error'],
+                'data' => [
+                    'user_id' => $user_id,
+                    'email' => $doctorData['email']
+                ],
+                'debug' => [
+                    'insert_data' => $insertData,
+                    'insert_response' => $insertResponse
+                ]
+            ]);
+            exit;
+        }
+        
+        // ========================================
+        // STEP 6: Get the inserted doctor record
+        // ========================================
+        $selectResponse = supabase('GET', 'dokter', 'id_dokter=eq.' . $user_id . '&select=id_dokter,nama_lengkap,email,username,nik');
+        
+        error_log("🔍 Select response: " . json_encode($selectResponse));
+        
+        if (isset($selectResponse['error']) || empty($selectResponse) || count($selectResponse) === 0) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Doctor registered but failed to retrieve record',
+                'error_details' => $selectResponse['error'] ?? 'No data returned',
+                'data' => [
+                    'user_id' => $user_id,
+                    'email' => $doctorData['email']
+                ]
+            ]);
+            exit;
+        }
+        
+        $doctorRecord = $selectResponse[0]; // Get first item from array
+        
+        // ========================================
+        // SUCCESS!
+        // ========================================
+        echo json_encode([
             'success' => true,
-            'access_token' => $result['access_token'],
-            'user_id' => $result['user']['id']
-        ];
-    } else {
-        $errorMsg = $result['error_description'] ?? 'Login failed';
-        return ['success' => false, 'message' => $errorMsg];
+            'message' => 'Registrasi berhasil!',
+            'data' => [
+                'user_id' => $user_id,
+                'id_dokter' => $doctorRecord['id_dokter'],
+                'nama_lengkap' => $doctorRecord['nama_lengkap'],
+                'email' => $doctorRecord['email'],
+                'username' => $doctorRecord['username'],
+                'nik' => $doctorRecord['nik']
+            ]
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ Exception: " . $e->getMessage());
+        echo json_encode([
+            'success' => false,
+            'message' => 'Error: ' . $e->getMessage(),
+            'error_details' => [
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]
+        ]);
     }
+    exit;
 }
+
+// ========================================
+// OTHER ACTIONS (if you have any)
+// ========================================
+if ($data['action'] === 'login') {
+    // Handle login if needed
+    echo json_encode([
+        'success' => false,
+        'message' => 'Login handled by Supabase client-side'
+    ]);
+    exit;
+}
+
+// Unknown action
+echo json_encode([
+    'success' => false,
+    'message' => 'Unknown action: ' . $data['action']
+]);
+exit;
 ?>
