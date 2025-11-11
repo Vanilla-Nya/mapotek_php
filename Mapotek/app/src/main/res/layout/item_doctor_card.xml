@@ -5,119 +5,153 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:minHeight="140dp">  <!-- Add minHeight instead -->
 
-        <!-- Doctor Avatar -->
+        <!-- Blurred Background -->
         <ImageView
-            android:id="@+id/ivDoctorAvatar"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:src="@drawable/ic_doctor"
-            android:background="@drawable/circle_background"
-            android:backgroundTint="@color/primary_color_light"
-            app:tint="@color/primary_color"
-            android:padding="12dp" />
+            android:id="@+id/ivDoctorBackground"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:alpha="0.9" />
 
-        <!-- Doctor Info -->
+        <!-- Gradient overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:background="@drawable/gradient_overlay" />
+
+        <!-- Foreground content -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="16dp"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvDoctorName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dr. Ahmad Sutrisno, Sp.PD"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
-
-            <TextView
-                android:id="@+id/tvSpecialty"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Dokter Spesialis Penyakit Dalam"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginTop="2dp" />
-
-            <!-- Schedule -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp"
-                android:gravity="center_vertical">
+            <!-- Doctor Avatar -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                app:cardCornerRadius="32dp"
+                app:cardElevation="3dp">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_schedule"
-                    app:tint="@color/success_color" />
+                    android:id="@+id/ivDoctorPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_doctor_placeholder" />
+            </androidx.cardview.widget.CardView>
+
+            <!-- Doctor Info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tvSchedule"
+                    android:id="@+id/tvDoctorName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="08:00 - 16:00"
-                    android:textSize="12sp"
-                    android:textColor="@color/success_color"
+                    android:text="Dr. Ahmad Sutrisno"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:layout_marginStart="4dp" />
-
-            </LinearLayout>
-
-            <!-- Location -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="4dp"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/text_secondary" />
+                    android:textColor="@android:color/white"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
                 <TextView
-                    android:id="@+id/tvLocation"
+                    android:id="@+id/tvSpecialty"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="RS Umum Surabaya, Lt. 2"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginStart="4dp" />
+                    android:text="Spesialis"
+                    android:textSize="13sp"
+                    android:textColor="#E0E0E0"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Schedule -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_schedule"
+                        app:tint="@android:color/white" />
+
+                    <TextView
+                        android:id="@+id/tvSchedule"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="08:00 - 16:00"
+                        android:textSize="11sp"
+                        android:textColor="@android:color/white"
+                        android:textStyle="bold"
+                        android:layout_marginStart="4dp" />
+                </LinearLayout>
+
+                <!-- Location -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_location"
+                        app:tint="#E0E0E0" />
+
+                    <TextView
+                        android:id="@+id/tvLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lokasi"
+                        android:textSize="11sp"
+                        android:textColor="#E0E0E0"
+                        android:layout_marginStart="4dp"
+                        android:maxLines="1"
+                        android:ellipsize="end" />
+                </LinearLayout>
 
             </LinearLayout>
+
+            <!-- Book Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBooking"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Booking"
+                android:textSize="11sp"
+                android:backgroundTint="@color/primary_color"
+                app:cornerRadius="8dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
-
-        <!-- Book Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBooking"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Booking"
-            android:textSize="12sp"
-            android:backgroundTint="@color/primary_color"
-            app:cornerRadius="8dp"
-            android:minWidth="0dp"
-            android:layout_gravity="center_vertical" />
-
-    </LinearLayout>
+    </FrameLayout>
 </androidx.cardview.widget.CardView>

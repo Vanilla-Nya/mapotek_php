@@ -2621,3 +2621,71 @@ footer#footer {
     width: 100%;
   }
 }
+
+/* ========================================
+   PRACTITIONER REGISTRATION STYLES
+   ======================================== */
+
+/* Tab buttons styling */
+.btn-check:checked + .btn-outline-primary {
+  background-color: #5CD4C8 !important;
+  border-color: #5CD4C8 !important;
+  color: white !important;
+}
+
+.btn-outline-primary {
+  color: #5CD4C8;
+  border-color: #5CD4C8;
+}
+
+.btn-outline-primary:hover {
+  background-color: #4AC4B8;
+  border-color: #4AC4B8;
+  color: white;
+}
+
+/* Search result display area */
+.result-display {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+/* Button styling */
+.btn-primary {
+  background-color: #5CD4C8;
+  border-color: #5CD4C8;
+}
+
+.btn-primary:hover {
+  background-color: #4AC4B8;
+  border-color: #4AC4B8;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+/* Form controls */
+.form-control:focus,
+.form-select:focus {
+  border-color: #5CD4C8;
+  box-shadow: 0 0 0 0.25rem rgba(92, 212, 200, 0.25);
+}
+
+/* Readonly fields styling */
+.form-control[readonly] {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}

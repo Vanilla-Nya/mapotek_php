@@ -7,12 +7,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.MultiTransformation;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
@@ -22,6 +27,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
 
 public class FindDoctorFragment extends Fragment {
     private static final String TAG = "FindDoctorFragment";
@@ -47,10 +54,7 @@ public class FindDoctorFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         initializeViews(view);
-
-        // Load doctors from Supabase
         loadDoctorsFromSupabase();
-
         setupSearchFunctionality();
         setupFilterChips();
         setupClickListeners();
@@ -67,7 +71,6 @@ public class FindDoctorFragment extends Fragment {
         authManager = new AuthManager(requireContext());
     }
 
-    // NEW METHOD: Load doctors from Supabase
     private void loadDoctorsFromSupabase() {
         Log.d(TAG, "=== START: Loading doctors from Supabase ===");
 
@@ -107,18 +110,20 @@ public class FindDoctorFragment extends Fragment {
                                     JSONObject doctorJson = jsonArray.getJSONObject(i);
                                     Log.d(TAG, "Doctor " + i + ": " + doctorJson.toString());
 
-                                    // Adjust these field names to match your actual database columns
+                                    // Create doctor with ID
                                     Doctor doctor = new Doctor(
-                                            doctorJson.optString("nama_lengkap", ""), // or "nama"
+                                            doctorJson.optString("id_dokter", ""),  // ID field
+                                            doctorJson.optString("nama_lengkap", ""),
                                             "", // specialty removed
-                                            doctorJson.optString("jam_kerja", "08:00 - 16:00"), // or "jadwal"
+                                            doctorJson.optString("jam_kerja", "08:00 - 16:00"),
                                             doctorJson.optString("alamat", ""),
                                             "", // category removed
-                                            true // always available
+                                            true, // always available
+                                            doctorJson.optString("avatar_url", "")
                                     );
 
                                     doctorList.add(doctor);
-                                    Log.d(TAG, "Added doctor: " + doctor.getName());
+                                    Log.d(TAG, "Added doctor: " + doctor.getName() + " (ID: " + doctor.getId() + ")");
                                 }
 
                                 Log.d(TAG, "Total doctors loaded: " + doctorList.size());
@@ -170,34 +175,17 @@ public class FindDoctorFragment extends Fragment {
     }
 
     private void setupFilterChips() {
-        // Since category is removed, you might want to disable chips or remove them
         chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            // Just show all doctors since we don't have categories
+            // Show all doctors since we don't have categories
             displayDoctors(doctorList);
         });
-    }
-
-    private String getSelectedFilter() {
-        int checkedId = chipGroup.getCheckedChipId();
-        if (checkedId == R.id.chipAll || checkedId == View.NO_ID) {
-            return "Semua";
-        } else if (checkedId == R.id.chipUmum) {
-            return "Dokter Umum";
-        } else if (checkedId == R.id.chipAnak) {
-            return "Anak";
-        } else if (checkedId == R.id.chipJantung) {
-            return "Jantung";
-        } else if (checkedId == R.id.chipMata) {
-            return "Mata";
-        }
-        return "Semua";
     }
 
     private void filterDoctors(String searchQuery) {
         filteredDoctorList.clear();
 
         for (Doctor doctor : doctorList) {
-            // Search only in name and location
+            // Search in name and location
             if (doctor.getName().toLowerCase().contains(searchQuery) ||
                     doctor.getLocation().toLowerCase().contains(searchQuery)) {
                 filteredDoctorList.add(doctor);
@@ -230,8 +218,36 @@ public class FindDoctorFragment extends Fragment {
         TextView tvSchedule = cardView.findViewById(R.id.tvSchedule);
         TextView tvLocation = cardView.findViewById(R.id.tvLocation);
         MaterialButton btnBooking = cardView.findViewById(R.id.btnBooking);
+        ImageView ivDoctorPhoto = cardView.findViewById(R.id.ivDoctorPhoto);
+        ImageView ivDoctorBackground = cardView.findViewById(R.id.ivDoctorBackground);
 
         tvDoctorName.setText(doctor.getName());
+
+        // 👇 Load blurred background using Glide transformation
+        Glide.with(requireContext())
+                .load(doctor.getPhotoUrl())
+                .transform(new MultiTransformation<>(new CenterCrop(), new BlurTransformation(25, 3)))
+                .placeholder(R.drawable.ic_doctor_placeholder)
+                .into(ivDoctorBackground);
+
+        // 👇 Load main circular doctor photo
+        Glide.with(requireContext())
+                .load(doctor.getPhotoUrl())
+                .placeholder(R.drawable.ic_doctor_placeholder)
+                .error(R.drawable.ic_doctor_placeholder)
+                .circleCrop()
+                .into(ivDoctorPhoto);
+
+        if (doctor.getPhotoUrl() != null && !doctor.getPhotoUrl().isEmpty()) {
+            Glide.with(requireContext())
+                    .load(doctor.getPhotoUrl())
+                    .placeholder(R.drawable.ic_doctor_placeholder)  // Show this while loading
+                    .error(R.drawable.ic_doctor_placeholder)        // Show this if load fails
+                    .circleCrop()                                    // Makes it circular
+                    .into(ivDoctorPhoto);
+        } else {
+            ivDoctorPhoto.setImageResource(R.drawable.ic_doctor_placeholder);
+        }
 
         // Hide specialty if empty
         if (doctor.getSpecialty().isEmpty()) {
@@ -272,8 +288,18 @@ public class FindDoctorFragment extends Fragment {
 
     private void bookAppointment(Doctor doctor) {
         if (doctor.isAvailable()) {
-            Toast.makeText(requireContext(), "Booking janji dengan " + doctor.getName(),
-                    Toast.LENGTH_LONG).show();
+            Log.d(TAG, "Booking appointment with doctor: " + doctor.getName() + " (ID: " + doctor.getId() + ")");
+
+            // Navigate to BookingFragment
+            BookingFragment bookingFragment = BookingFragment.newInstance(
+                    doctor.getId(),
+                    doctor.getName()
+            );
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.nav_host_fragment, bookingFragment)
+                    .addToBackStack(null)
+                    .commit();
         } else {
             Toast.makeText(requireContext(), "Dokter sedang tidak tersedia",
                     Toast.LENGTH_SHORT).show();
@@ -281,38 +307,47 @@ public class FindDoctorFragment extends Fragment {
     }
 
     private void showDoctorDetails(Doctor doctor) {
+        // You can create a detail fragment later
         Toast.makeText(requireContext(), "Detail dokter: " + doctor.getName(),
                 Toast.LENGTH_SHORT).show();
     }
 
     private void openQueueManagement() {
+        // Navigate to queue management screen
         Toast.makeText(requireContext(), "Fitur manajemen antrian - Akan segera hadir",
                 Toast.LENGTH_SHORT).show();
     }
 
+    // Doctor model class
     public static class Doctor {
+        private String id;           // NEW: Doctor ID
         private String name;
         private String specialty;
         private String schedule;
         private String location;
         private String category;
         private boolean isAvailable;
+        private String photoUrl;
 
-        public Doctor(String name, String specialty, String schedule, String location,
-                      String category, boolean isAvailable) {
+        public Doctor(String id, String name, String specialty, String schedule,
+                      String location, String category, boolean isAvailable, String photoUrl) {
+            this.id = id;
             this.name = name;
             this.specialty = specialty;
             this.schedule = schedule;
             this.location = location;
             this.category = category;
             this.isAvailable = isAvailable;
+            this.photoUrl = photoUrl;
         }
 
+        public String getId() { return id; }                    // NEW
         public String getName() { return name; }
         public String getSpecialty() { return specialty; }
         public String getSchedule() { return schedule; }
         public String getLocation() { return location; }
         public String getCategory() { return category; }
         public boolean isAvailable() { return isAvailable; }
+        public String getPhotoUrl() { return photoUrl; }
     }
 }

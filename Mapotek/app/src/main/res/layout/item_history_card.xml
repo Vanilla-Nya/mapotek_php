@@ -6,10 +6,8 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="12dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="4dp"
-    android:clickable="true"
-    android:focusable="true"
-    android:foreground="?android:attr/selectableItemBackground">
+    app:cardElevation="3dp"
+    app:cardUseCompatPadding="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,26 +15,20 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Header Row -->
+        <!-- Header: Date and Time -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:paddingBottom="12dp">
 
-            <!-- Status Icon -->
             <ImageView
-                android:id="@+id/ivStatusIcon"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:src="@drawable/ic_check_circle"
-                android:background="@drawable/circle_background"
-                android:backgroundTint="#E8F5E8"
-                app:tint="#4CAF50"
-                android:padding="6dp" />
+                android:src="@drawable/ic_calendar"
+                app:tint="@color/primary_color" />
 
-            <!-- Title and Date -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -45,133 +37,119 @@
                 android:layout_marginStart="12dp">
 
                 <TextView
-                    android:id="@+id/tvHistoryTitle"
+                    android:id="@+id/tvHistoryDate"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Konsultasi Umum"
+                    android:text="15 Januari 2025"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
                 <TextView
-                    android:id="@+id/tvHistoryStatus"
+                    android:id="@+id/tvHistoryTime"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Selesai"
-                    android:textSize="12sp"
-                    android:textColor="#4CAF50"
-                    android:textStyle="bold"
+                    android:text="10:30 WIB"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
                     android:layout_marginTop="2dp" />
 
             </LinearLayout>
 
-            <!-- Date Badge -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp"
-                app:cardBackgroundColor="@color/primary_color_light">
-
-                <TextView
-                    android:id="@+id/tvAppointmentDate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="15 Mar"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_color"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp" />
-
-            </androidx.cardview.widget.CardView>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_check_circle"
+                app:tint="@color/success_color" />
 
         </LinearLayout>
 
-        <!-- Doctor Information -->
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_color"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Doctor Name Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:paddingBottom="8dp">
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:src="@drawable/ic_doctor"
                 app:tint="@color/primary_color" />
 
             <TextView
-                android:id="@+id/tvDoctorName"
-                android:layout_width="0dp"
+                android:id="@+id/tvHistoryDoctor"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Dr. Ahmad Sutrisno, Sp.PD"
+                android:text="dr. Alexander"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary"
                 android:layout_marginStart="8dp" />
 
         </LinearLayout>
 
-        <!-- Time and Location Row -->
+        <!-- Diagnosis Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="start"
+            android:paddingBottom="12dp">
 
-            <!-- Time -->
-            <LinearLayout
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_diagnosis"
+                app:tint="@color/accent_color"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tvDiagnosis"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_schedule"
-                    app:tint="@color/text_secondary" />
-
-                <TextView
-                    android:id="@+id/tvAppointmentTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10:30 WIB"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginStart="6dp" />
-
-            </LinearLayout>
-
-            <!-- Location -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_location"
-                    app:tint="@color/text_secondary" />
-
-                <TextView
-                    android:id="@+id/tvLocation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="RS Umum Lt.2"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:layout_marginStart="6dp" />
-
-            </LinearLayout>
+                android:text="Keluhan: Demam dan batuk"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginStart="8dp" />
 
         </LinearLayout>
 
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider_color"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Medications Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Obat yang Diberikan"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp"
+            android:drawableStart="@drawable/ic_medication"
+            android:drawablePadding="8dp"
+            android:drawableTint="@color/primary_color" />
+
+        <!-- Medications Container (dynamically populated) -->
+        <LinearLayout
+            android:id="@+id/medicationsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

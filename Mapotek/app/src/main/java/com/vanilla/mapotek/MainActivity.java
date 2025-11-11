@@ -1,5 +1,6 @@
 package com.vanilla.mapotek;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -7,8 +8,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AlertDialog;
@@ -21,9 +20,13 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.vanilla.mapotek.auth.AuthManager;
 import com.vanilla.mapotek.auth.loginActivity;
+import com.vanilla.mapotek.database.supabaseHelper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private FloatingActionButton fabScanQR;
     private static final int QR_SCAN_REQUEST = 200;
 
@@ -93,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void selectNavItemInternal(String navItem) {
+        // ✅ Clear back stack IMMEDIATELY (synchronously)
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStackImmediate();
+        }
+
         resetNavIcons();
 
         switch (navItem) {
@@ -114,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
-
 
     public void navigateToSection(String section) {
         selectNavItemInternal(section);
@@ -260,18 +267,128 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        Log.d(TAG, "onActivityResult - requestCode: " + requestCode + ", resultCode: " + resultCode);
+
         if (requestCode == QR_SCAN_REQUEST && resultCode == RESULT_OK) {
             if (data != null) {
-                String qrData = data.getStringExtra("QR_DATA");
-                Toast.makeText(this, "QR Code: " + qrData, Toast.LENGTH_LONG).show();
-                processQRCode(qrData);
+                String qrType = data.getStringExtra("QR_TYPE");
+
+                Log.d(TAG, "QR_TYPE: [" + qrType + "]");
+
+                if ("DOCTOR".equals(qrType)) {
+                    String doctorId = data.getStringExtra("DOCTOR_ID");
+                    String doctorName = data.getStringExtra("DOCTOR_NAME");
+
+                    Log.d(TAG, "✅ Doctor QR - ID: [" + doctorId + "], Name: [" + doctorName + "]");
+
+                    openBookingForDoctor(doctorId, doctorName);
+                } else {
+                    Log.e(TAG, "❌ Not a DOCTOR type, got: " + qrType);
+                    String qrData = data.getStringExtra("QR_DATA");
+                    Log.d(TAG, "Fallback QR_DATA: [" + qrData + "]");
+                    Toast.makeText(this, "QR Code: " + qrData, Toast.LENGTH_LONG).show();
+                    processQRCode(qrData);
+                }
+            } else {
+                Log.e(TAG, "❌ Intent data is null!");
             }
+        } else {
+            Log.e(TAG, "❌ Request/result doesn't match");
         }
     }
 
+    private void openBookingForDoctor(String doctorId, String doctorName) {
+        // If doctor name is empty, we need to fetch it from database
+        if (doctorName == null || doctorName.isEmpty()) {
+            fetchDoctorAndOpenBooking(doctorId);
+        } else {
+            // We have all info, open booking directly
+            openBookingFragment(doctorId, doctorName);
+        }
+    }
+
+    private void fetchDoctorAndOpenBooking(String doctorId) {
+        // Show loading
+        Toast.makeText(this, "Memuat data dokter...", Toast.LENGTH_SHORT).show();
+
+        String accessToken = authManager.getAccessToken();
+        String table = "dokter";
+        String params = "*&id_dokter=eq." + doctorId;
+
+        supabaseHelper.select(this, table, params, accessToken,
+                new supabaseHelper.SupabaseCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        try {
+                            JSONArray jsonArray = new JSONArray(response);
+                            if (jsonArray.length() > 0) {
+                                JSONObject doctor = jsonArray.getJSONObject(0);
+                                String doctorName = doctor.optString("nama_lengkap", "Dokter");
+
+                                runOnUiThread(() -> {
+                                    openBookingFragment(doctorId, doctorName);
+                                });
+                            } else {
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this,
+                                            "Dokter tidak ditemukan",
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing doctor: " + e.getMessage());
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this,
+                                        "Error: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "Error fetching doctor: " + error);
+                        runOnUiThread(() -> {
+                            Toast.makeText(MainActivity.this,
+                                    "Gagal memuat data dokter",
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+    }
+
+    private void openBookingFragment(String doctorId, String doctorName) {
+        Log.d(TAG, "Opening booking fragment for: " + doctorName);
+
+        BookingFragment bookingFragment = BookingFragment.newInstance(doctorId, doctorName);
+
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        // ✅ Add animation
+        transaction.setCustomAnimations(
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right,
+                android.R.anim.slide_in_left,
+                android.R.anim.slide_out_right
+        );
+
+        // ✅ IMPORTANT: Hide the currently active fragment
+        if (activeFragment != null) {
+            transaction.hide(activeFragment);
+            Log.d(TAG, "Hiding active fragment: " + activeFragment.getClass().getSimpleName());
+        }
+
+        // ✅ Add booking fragment on top
+        transaction.add(R.id.nav_host_fragment, bookingFragment, "Booking");
+        transaction.addToBackStack("Booking");
+        transaction.commit();
+
+        Toast.makeText(this, "Booking untuk: " + doctorName, Toast.LENGTH_SHORT).show();
+    }
+
     private void processQRCode(String qrData) {
-        Log.d("MainActivity", "Scanned QR: " + qrData);
-        // Process QR data here
+        Log.d(TAG, "Scanned QR: " + qrData);
+        // Process other types of QR data here if needed
     }
 
     public void showLogoutConfirmation() {
@@ -293,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences loginPrefs = getSharedPreferences("LoginPrefs", MODE_PRIVATE);
         loginPrefs.edit().clear().apply();
 
-        Log.d("MainActivity", "User logged out successfully");
+        Log.d(TAG, "User logged out successfully");
         Toast.makeText(this, "Anda telah keluar", Toast.LENGTH_SHORT).show();
 
         redirectToLogin();
@@ -318,7 +435,10 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (activeFragment == dashboardFragment) {
+                // Check if there's a fragment in back stack
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    getSupportFragmentManager().popBackStack();
+                } else if (activeFragment == dashboardFragment) {
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("Keluar Aplikasi")
                             .setMessage("Apakah Anda yakin ingin keluar?")
