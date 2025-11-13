@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>BookSaw - Free Book Store HTML CSS Template</title>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="format-detection" content="telephone=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="author" content="">
+	<meta name="keywords" content="">
+	<meta name="description" content="">
+
+	<!-- Import Nunito Sans dari Google Fonts -->
+	
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap" rel="stylesheet">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+
+	<link rel="stylesheet" type="text/css" href="css/normalize.css">
+	<link rel="stylesheet" type="text/css" href="icomoon/icomoon.css">
+	<link rel="stylesheet" type="text/css" href="css/vendor.css">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	
+	
+	<!-- Custom styles for navbar -->
+	<style>
+		#header {
+			padding: 1px 0;
+			background-color: rgba(5, 125, 205, 0.88); /* Warna biru semi-transparan */
+			border-radius: 0;
+			border-bottom: 1px solid rgba(5, 125, 205, 0.88);
+			backdrop-filter: blur(10px);
+			transition: all 0.3s ease;
+			height: var(--header-height-min);
+		}
+		
+		#header.scrolled {
+			background-color: rgba(5, 125, 205, 0.88) !important;
+			height: var(--header-height-min);
+			padding: 1px 0;
+		}
+		
+		#header .menu-list a {
+			color: #fcfcfc !important; /* Warna teks putih untuk kontras dengan biru */
+			font-size: 0.9rem; /* Ukuran font lebih kecil */
+			text-decoration: none;
+			padding: 8px 12px; /* Tambahkan padding untuk area klik */
+			border-radius: 4px; /* Tambahkan rounded corner untuk efek hover */
+			transition: all 0.3s ease; /* Transisi halus untuk efek hover */
+		}
+		
+		#header .menu-list a:hover,
+#header .menu-list a:focus {
+	color: #000 !important;
+	background-color: rgba(0, 0, 0, 0.2);
+	transform: translateY(-2px);
+	font-weight: 600; /* tambah ini biar tebalnya sama dengan active */
+}
+
+		#header .menu-list a.active {
+			color: #000 !important; /* Changed to black */
+			background-color: rgba(0, 0, 0, 0.3); /* Latar belakang untuk item aktif */
+			font-weight: 600; /* Teks aktif lebih tebal */
+		}
+		
+		/* Tambahkan warna khusus untuk link home saat aktif */
+		#header .menu-list .menu-item.active a {
+			color: #000 !important; /* Changed to black */
+		}
+		
+		/* Logo size adjustment */
+		.main-logo img {
+			max-height: 40px;
+		}
+		
+		/* Hamburger menu adjustment */
+		.hamburger .bar {
+			background-color: #000;
+		}
+		
+		/* Untuk menghindari tumpukan teks di layar kecil */
+		@media (max-width: 768px) {
+			#header .menu-list {
+				flex-direction: column !important; /* Ubah ke kolom di layar kecil */
+				align-items: center;
+			}
+			
+			#header .menu-list li {
+				width: 100%;
+				text-align: center;
+				margin: 5px 0;
+			}
+		}
+	</style>
+
+</head>
+
+<body data-bs-spy="scroll" data-bs-target="#header" tabindex="0">
+
+	<div id="header-wrap">
+		<div id="authModal" class="auth-modal">
+  <div class="auth-modal-content">
+    <span class="close">&times;</span>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <h2 class="text-center mb-4">Login</h2>
+      <form>
+        <div class="mb-3">
+          <label>Email</label>
+          <input type="email" class="form-control" placeholder="Masukkan Email">
+        </div>
+        <div class="mb-3">
+          <label>Password</label>
+          <input type="password" class="form-control" placeholder="Masukkan Password">
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+        <p class="text-center mt-3">
+          Belum punya akun? <a href="#" id="toRegister">Register</a>
+        </p>
+      </form>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+  <h2 class="text-center mb-4">Register</h2>
+  <form>
+    <div class="mb-3">
+      <label>Nama Faskes</label>
+      <input type="text" class="form-control" name="nama_faskes" placeholder="Masukkan Nama Faskes">
+    </div>
+    <div class="mb-3">
+      <label>Nama Lengkap</label>
+      <input type="text" class="form-control" name="nama_lengkap" placeholder="Masukkan Nama Lengkap">
+    </div>
+    <div class="mb-3">
+      <label>Username</label>
+      <input type="text" class="form-control" name="username" placeholder="Masukkan Username">
+    </div>
+    <div class="mb-3">
+      <label>Jenis Kelamin</label>
+      <select class="form-control" name="jenis_kelamin">
+        <option value="">-- Pilih Jenis Kelamin --</option>
+        <option value="Laki-laki">Laki-laki</option>
+        <option value="Perempuan">Perempuan</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label>Alamat</label>
+      <textarea class="form-control" name="alamat" placeholder="Masukkan Alamat"></textarea>
+    </div>
+    <div class="mb-3">
+      <label>No. Telepon</label>
+      <input type="text" class="form-control" name="no_telp" placeholder="Masukkan No. Telepon">
+    </div>
+    <div class="mb-3">
+      <label>Email</label>
+      <input type="email" class="form-control" name="email" placeholder="Masukkan Email">
+    </div>
+    <div class="mb-3">
+      <label>Password</label>
+      <input type="password" class="form-control" name="password" placeholder="Masukkan Password">
+    </div>
+    <button type="submit" class="btn btn-success w-100">Register</button>
+    <p class="text-center mt-3">
+      Sudah punya akun? <a href="#" id="toLogin">Login</a>
+    </p>
+  </form>
+</div>
+  </div>
+</div>
+		<header id="header">
+			<div class="container-fluid">
+				<div class="row align-items-center">
+
+					<div class="col-md-2">
+						<div class="main-logo">
+							<h1 class="section-judul">MAPOTEK</h1>
+						</div>
+					</div>
+
+					<div class="col-md-7">
+						<nav id="navbar">
+							<div class="main-menu stellarnav">
+								<ul class="menu-list justify-content-center">
+									<li class="menu-item "><a href="#home" class="nav-link">Home</a></li>
+									<li class="menu-item"><a href="#fitur-utama" class="nav-link">fitur</a></li>
+									<li class="menu-item"><a href="#pricing" class="nav-link">Langganan</a></li>
+									<li class="menu-item"><a href="#testimonial" class="nav-link">Ulasan</a></li>
+									<li class="menu-item"><a href="#download-app" class="nav-link">App</a></li>
+                  
+								</ul>
+
+								<div class="hamburger">
+									<span class="bar"></span>
+									<span class="bar"></span>
+									<span class="bar"></span>
+								</div>
+
+							</div>
+						
+					</div>
+
+					<div class="col-md-3 text-end">
+    <nav id="navbar-auth">
+        <div class="main-menu stellarnav">
+            <ul class="menu-list justify-content-end">
+                <li class="menu-item"><a href="#" id="openLogin" class="nav-link">Masuk</a></li>
+                <li class="menu-item"><a href="#" id="openRegister" class="nav-link">Daftar</a></li>
+                <!-- <li class="menu-item"><a href="login.php" class="nav-link">Masuk</a></li>
+									<li class="menu-item"><a href="register.php" class="nav-link">Daftar</a></li> -->
+            </ul>
+        </div>
+    </nav>
+</div>
+				</div>
+			</div>
+		</header>
+
+	</div><!--header-wrap-->
+
+	<section id="home" class="billboard-section">
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+
+				
+
+					<div class="main-slider pattern-overlay">
+						<div class="slider-item">
+							<div class="banner-content">
+								<h2 class="banner-title">Apa itu MAPOTEK?</h2>
+								<p> Sistem informasi yang dirancang khusus untuk mempermudah manajemen praktik pribadi dokter.
+									mempermudah dokter dalam mengelola data pasien, jadwal praktek, rekam medis, dan administrasi dan lainnya.
+									Simpel, intuitif,dan efisen - sesuai kebutuhan praktik </p>
+								<div >
+									
+								</div>
+							</div><!--banner-content-->
+							<img src="images/mapotekLogoo.png" alt="banner" class="banner-image">
+						
+					</div><!--slider-->
+
+					
+					
+
+				</div>
+			</div>
+		</div>
+
+	</section>
+
+	
+<!-- pastikan Bootstrap sudah ter-include di <head> -->
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+<!-- opsional: bootstrap icons -->
+<!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"> -->
+
+<section id="fitur-utama" class="py-5">
+  <div class="container">
+
+    <!-- Judul di tengah -->
+    <div class="row align-items-center gy-4">
+  <!-- KIRI: gambar -->
+  <div class="col-md-6">
+    <div class="fitur-illustration text-center">
+      <img src="images/8ffed3c9-aa32-44e9-bc1b-697ac6265b09_removalai_preview.png"
+           alt="Ilustrasi Mapotek" class="img-fluid">
+    </div>
+  </div>
+
+  <!-- KANAN: judul + paragraf + fitur -->
+  <div class="col-md-6">
+    <!-- Pastikan section-header berada di dalam kolom kanan -->
+    <div class="section-header text-start mb-3 w-100 d-block">
+      <h2 class="section-title">Apa yang didapatkan saat menggunakan mapotek??</h2>
+    </div>
+
+        <p class="lead text-muted mb-4">
+          Kamu dapat mengeksplor fitur-fitur yang kami sediakan dengan mudah dan setiap fitur memiliki fungsi spesifik yang membantu operasional apotek.
+        </p>
+
+        <ul class="list-unstyled features-list">
+          <li class="feature d-flex align-items-start mb-3">
+            <span class="feature-icon me-3">
+              <!-- SVG check -->
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Login Multi-Role</h5>
+              <p class="mb-0 text-muted">Owner, Admin, dan Dokter dengan hak akses berbeda</p>
+            </div>
+          </li>
+
+          <li class="feature d-flex align-items-start mb-3">
+            <span class="feature-icon me-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Manajemen Data Pasien</h5>
+              <p class="mb-0 text-muted">Pencatatan pasien digital yang praktis dan aman</p>
+            </div>
+          </li>
+
+          <li class="feature d-flex align-items-start mb-3">
+            <span class="feature-icon me-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Pemantauan Stok Obat</h5>
+              <p class="mb-0 text-muted">Monitoring stok obat otomatis dengan alert</p>
+            </div>
+          </li>
+
+          <li class="feature d-flex align-items-start mb-3">
+            <span class="feature-icon me-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Absensi Staf Digital</h5>
+              <p class="mb-0 text-muted">Sistem absensi yang efisien dan akurat</p>
+            </div>
+          </li>
+
+          <li class="feature d-flex align-items-start mb-3">
+            <span class="feature-icon me-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Pencatatan Keuangan</h5>
+              <p class="mb-0 text-muted">Laporan keuangan rapi dan terstruktur</p>
+            </div>
+          </li>
+
+          <li class="feature d-flex align-items-start">
+            <span class="feature-icon me-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" stroke="#10B981" stroke-width="2" fill="#10B981" opacity="0.18"/>
+                <path d="M7 12.5l2.5 2.5L17 8" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <h5 class="mb-1">Antarmuka User-Friendly</h5>
+              <p class="mb-0 text-muted">Desain simpel, clean, dan mudah digunakan</p>
+            </div>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="video-section">
+  <h2 class="video-title"></h2>
+
+  <div class="video-frame">
+    <video controls autoplay muted>
+      <source src="video/videountk.mp4" type="video/mp4" />
+      Browser kamu tidak mendukung tag video.
+    </video>
+  </div>
+</section>
+<section id="pricing" class="py-5 bg-light" style="margin-top: 0; padding-top: 0;">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+     
+      <h1 class="section-title">APA YANG ANDA TUNGGU</h1>
+      <p class="text-muted mt-4">Pilih paket langganan yang sesuai kebutuhan praktik Anda</p>
+    </div>
+
+    <div class="row justify-content-center">
+
+      <!-- 1 Bulan -->
+     <div class="col-md-4 mb-4">
+  <div class="card h-100 pricing-card">
+    <div class="card-body text-center">
+      <img src="images/berlangganan.jpg" alt="1 Bulan" class="img-fluid mb-3 rounded">
+      <h4 class="card-title fw-bold">1 Bulan</h4>
+      <p class="text-muted">Langganan</p>
+      <h3 class="fw-bold mb-4 text-danger">Rp 250.000,00</h3>
+      <a href="#" class="btn btn-outline-danger px-4">Berlangganan</a>
+    </div>
+  </div>
+</div>
+
+<!-- 3 Bulan -->
+<div class="col-md-4 mb-4">
+  <div class="card h-100 pricing-card">
+    <div class="card-body text-center">
+      <img src="images/abi.jpg" alt="3 Bulan" class="img-fluid mb-3 rounded">
+      <h4 class="card-title fw-bold">3 Bulan</h4>
+      <p class="text-muted">Langganan</p>
+      <!-- Harga -->
+      <h5 class="text-muted text-decoration-line-through mb-1">Rp 650.000,00</h5>
+      <h3 class="fw-bold mb-4 text-danger">Rp 500.000,00</h3>
+      <a href="#" class="btn btn-outline-danger px-4">Berlangganan</a>
+    </div>
+  </div>
+</div>
+
+<!-- 1 Tahun -->
+<div class="col-md-4 mb-4">
+  <div class="card h-100 pricing-card">
+    <div class="card-body text-center">
+      <img src="images/ummi.jpg" alt="1 Tahun" class="img-fluid mb-3 rounded">
+      <h4 class="card-title fw-bold">1 Tahun</h4>
+      <p class="text-muted">Langganan</p>
+      <!-- Harga -->
+      <h5 class="text-muted text-decoration-line-through mb-1">Rp 1.200.000,00</h5>
+      <h3 class="fw-bold mb-4 text-danger">Rp 800.000,00</h3>
+      <a href="#" class="btn btn-outline-danger px-4">Berlangganan</a>
+    </div>
+  </div>
+</div>
+
+
+    </div>
+  </div>
+</section>
+
+	<!-- <section id="latest-blog" class="py-5 my-5">
+  <div class="container">
+    <div class="section-header text-center mb-4">
+      <div class="title">
+        <span>What our clients say</span>
+      </div>
+      <h2 class="section-title">Ulasan Pelanggan</h2>
+    </div>
+
+    <div class="review-wrapper position-relative">
+      <!-- Tombol panah kiri -->
+      <button class="scroll-btn left" id="scrollLeft">
+        
+      </button>
+
+      <!-- Kontainer gambar (bisa digeser) -->
+      <!-- <div class="review-container d-flex">
+        <div class="review-card"><img src="images/errrr.jpeg" alt="ulasan1" class="review-img"></div>
+        <div class="review-card"><img src="images/errrr.jpeg" alt="ulasan2" class="review-img"></div>
+        <div class="review-card"><img src="images/errrr.jpeg" alt="ulasan3" class="review-img"></div>
+        <div class="review-card"><img src="images/Atma -A Space for the Unbound.jpeg" alt="ulasan4" class="review-img"></div>
+      </div> -->
+
+      <!-- Tombol panah kanan -->
+      <button class="scroll-btn right" id="scrollRight">
+        
+      </button>
+    
+
+<section id="testimonial" class="py-5 my-5"></section>
+<div class="testimonial-section">
+      <h2 class="section-title">Ulasan pelanggan</h2>
+      <p class="section-subtitle">
+        pelanggan kami telah membuktikan kualitas MAPOTEK
+      </p>
+
+      <div class="carousel-container">
+        <div class="carousel-wrapper" id="carouselWrapper"></div>
+      </div>
+
+      <div class="dots-container" id="dotsContainer"></div>
+    </div>
+  </section>
+</section>
+	<section id="download-app" class="leaf-pattern-overlay">
+		<div class="corner-pattern-overlay"></div>
+		<div class="container">
+			<div class="row justify-content-center">
+				<div class="col-md-8">
+					<div class="row">
+
+						<div class="col-md-5">
+							<figure>
+								<img src="images/mapotek_mobile.jpg" alt="phone" class="single-image">
+							</figure>
+						</div>
+
+						<div class="col-md-7">
+							<div class="app-info">
+								<h2 class="section-title divider">Download aplikasi!</h2>
+								<p>Aplikasi mobile kami tersedia di Android yang diperuntukkan untuk pasien
+									yang akan berkonsultasi dengan dokter yang berlangganan di Mapotek.
+								</p>
+								<div class="google-app">
+									<img src="images/google-play.jpg" alt="google play">
+									
+								</div>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+<footer id="footer" class="py-5">
+  <div class="container">
+    <div class="row align-items-center">
+
+      <!-- Kolom 1: Logo -->
+      <div class="col-md-4 mb-4 mb-md-0 text-center text-md-start">
+        <img src="images/mapotekTxt.png" alt="logo" class="footer-logo mb-3" style="max-width:180px;">
+        <p class="mb-0 text-light">Download now</p>
+      </div>
+
+      <!-- Kolom 2 -->
+      <div class="col-md-2 mb-4 mb-md-0">
+        <h5>About Us</h5>
+        <ul class="list-unstyled">
+          <li><a href="#">Vision</a></li>
+          <li><a href="#">Articles</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Service Terms</a></li>
+          <li><a href="#">Donate</a></li>
+        </ul>
+      </div>
+
+      <!-- Kolom 3 -->
+      <div class="col-md-2 mb-4 mb-md-0">
+        <h5>Discover</h5>
+        <ul class="list-unstyled">
+          <li><a href="#">Home</a></li>
+          <li><a href="#">Books</a></li>
+          <li><a href="#">Authors</a></li>
+          <li><a href="#">Subjects</a></li>
+          <li><a href="#">Advanced Search</a></li>
+        </ul>
+      </div>
+
+      <!-- Kolom 4 -->
+      <div class="col-md-2 mb-4 mb-md-0">
+        <h5>My Account</h5>
+        <ul class="list-unstyled">
+          <li><a href="#">Sign In</a></li>
+          <li><a href="#">View Cart</a></li>
+          <li><a href="#">Wishlist</a></li>
+          <li><a href="#">Track Order</a></li>
+        </ul>
+      </div>
+
+      <!-- Kolom 5 -->
+      <div class="col-md-2">
+        <h5>Help</h5>
+        <ul class="list-unstyled">
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Report a Problem</a></li>
+          <li><a href="#">Suggest Edits</a></li>
+          <li><a href="#">Contact Us</a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</footer>
+
+
+	
+
+	<div id="footer-bottom">
+		<div class="container">
+    <p>© 2025 Mapotek. All rights reserved.</p>
+  </div>
+</div>
+
+
+						</div>
+					</div><!--grid-->
+
+				</div><!--footer-bottom-content-->
+			</div>
+		</div>
+	</div>
+
+	<script src="js/jquery-1.11.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+		crossorigin="anonymous"></script>
+	<script src="js/plugins.js"></script>
+	<script src="js/script.js"></script>
+	
+
+</body>
+
+</html>

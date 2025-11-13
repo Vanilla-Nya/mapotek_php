@@ -1,0 +1,146 @@
+/* Semua background diubah menjadi putih bersih, dan header diubah menjadi biru semi-transparan */
+
+#header-wrap {
+  background-color: transparent !important; /* Warna transparan agar bisa berubah saat scroll */
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#billboard {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+#fitur-utama {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+#featured-books {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+#latest-blog {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+#download-app {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 60px;
+  padding-bottom: 60px;
+}
+
+footer#footer {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0 !important;
+  margin-bottom: 0;
+  padding-top: 40px;
+  padding-bottom: 20px;
+}
+
+#footer-bottom {
+  background-color: #ffffff; /* Putih bersih */
+  margin-top: 0;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+/* Hilangkan margin bawah di setiap section untuk mencegah gap */
+section {
+  margin-bottom: 0 !important;
+}
+
+/* Khusus untuk class Bootstrap py-5 my-5, atur ulang margin dan padding */
+.py-5,
+.my-5 {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Tapi tetap beri sedikit padding dalam section untuk konten tetap terlihat bagus */
+#featured-books.py-5,
+#featured-books.my-5,
+#latest-blog.py-5,
+#latest-blog.my-5 {
+  padding-top: 60px !important;
+  padding-bottom: 60px !important;
+}
+
+/* Untuk menjaga konsistensi, kita atur juga warna teks yang sesuai */
+#billboard,
+#download-app,
+#footer-bottom,
+#fitur-utama,
+#featured-books,
+#latest-blog,
+footer#footer {
+  color: #333; /* Warna teks gelap agar kontras dengan latar putih bersih */
+}
+
+/* Header tetap menggunakan warna aslinya */
+#header-wrap {
+  color: #333; /* Warna teks untuk header */
+}
+
+/* Pastikan semua elemen memiliki background putih, kecuali header */
+body {
+  background-color: #ffffff !important;
+}
+
+#download-app {
+  background-color: #ffffff !important;
+}
+
+#featured-books {
+  background-color: #ffffff !important;
+}
+
+#latest-blog {
+  background-color: #ffffff !important;
+}
+
+#footer-bottom {
+  background-color: #ffffff !important;
+}
+
+#pricing {
+  background-color: #ffffff !important;
+}
+
+.video-section {
+  background-color: #ffffff !important;
+}
+
+/* Section backgrounds menjadi putih, kecuali header yang tetap aslinya */
+#billboard,
+#fitur-utama,
+#featured-books,
+#latest-blog,
+#download-app,
+#pricing,
+.video-section {
+  background-color: #ffffff !important;
+}
+
+div {
+  background-color: #ffffff !important;
+}

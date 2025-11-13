@@ -1,0 +1,353 @@
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: #77d2d0;
+    background: linear-gradient(180deg, #77d2d0 0%, #5ab8b6 100%);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+    box-shadow: 6px 0 25px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar.collapsed {
+    width: 70px;
+    border-radius: 0 35px 35px 0;
+    box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 0;
+    margin: 8px auto;
+    width: 45px; /* Smaller circular buttons */
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar.collapsed ~ .main-content {
+    margin-left: 70px; /* Match sidebar width */
+}
+.sidebar-header {
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 100px;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 20px 10px;
+    min-height: 70px;
+    border: none;
+}
+
+.sidebar-logo {
+    max-width: 150px;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-logo {
+    opacity: 0;
+    height: 0;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.sidebar.collapsed .sidebar-nav {
+    padding: 30px 0;
+}
+
+.nav-item {
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    position: relative;
+    margin: 3px 0;
+}
+
+/* Open state */
+.sidebar:not(.collapsed) .nav-item {
+    padding: 15px 25px;
+}
+
+.sidebar:not(.collapsed) .nav-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 0 12px 12px 0;
+    margin-right: 8px;
+}
+
+.sidebar:not(.collapsed) .nav-item.active {
+    background: rgba(255, 255, 255, 0.25);
+    border-left: 4px solid white;
+    border-radius: 0 15px 15px 0;
+    margin-right: 10px;
+}
+
+/* Collapsed state - circular icon buttons */
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 0;
+    margin: 10px auto;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar.collapsed .nav-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.sidebar.collapsed .nav-item.active {
+    background: rgba(255, 255, 255, 0.35);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item i {
+    min-width: 30px;
+    font-size: 22px;
+    transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .nav-item i {
+    margin: 0;
+    font-size: 24px;
+}
+
+.nav-text {
+    transition: opacity 0.3s ease, width 0.3s ease;
+    margin-left: 15px;
+}
+
+.sidebar.collapsed .nav-text {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+    display: none;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 0;
+}
+
+.sidebar.collapsed .sidebar-footer {
+    border: none;
+    padding: 20px 0;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    right: -17px;
+    top: 45%; /* Adjust position */
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    z-index: 1001;
+    border: 3px solid #fff;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #f0f0f0;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+    color: #77d2d0;
+    font-weight: bold;
+}
+
+.sidebar.collapsed .sidebar-toggle i::before {
+    content: "\f285";
+}
+
+.main-content {
+    margin-left: 260px;
+    transition: margin-left 0.3s ease;
+    min-height: 100vh;
+}
+
+.sidebar.collapsed ~ .main-content {
+    margin-left: 90px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+        border-radius: 0;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+    
+    .sidebar-toggle {
+        display: none;
+    }
+}
+
+/* Modal fullscreen styling */
+#cropModal .modal-fullscreen {
+    width: 100vw;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+}
+
+#cropModal .modal-content {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+}
+
+#cropModal .modal-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cropper-container {
+    background: #000 !important;
+}
+
+.cropper-crop-box {
+    border: 2px solid #fff !important;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6) !important;
+}
+
+.cropper-face {
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
+
+.cropper-view-box {
+    outline: 2px solid rgba(255, 255, 255, 0.9) !important;
+    outline-offset: -2px !important;
+}
+
+.cropper-modal {
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    opacity: 1 !important;
+}
+
+.cropper-point {
+    display: none !important;
+}
+
+.cropper-line {
+    display: none !important;
+}
+
+.cropper-center {
+    opacity: 0 !important;
+}
+
+.cropper-canvas {
+    cursor: move !important;
+}
+
+.cropper-drag-box {
+    cursor: move !important;
+}
+
+.cropper-bg {
+    background: none !important;
+}
+
+.cropper-crop-box,
+.cropper-view-box {
+    visibility: visible !important;
+    display: block !important;
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
+#cropModal {
+    z-index: 9999 !important;
+}
+
+/* ========================================
+   AVATAR CARD - Dynamic Blurred Background from Photo
+   ======================================== */
+
+/* Container for the blurred background */
+.row.justify-content-center > .col-lg-9 > .card:first-child {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    transition: all 0.5s ease; /* 🎨 Smooth color changes */
+}
+
+/* Create blurred background from avatar image */
+.row.justify-content-center > .col-lg-9 > .card:first-child::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    background-image: var(--avatar-bg-image);
+    background-size: cover;
+    background-position: center;
+    filter: blur(10px) brightness(0.95) saturate(1);
+    opacity: 0.7;
+    z-index: 0;
+    transition: opacity 0.5s ease, filter 0.5s ease; /* 🎨 Smooth background changes */
+}
+
+/* Overlay to lighten and make text readable */
+.row.justify-content-center > .col-lg-9 > .card:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    z-index: 1;
+    transition: background 0.5s ease; /* 🎨 Smooth overlay changes */
+}
+
+/* Make card content appear above the background */
+.row.justify-content-center > .col-lg-9 > .card:first-child .card-body {
+    position: relative;
+    z-index: 2;
+}
+
+/* Make sure avatar and buttons are on top */
+.row.justify-content-center > .col-lg-9 > .card:first-child #avatarContainer,
+.row.justify-content-center > .col-lg-9 > .card:first-child button,
+.row.justify-content-center > .col-lg-9 > .card:first-child h3,
+.row.justify-content-center > .col-lg-9 > .card:first-child p {
+    position: relative;
+    z-index: 3;
+}
