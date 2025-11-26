@@ -38,21 +38,32 @@ class ApiClient {
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
                 if ($data) curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
                 break;
-            default: // GET
+            default:
                 break;
         }
-        // Log to PHP error log instead (won’t break JSON)
+
         error_log("DEBUG URL: " . $this->baseUrl . $url);
         error_log("DEBUG METHOD: " . strtoupper($method));
         error_log("DEBUG HEADERS: " . json_encode($headers));
         if ($data) error_log("DEBUG BODY: " . json_encode($data));
 
-
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
         if (curl_errno($ch)) {
             throw new Exception("cURL Error: " . curl_error($ch));
         }
         curl_close($ch);
+
+        // ⭐ TAMBAHAN: Retry dengan token baru jika 401/403
+        if ($httpCode == 401 || $httpCode == 403) {
+            error_log("⚠️ Got HTTP $httpCode, refreshing token and retrying...");
+            $this->token = null; // Reset token
+            $this->getToken(); // Get new token
+            
+            // Retry request dengan token baru
+            return $this->request($method, $url, $data);
+        }
 
         return $response;
     }

@@ -206,6 +206,10 @@
                 <i class="bi bi-journal-text fs-4"></i>
                 <span class="nav-text ms-3">Pembukuan</span>
             </a>
+            <a href="#asistendokter" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="asistendokter">
+                <i class="bi bi-person-badge fs-4"></i>
+                <span class="nav-text ms-3">Asisten Dokter</span>
+            </a>
         </nav>
 
         <!-- Footer -->
@@ -245,7 +249,7 @@
                 </div>
                 <div class="top-bar-user-info">
                     <p class="top-bar-user-name" id="topBarUserName">Loading...</p>
-                    <p class="top-bar-user-role">Doctor</p>
+                    <p class="top-bar-user-role" id="topBarUserRole">Loading...</p>
                 </div>
             </div>
         </header>
@@ -286,6 +290,8 @@
     <!-- 7. USER PROFILE UPDATER - Must load BEFORE app.js! -->
     <script src="js/user-profile-updater.js"></script>
 
+    <script src="js/userRole.js"></script>
+
     <!-- ⭐ 8. Modal Helper - BEFORE fragments! (FIXED PATH) -->
     <script src="js/Utils/modal-helper.js"></script>
 
@@ -297,6 +303,8 @@
     <script src="js/Fragments/pemeriksaanfragment.js"></script>
     <script src="js/Fragments/pembukuanfragment.js"></script>
     <script src="js/Fragments/profilefragment.js"></script>
+    <script src="js/Fragments/asistendokterfragment.js"></script>
+    
 
     <!-- 10. Load Fragment Manager -->
     <script src="js/fragmentmanager.js"></script>

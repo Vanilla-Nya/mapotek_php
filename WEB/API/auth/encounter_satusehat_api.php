@@ -1,7 +1,8 @@
 <?php
 // auth/encounter_satusehat_api.php
 
-require_once __DIR__ . '/../ApiClient.php';
+require_once __DIR__ . '/../database.php';
+require_once __DIR__ . '/../config/satusehat_api.php';
 
 class EncounterSatusehatApi {
     
@@ -42,25 +43,97 @@ class EncounterSatusehatApi {
                 return null;
             }
             
-            $api = new ApiClient();
+            // ✅ Get doctor's database ID and credentials
+            $doctorParams = "select=id_dokter,nama_lengkap,satusehat_client_id,satusehat_client_secret,satusehat_org_id,satusehat_location_id,satusehat_location_name&id_satusehat=eq.$idSatusehatDokter&limit=1";
+            $doctorResult = supabase('GET', 'dokter', $doctorParams);
+            
+            if (empty($doctorResult) || isset($doctorResult['error'])) {
+                error_log("❌ Failed to get doctor credentials from database");
+                error_log("   Query: $doctorParams");
+                error_log("   Result: " . json_encode($doctorResult));
+                return null;
+            }
+            
+            $doctor = $doctorResult[0];
+            $idDokter = $doctor['id_dokter'];
+            
+            error_log("✅ Doctor found in database: ID=$idDokter");
+            
+            // Check credentials
+            if (empty($doctor['satusehat_client_id']) || empty($doctor['satusehat_client_secret'])) {
+                error_log("❌ Doctor has no SatuSehat credentials configured!");
+                error_log("   Doctor: {$doctor['nama_lengkap']}");
+                error_log("   Please configure in Profile settings");
+                return null;
+            }
+            
+            error_log("✅ Doctor has valid SatuSehat credentials");
+            
+            // Initialize API client
+            $api = SatuSehatAPI::forDoctor($idDokter);
+            
+            if (!$api->isConfigured()) {
+                error_log("❌ SatuSehat API not properly configured for this doctor");
+                return null;
+            }
+            
+            error_log("✅ API client initialized with doctor credentials");
+            
+            // Get organization ID
+            $orgId = $api->getOrganizationId();
+            
+            if (empty($orgId)) {
+                error_log("❌ Organization ID not found");
+                return null;
+            }
+            
+            error_log("🏢 Organization ID: $orgId");
+            
+            // ========================================
+            // ✅ NEW: Get Location from Doctor's Profile
+            // ========================================
+            if (!$locationId) {
+                error_log("📍 Fetching doctor's configured location...");
+                
+                // Use location from the doctor record we already fetched
+                $locationId = $doctor['satusehat_location_id'] ?? null;
+                $locationDisplay = $doctor['satusehat_location_name'] ?? null;
+                
+                if ($locationId && $locationDisplay) {
+                    error_log("✅ Using doctor's configured location:");
+                    error_log("   ID: $locationId");
+                    error_log("   Name: $locationDisplay");
+                } else {
+                    error_log("❌ Doctor has no location configured in profile!");
+                    error_log("   Location ID: " . ($locationId ?: 'MISSING'));
+                    error_log("   Location Name: " . ($locationDisplay ?: 'MISSING'));
+                    error_log("");
+                    error_log("⚠️ SOLUTION: Configure location in Profile:");
+                    error_log("   1. Go to Profile page");
+                    error_log("   2. Find 'Lokasi Praktik' section");
+                    error_log("   3. Click 'Edit Lokasi'");
+                    error_log("   4. Search and select your practice location");
+                    error_log("");
+                    
+                    // Return null - location is REQUIRED
+                    return null;
+                }
+            }
             
             // Generate timestamps
             $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
             $periodStart = $now->format(DateTime::ATOM);
+            
+            error_log("⏰ Timestamp: $periodStart");
             
             // Generate unique encounter number if not provided
             if (!$encounterNumber) {
                 $encounterNumber = 'ENC-' . date('YmdHis') . '-' . substr(uniqid(), -6);
             }
             
-            // Use default location if not provided
-            if (!$locationId) {
-                $locationId = 'b017aa54-f1df-4ec2-9d84-8823815d7228';
-                $locationDisplay = 'Ruang 1A, Poliklinik Bedah Rawat Jalan Terpadu, Lantai 2, Gedung G';
-            }
+            error_log("🔢 Encounter Number: $encounterNumber");
             
-            $orgId = ApiClient::getOrgId();
-            
+            // Build encounter with proper structure
             $encounter = [
                 "resourceType" => "Encounter",
                 "status" => "arrived",
@@ -108,30 +181,24 @@ class EncounterSatusehatApi {
                 ]
             ];
             
-            error_log("📤 Encounter Payload: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            error_log("📤 Encounter Payload:");
+            error_log(json_encode($encounter, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
             
-            // Create encounter using ApiClient
-            $response = $api->post("/Encounter", $encounter);
+            // Create encounter
+            $responseData = $api->post('/Encounter', $encounter);
             
-            error_log("📥 SATUSEHAT Raw Response: " . $response);
-            
-            // Parse response
-            $responseData = json_decode($response, true);
-            
-            if (!$responseData) {
-                error_log("❌ Failed to parse JSON response");
-                error_log("   Raw response: " . $response);
-                return null;
-            }
-            
-            error_log("📥 SATUSEHAT Parsed Response: " . json_encode($responseData, JSON_PRETTY_PRINT));
+            error_log("📥 SATUSEHAT Response:");
+            error_log(json_encode($responseData, JSON_PRETTY_PRINT));
             
             // Check for errors
             if (isset($responseData['resourceType']) && $responseData['resourceType'] === 'OperationOutcome') {
                 error_log("❌ SATUSEHAT returned OperationOutcome (error)");
                 if (isset($responseData['issue'])) {
                     foreach ($responseData['issue'] as $issue) {
-                        error_log("   - " . ($issue['severity'] ?? 'unknown') . ": " . ($issue['diagnostics'] ?? 'no message'));
+                        $severity = $issue['severity'] ?? 'unknown';
+                        $diagnostics = $issue['diagnostics'] ?? 'no message';
+                        $code = $issue['code'] ?? 'unknown';
+                        error_log("   - [$severity] $code: $diagnostics");
                     }
                 }
                 return null;
@@ -143,17 +210,19 @@ class EncounterSatusehatApi {
                 error_log("✅ Encounter created successfully!");
                 error_log("🆔 Encounter ID: " . $encounterId);
                 error_log("🔢 Encounter Number: " . $encounterNumber);
+                error_log("📍 Location: " . $locationDisplay);
+                error_log("=".str_repeat("=", 50));
                 return $encounterId;
             }
             
             error_log("❌ No 'id' field in response");
-            error_log("   Response keys: " . implode(', ', array_keys($responseData)));
             return null;
             
         } catch (Exception $ex) {
             error_log("❌ EXCEPTION in createEncounter: " . $ex->getMessage());
             error_log("   File: " . $ex->getFile() . " Line: " . $ex->getLine());
-            error_log("   Stack trace: " . $ex->getTraceAsString());
+            error_log("   Stack trace:");
+            error_log($ex->getTraceAsString());
             return null;
         }
     }
@@ -163,27 +232,59 @@ class EncounterSatusehatApi {
      * 
      * @param string $encounterId Encounter ID from SATUSEHAT
      * @param string $newStatus New status (arrived, in-progress, finished, cancelled)
+     * @param int|null $doctorId Doctor ID from database (to get API credentials)
      * @return bool True if successful, false if failed
      */
-    public static function updateEncounterStatus($encounterId, $newStatus = 'finished') {
+    public static function updateEncounterStatus($encounterId, $newStatus = 'finished', $doctorId = null) {
         try {
             error_log("🔄 ===== UPDATING ENCOUNTER STATUS =====");
             error_log("🆔 Encounter ID: " . $encounterId);
             error_log("📊 New Status: " . $newStatus);
             
-            $api = new ApiClient();
-            
-            // First, get the existing encounter
-            $response = $api->get("/Encounter/" . $encounterId);
-            $encounter = json_decode($response, true);
-            
-            if (!$encounter || isset($encounter['issue'])) {
-                error_log("❌ Failed to fetch encounter");
-                error_log("   Response: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            // ✅ Validate status
+            $validStatuses = ['arrived', 'in-progress', 'finished', 'cancelled'];
+            if (!in_array($newStatus, $validStatuses)) {
+                error_log("❌ Invalid status: $newStatus");
+                error_log("   Valid statuses: " . implode(', ', $validStatuses));
                 return false;
             }
             
-            error_log("📥 Current Encounter: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            // ✅ Get API client - prefer doctor-specific if ID provided
+            if ($doctorId) {
+                error_log("👨‍⚕️ Using doctor-specific credentials (ID: $doctorId)");
+                $api = SatuSehatAPI::forDoctor($doctorId);
+            } else {
+                error_log("⚠️ No doctor ID provided, using default API client");
+                $api = new SatuSehatAPI();
+            }
+            
+            if (!$api->isConfigured()) {
+                error_log("❌ SatuSehat API not configured");
+                return false;
+            }
+            
+            error_log("✅ API client initialized");
+            
+            // First, get the existing encounter
+            error_log("📥 Fetching current encounter...");
+            $encounter = $api->get("/Encounter/" . $encounterId);
+            
+            if (!$encounter || isset($encounter['issue'])) {
+                error_log("❌ Failed to fetch encounter");
+                if (isset($encounter['issue'])) {
+                    error_log("   Issues: " . json_encode($encounter['issue'], JSON_PRETTY_PRINT));
+                }
+                return false;
+            }
+            
+            error_log("✅ Current encounter fetched");
+            error_log("   Current status: " . ($encounter['status'] ?? 'unknown'));
+            
+            // Check if status is already the same
+            if (isset($encounter['status']) && $encounter['status'] === $newStatus) {
+                error_log("ℹ️ Encounter already has status: $newStatus");
+                return true;
+            }
             
             // Update status
             $encounter['status'] = $newStatus;
@@ -194,35 +295,56 @@ class EncounterSatusehatApi {
             }
             
             $now = new DateTime('now', new DateTimeZone('Asia/Jakarta'));
+            $timestamp = $now->format(DateTime::ATOM);
+            
             $encounter['statusHistory'][] = [
                 'status' => $newStatus,
-                'period' => ['start' => $now->format(DateTime::ATOM)]
+                'period' => ['start' => $timestamp]
             ];
             
             // Update period end time if finishing
             if ($newStatus === 'finished' && isset($encounter['period'])) {
-                $encounter['period']['end'] = $now->format(DateTime::ATOM);
+                $encounter['period']['end'] = $timestamp;
+                error_log("⏰ Setting end time: $timestamp");
             }
             
-            error_log("📤 Updated Encounter Payload: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            error_log("📤 Updated Encounter Payload:");
+            error_log(json_encode($encounter, JSON_PRETTY_PRINT));
             
-            // Use PUT method to update (need to implement in ApiClient)
-            $updateResponse = $api->post("/Encounter/" . $encounterId, $encounter);
-            $responseData = json_decode($updateResponse, true);
+            // ✅ Use PUT method to update
+            $responseData = $api->put("/Encounter/" . $encounterId, $encounter);
             
-            error_log("📥 Update Response: " . json_encode($responseData, JSON_PRETTY_PRINT));
+            error_log("📥 Update Response:");
+            error_log(json_encode($responseData, JSON_PRETTY_PRINT));
+            
+            // Check for errors
+            if (isset($responseData['resourceType']) && $responseData['resourceType'] === 'OperationOutcome') {
+                error_log("❌ SATUSEHAT returned OperationOutcome (error)");
+                if (isset($responseData['issue'])) {
+                    foreach ($responseData['issue'] as $issue) {
+                        $severity = $issue['severity'] ?? 'unknown';
+                        $diagnostics = $issue['diagnostics'] ?? 'no message';
+                        error_log("   - [$severity]: $diagnostics");
+                    }
+                }
+                return false;
+            }
             
             if (isset($responseData['id'])) {
                 error_log("✅ Encounter status updated successfully");
+                error_log("=".str_repeat("=", 50));
                 return true;
             }
             
             error_log("❌ Failed to update encounter status");
+            error_log("   No 'id' field in response");
             return false;
             
         } catch (Exception $ex) {
             error_log("❌ EXCEPTION in updateEncounterStatus: " . $ex->getMessage());
-            error_log("   Stack trace: " . $ex->getTraceAsString());
+            error_log("   File: " . $ex->getFile() . " Line: " . $ex->getLine());
+            error_log("   Stack trace:");
+            error_log($ex->getTraceAsString());
             return false;
         }
     }
@@ -231,33 +353,49 @@ class EncounterSatusehatApi {
      * Search Patient by NIK in SATUSEHAT
      * 
      * @param string $nik Patient's NIK (National ID)
+     * @param int|null $doctorId Doctor ID for credentials (optional)
      * @return array Result with patient info or error
      */
-    public static function searchPatientByNIK($nik) {
+    public static function searchPatientByNIK($nik, $doctorId = null) {
         try {
-            error_log("🔍 Searching patient by NIK: " . $nik);
+            error_log("🔍 ===== SEARCHING PATIENT BY NIK =====");
+            error_log("🆔 NIK: " . $nik);
             
-            $api = new ApiClient();
+            // Get API client
+            if ($doctorId) {
+                $api = SatuSehatAPI::forDoctor($doctorId);
+            } else {
+                $api = new SatuSehatAPI();
+            }
+            
+            if (!$api->isConfigured()) {
+                error_log("❌ SatuSehat API not configured");
+                return [
+                    'success' => false,
+                    'error' => 'API not configured'
+                ];
+            }
             
             $response = $api->get("/Patient", [
                 'identifier' => 'https://fhir.kemkes.go.id/id/nik|' . $nik
             ]);
             
-            error_log("📥 Patient Search Response: " . $response);
+            error_log("📥 Patient Search Response:");
+            error_log(json_encode($response, JSON_PRETTY_PRINT));
             
-            $responseData = json_decode($response, true);
-            
-            if (!$responseData) {
-                error_log("❌ Failed to parse JSON response");
+            // Check for errors
+            if (isset($response['resourceType']) && $response['resourceType'] === 'OperationOutcome') {
+                error_log("❌ Search failed");
                 return [
                     'success' => false,
-                    'error' => 'Invalid JSON response'
+                    'error' => 'Search failed',
+                    'details' => $response['issue'] ?? []
                 ];
             }
             
             // Check if patient found
-            if (isset($responseData['entry']) && count($responseData['entry']) > 0) {
-                $patient = $responseData['entry'][0]['resource'];
+            if (isset($response['entry']) && count($response['entry']) > 0) {
+                $patient = $response['entry'][0]['resource'];
                 $satusehatId = $patient['id'] ?? null;
                 
                 error_log("✅ Patient found: " . $satusehatId);
@@ -291,30 +429,83 @@ class EncounterSatusehatApi {
      * Get Encounter by ID
      * 
      * @param string $encounterId Encounter ID from SATUSEHAT
+     * @param int|null $doctorId Doctor ID for credentials (optional)
      * @return array|null Encounter data or null if not found
      */
-    public static function getEncounter($encounterId) {
+    public static function getEncounter($encounterId, $doctorId = null) {
         try {
-            error_log("📋 Getting encounter: " . $encounterId);
+            error_log("📋 ===== GETTING ENCOUNTER =====");
+            error_log("🆔 Encounter ID: " . $encounterId);
             
-            $api = new ApiClient();
+            // Get API client
+            if ($doctorId) {
+                $api = SatuSehatAPI::forDoctor($doctorId);
+            } else {
+                $api = new SatuSehatAPI();
+            }
             
-            $response = $api->get("/Encounter/" . $encounterId);
-            $encounter = json_decode($response, true);
+            if (!$api->isConfigured()) {
+                error_log("❌ SatuSehat API not configured");
+                return null;
+            }
+            
+            $encounter = $api->get("/Encounter/" . $encounterId);
             
             if ($encounter && !isset($encounter['issue'])) {
                 error_log("✅ Encounter retrieved successfully");
+                error_log("   Status: " . ($encounter['status'] ?? 'unknown'));
                 return $encounter;
             }
             
             error_log("❌ Failed to fetch encounter");
-            error_log("   Response: " . json_encode($encounter, JSON_PRETTY_PRINT));
+            if (isset($encounter['issue'])) {
+                error_log("   Issues: " . json_encode($encounter['issue'], JSON_PRETTY_PRINT));
+            }
             return null;
             
         } catch (Exception $ex) {
             error_log("❌ EXCEPTION in getEncounter: " . $ex->getMessage());
             return null;
         }
+    }
+    
+    /**
+     * Cancel Encounter
+     * Convenience method to cancel an encounter
+     * 
+     * @param string $encounterId Encounter ID from SATUSEHAT
+     * @param int|null $doctorId Doctor ID for credentials (optional)
+     * @return bool True if successful, false if failed
+     */
+    public static function cancelEncounter($encounterId, $doctorId = null) {
+        error_log("🚫 Cancelling encounter: $encounterId");
+        return self::updateEncounterStatus($encounterId, 'cancelled', $doctorId);
+    }
+    
+    /**
+     * Finish Encounter
+     * Convenience method to finish an encounter
+     * 
+     * @param string $encounterId Encounter ID from SATUSEHAT
+     * @param int|null $doctorId Doctor ID for credentials (optional)
+     * @return bool True if successful, false if failed
+     */
+    public static function finishEncounter($encounterId, $doctorId = null) {
+        error_log("✅ Finishing encounter: $encounterId");
+        return self::updateEncounterStatus($encounterId, 'finished', $doctorId);
+    }
+    
+    /**
+     * Start In-Progress Status
+     * Convenience method to set encounter to in-progress
+     * 
+     * @param string $encounterId Encounter ID from SATUSEHAT
+     * @param int|null $doctorId Doctor ID for credentials (optional)
+     * @return bool True if successful, false if failed
+     */
+    public static function startInProgress($encounterId, $doctorId = null) {
+        error_log("▶️ Setting encounter to in-progress: $encounterId");
+        return self::updateEncounterStatus($encounterId, 'in-progress', $doctorId);
     }
 }
 ?>

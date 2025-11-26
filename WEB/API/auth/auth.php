@@ -1,7 +1,8 @@
 <?php
 // ========================================
-// BACKEND: Direct Doctor Registration (NO SATUSEHAT)
-// File: register_practitioner.php
+// BACKEND: Authentication Handler
+// File: /MAPOTEK_PHP/WEB/API/auth.php
+// Handles: Doctor Registration & Asisten Auth Creation
 // ========================================
 
 header('Content-Type: application/json');
@@ -9,38 +10,134 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Include your Supabase client
+// Include Supabase config
 require_once __DIR__ . '/../config/supabase.php';
 
 // Get JSON input
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
-if (!$data || !isset($data['action'])) {
+// Log request for debugging
+error_log("=== AUTH.PHP REQUEST ===");
+error_log("Raw Input: " . substr($input, 0, 500));
+error_log("Parsed Data: " . json_encode($data, JSON_PRETTY_PRINT));
+error_log("=======================");
+
+if (!$data) {
     echo json_encode([
         'success' => false,
-        'message' => 'Invalid request'
+        'message' => 'Invalid request - no data received',
+        'raw_input' => substr($input, 0, 200)
     ]);
     exit;
 }
 
 // ========================================
-// DIRECT DOCTOR REGISTRATION (NO SATUSEHAT)
+// ACTION 1: CREATE ASISTEN DOKTER AUTH ACCOUNT
+// Simple auth account creation (for asisten)
 // ========================================
-if ($data['action'] === 'register_doctor_direct') {
+if (!isset($data['action']) && isset($data['email']) && isset($data['password'])) {
+    
+    $email = trim($data['email']);
+    $password = $data['password'];
+    $nama = isset($data['nama']) ? trim($data['nama']) : null;
+    $alamat = isset($data['alamat']) ? trim($data['alamat']) : null;
+    
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'error' => 'Format email tidak valid']);
+        exit;
+    }
+    
+    if (strlen($password) < 6) {
+        echo json_encode(['success' => false, 'error' => 'Password minimal 6 karakter']);
+        exit;
+    }
+    
+    try {
+        $metadata = ['role' => 'asisten_dokter'];
+        if ($nama) $metadata['nama_lengkap'] = $nama;
+        if ($alamat) $metadata['alamat'] = $alamat;
+        
+        error_log("🔐 Creating asisten auth for: $email");
+        
+        $authResponse = supabaseAuthSignUp($email, $password, $metadata);
+        
+        error_log("🔍 Auth response: " . json_encode($authResponse));
+        
+        if (!$authResponse['success']) {
+            $errorMsg = $authResponse['error']['message'] ?? 'Failed to create auth account';
+            if (strpos($errorMsg, 'already registered') !== false) {
+                $errorMsg = 'Email sudah terdaftar';
+            }
+            echo json_encode(['success' => false, 'error' => $errorMsg]);
+            exit;
+        }
+        
+        // ⭐ Extract user object
+        if (!isset($authResponse['user']) || !is_array($authResponse['user'])) {
+            error_log("❌ Missing user in auth response!");
+            echo json_encode(['success' => false, 'error' => 'Invalid auth response']);
+            exit;
+        }
+        
+        $user = $authResponse['user'];
+        
+        // ⭐ Extract the UUID STRING (not the whole object!)
+        if (!isset($user['id']) || empty($user['id'])) {
+            error_log("❌ Missing user ID!");
+            error_log("❌ User keys: " . implode(', ', array_keys($user)));
+            echo json_encode(['success' => false, 'error' => 'Auth response missing user ID']);
+            exit;
+        }
+        
+        $userId = $user['id'];  // ⭐ This should be a STRING like "abc-123-def"
+        
+        error_log("✅ Auth created! UUID: $userId");
+        
+        // ⭐ Return ONLY the UUID string, not the whole user object!
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'user_id' => $userId,  // ⭐ STRING UUID
+                'id' => $userId,        // ⭐ STRING UUID  
+                'email' => $user['email'] ?? $email,
+                'created_at' => $user['created_at'] ?? date('Y-m-d H:i:s')
+            ],
+            'message' => 'Auth account created successfully'
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("❌ Exception: " . $e->getMessage());
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    
+    exit;
+}
+
+// ========================================
+// ACTION 2: DIRECT DOCTOR REGISTRATION
+// Full doctor registration with validation
+// ========================================
+if (isset($data['action']) && $data['action'] === 'register_doctor_direct') {
     
     $doctorData = $data['data'];
     
     // Validate required fields
     $required = ['nik', 'nama', 'tanggal_lahir', 'gender', 'email', 'username', 'alamat', 'no_telp', 'password'];
+    $missing = [];
+    
     foreach ($required as $field) {
         if (empty($doctorData[$field])) {
-            echo json_encode([
-                'success' => false,
-                'message' => "Field '$field' harus diisi"
-            ]);
-            exit;
+            $missing[] = $field;
         }
+    }
+    
+    if (!empty($missing)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Field berikut harus diisi: ' . implode(', ', $missing)
+        ]);
+        exit;
     }
     
     // Validate NIK (16 digits)
@@ -79,9 +176,7 @@ if ($data['action'] === 'register_doctor_direct') {
         exit;
     }
 
-    // ========================================
-    // Normalize gender to Indonesian format
-    // ========================================
+    // Normalize gender
     $gender = strtolower(trim($doctorData['gender']));
     if (in_array($gender, ['male', 'laki-laki', 'laki laki', 'l', 'pria'])) {
         $normalizedGender = 'Laki-Laki';
@@ -96,17 +191,11 @@ if ($data['action'] === 'register_doctor_direct') {
     }
     
     try {
-        // ========================================
-        // STEP 1: Check if NIK already exists
-        // ========================================
-        $checkNIK = supabase('GET', 'dokter', 'nik=eq.' . $doctorData['nik'] . '&select=nik');
+        // Check if NIK already exists
+        $checkNIK = supabase('GET', 'dokter', 'nik=eq.' . urlencode($doctorData['nik']) . '&select=nik');
         
         if (isset($checkNIK['error'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error checking NIK: ' . $checkNIK['error']
-            ]);
-            exit;
+            throw new Exception('Error checking NIK: ' . ($checkNIK['error']['message'] ?? 'Unknown error'));
         }
         
         if (!empty($checkNIK) && count($checkNIK) > 0) {
@@ -117,17 +206,11 @@ if ($data['action'] === 'register_doctor_direct') {
             exit;
         }
         
-        // ========================================
-        // STEP 2: Check if email already exists
-        // ========================================
-        $checkEmail = supabase('GET', 'dokter', 'email=eq.' . $doctorData['email'] . '&select=email');
+        // Check if email already exists
+        $checkEmail = supabase('GET', 'dokter', 'email=eq.' . urlencode($doctorData['email']) . '&select=email');
         
         if (isset($checkEmail['error'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error checking email: ' . $checkEmail['error']
-            ]);
-            exit;
+            throw new Exception('Error checking email: ' . ($checkEmail['error']['message'] ?? 'Unknown error'));
         }
         
         if (!empty($checkEmail) && count($checkEmail) > 0) {
@@ -138,17 +221,11 @@ if ($data['action'] === 'register_doctor_direct') {
             exit;
         }
         
-        // ========================================
-        // STEP 3: Check if username already exists
-        // ========================================
-        $checkUsername = supabase('GET', 'dokter', 'username=eq.' . $doctorData['username'] . '&select=username');
+        // Check if username already exists
+        $checkUsername = supabase('GET', 'dokter', 'username=eq.' . urlencode($doctorData['username']) . '&select=username');
         
         if (isset($checkUsername['error'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Error checking username: ' . $checkUsername['error']
-            ]);
-            exit;
+            throw new Exception('Error checking username: ' . ($checkUsername['error']['message'] ?? 'Unknown error'));
         }
         
         if (!empty($checkUsername) && count($checkUsername) > 0) {
@@ -159,9 +236,9 @@ if ($data['action'] === 'register_doctor_direct') {
             exit;
         }
         
-        // ========================================
-        // STEP 4: Create Supabase Auth User
-        // ========================================
+        // Create Supabase Auth User
+        error_log("🔐 Creating doctor auth account for: " . $doctorData['email']);
+        
         $authResponse = supabaseAuthSignUp(
             $doctorData['email'],
             $doctorData['password'],
@@ -172,22 +249,16 @@ if ($data['action'] === 'register_doctor_direct') {
         );
         
         if (!$authResponse['success']) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Gagal membuat akun: ' . ($authResponse['error']['message'] ?? 'Unknown error'),
-                'error_details' => $authResponse['error']
-            ]);
-            exit;
+            $errorMsg = $authResponse['error']['message'] ?? 'Unknown error';
+            throw new Exception('Gagal membuat akun: ' . $errorMsg);
         }
         
         $user = $authResponse['user'];
         $user_id = $user['id'];
         
-        error_log("✅ Auth user created: $user_id");
+        error_log("✅ Doctor auth user created: $user_id");
         
-        // ========================================
-        // STEP 5: Insert into dokter table
-        // ========================================
+        // Insert into dokter table
         $insertData = [
             'id_dokter' => $user_id,
             'nik' => $doctorData['nik'],
@@ -205,47 +276,21 @@ if ($data['action'] === 'register_doctor_direct') {
         error_log("📋 Insert response: " . json_encode($insertResponse));
         
         if (isset($insertResponse['error'])) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'User created but failed to save doctor data',
-                'error_details' => $insertResponse['error'],
-                'data' => [
-                    'user_id' => $user_id,
-                    'email' => $doctorData['email']
-                ],
-                'debug' => [
-                    'insert_data' => $insertData,
-                    'insert_response' => $insertResponse
-                ]
-            ]);
-            exit;
+            throw new Exception('Failed to save doctor data: ' . ($insertResponse['error']['message'] ?? 'Unknown error'));
         }
         
-        // ========================================
-        // STEP 6: Get the inserted doctor record
-        // ========================================
+        // Verify insertion by querying back
         $selectResponse = supabase('GET', 'dokter', 'id_dokter=eq.' . $user_id . '&select=id_dokter,nama_lengkap,email,username,nik');
         
-        error_log("🔍 Select response: " . json_encode($selectResponse));
-        
-        if (isset($selectResponse['error']) || empty($selectResponse) || count($selectResponse) === 0) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Doctor registered but failed to retrieve record',
-                'error_details' => $selectResponse['error'] ?? 'No data returned',
-                'data' => [
-                    'user_id' => $user_id,
-                    'email' => $doctorData['email']
-                ]
-            ]);
-            exit;
+        if (isset($selectResponse['error']) || empty($selectResponse)) {
+            throw new Exception('Doctor registered but failed to retrieve record');
         }
         
-        $doctorRecord = $selectResponse[0]; // Get first item from array
+        $doctorRecord = $selectResponse[0];
         
-        // ========================================
-        // SUCCESS!
-        // ========================================
+        error_log("✅ Doctor registration complete!");
+        
+        // Return success
         echo json_encode([
             'success' => true,
             'message' => 'Registrasi berhasil!',
@@ -260,14 +305,16 @@ if ($data['action'] === 'register_doctor_direct') {
         ]);
         
     } catch (Exception $e) {
-        error_log("❌ Exception: " . $e->getMessage());
+        error_log("❌ Doctor registration failed: " . $e->getMessage());
+        error_log("   Stack trace: " . $e->getTraceAsString());
+        
         echo json_encode([
             'success' => false,
-            'message' => 'Error: ' . $e->getMessage(),
+            'message' => $e->getMessage(),
             'error_details' => [
                 'code' => $e->getCode(),
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
+                'file' => basename($e->getFile()),
                 'line' => $e->getLine()
             ]
         ]);
@@ -276,21 +323,13 @@ if ($data['action'] === 'register_doctor_direct') {
 }
 
 // ========================================
-// OTHER ACTIONS (if you have any)
+// UNKNOWN REQUEST
 // ========================================
-if ($data['action'] === 'login') {
-    // Handle login if needed
-    echo json_encode([
-        'success' => false,
-        'message' => 'Login handled by Supabase client-side'
-    ]);
-    exit;
-}
-
-// Unknown action
+error_log("⚠️ Unknown request to auth.php");
 echo json_encode([
     'success' => false,
-    'message' => 'Unknown action: ' . $data['action']
+    'message' => 'Unknown request type',
+    'received_data' => array_keys($data)
 ]);
 exit;
 ?>

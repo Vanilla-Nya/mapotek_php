@@ -169,7 +169,6 @@ class ICDXSelectionModal {
     console.log("📦 Loading ICDX data from JSON file...");
     const tbody = document.getElementById("icdxTableBody");
     
-    // ✅ Show skeleton loading
     tbody.innerHTML = SkeletonLoader.searchResults(8);
     
     try {
@@ -189,7 +188,6 @@ class ICDXSelectionModal {
       
       console.log(`✅ Loaded ${this.allICDXData.length} ICDX records from JSON`);
       
-      // Show initial message
       tbody.innerHTML = `
         <tr>
           <td colspan="2" style="text-align: center; padding: 40px; color: #999;">
@@ -227,7 +225,6 @@ class ICDXSelectionModal {
           </div>
 
           <div class="icdx-modal-body">
-            <!-- Search Section -->
             <div class="search-section" style="display: flex; gap: 10px; margin-bottom: 20px;">
               <input type="text" 
                      id="icdxSearchInput" 
@@ -240,7 +237,6 @@ class ICDXSelectionModal {
               </button>
             </div>
 
-            <!-- Table Section -->
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
               <table class="table table-hover">
                 <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
@@ -313,7 +309,6 @@ class ICDXSelectionModal {
       clearTimeout(this.searchTimeout);
     }
 
-    // ✅ Show skeleton while searching
     const tbody = document.getElementById("icdxTableBody");
     tbody.innerHTML = SkeletonLoader.searchResults(5);
 
@@ -461,7 +456,6 @@ class ICDIXSelectionModal {
     console.log("📦 Loading ICDIX data from JSON file...");
     const tbody = document.getElementById("icdixTableBody");
     
-    // ✅ Show skeleton loading
     tbody.innerHTML = SkeletonLoader.searchResults(8);
     
     try {
@@ -471,8 +465,8 @@ class ICDIXSelectionModal {
       const jsonData = await response.json();
       
       this.allICDIXData = jsonData.map(item => ({
-        code: item.CODE || '',
-        display: item.DISPLAY || ''
+        code: String(item.CODE || ''),     
+        display: String(item.DISPLAY || '')  
       }));
 
       this.filteredICDIXData = [...this.allICDIXData];
@@ -517,7 +511,6 @@ class ICDIXSelectionModal {
           </div>
 
           <div class="icdix-modal-body">
-            <!-- Search Section -->
             <div class="search-section" style="display: flex; gap: 10px; margin-bottom: 20px;">
               <input type="text" 
                      id="icdixSearchInput" 
@@ -530,7 +523,6 @@ class ICDIXSelectionModal {
               </button>
             </div>
 
-            <!-- Table Section -->
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
               <table class="table table-hover">
                 <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
@@ -620,19 +612,18 @@ class ICDIXSelectionModal {
       return;
     }
 
-    const keywords = keyword.split(' ').filter(k => k.length > 0);
-    
     this.filteredICDIXData = this.allICDIXData.filter(icdix => {
-      const code = (icdix.code || '').toLowerCase();
-      const display = (icdix.display || '').toLowerCase();
-      const searchText = `${code} ${display}`;
+      if (!icdix) return false;
       
-      return keywords.every(kw => searchText.includes(kw));
+      // ✅ Convert to string first, then lowercase
+      const code = String(icdix.code || "").toLowerCase();
+      const display = String(icdix.display || "").toLowerCase();
+      
+      return code.includes(keyword) || display.includes(keyword);
     });
-
-    console.log(`🔍 Found ${this.filteredICDIXData.length} results for "${keyword}"`);
+    
     this.renderICDIXTable();
-  }
+}
 
   renderICDIXTable() {
     const tbody = document.getElementById("icdixTableBody");
@@ -726,9 +717,10 @@ class ICDIXSelectionModal {
 // OBAT SELECTION MODAL CLASS
 // ========================================
 class ObatSelectionModal {
-  constructor(pemeriksaanModal) {
+  constructor(pemeriksaanModal, doctorId) {
     this.pemeriksaanModal = pemeriksaanModal;
     this.allObatData = [];
+    this.doctorId = doctorId;
     this.filteredObatData = [];
     this.selectedObat = null;
     this.jumlah = 1;
@@ -742,29 +734,78 @@ class ObatSelectionModal {
   }
 
   async loadObatData() {
-    console.log("📦 Loading obat data...");
+    console.log("📦 Loading obat data for doctor:", this.doctorId);
+    
+    if (!this.doctorId) {
+      console.error("❌ No doctor ID provided to ObatSelectionModal!");
+      const tbody = document.getElementById("obatTableBody");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: #dc3545;">
+              <i class="bi bi-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+              Error: Doctor ID tidak ditemukan
+            </td>
+          </tr>
+        `;
+      }
+      return;
+    }
     
     try {
-      const response = await fetch('../API/auth/obat.php?action=get_all');
-      const result = await response.json();
+      // ✅ Filter by doctor ID
+      const url = `/MAPOTEK_PHP/WEB/API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
+      console.log("📤 Fetching from:", url);
       
-      if (result.success && Array.isArray(result.data)) {
-        this.allObatData = result.data;
-        this.filteredObatData = [...this.allObatData];
-        console.log("✅ Loaded", this.allObatData.length, "obat");
-      } else {
-        console.error("❌ Failed to load obat data");
-        this.allObatData = [];
-        this.filteredObatData = [];
+      this.showLoading(true);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
+      
+      const result = await response.json();
+      console.log('📦 Medicines response:', result);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Gagal memuat data obat');
+      }
+      
+      this.allObatData = result.data || [];
+      this.filteredObatData = [...this.allObatData];
+      
+      console.log(`✅ Loaded ${this.allObatData.length} medicines for doctor ID: ${this.doctorId}`);
+      
     } catch (error) {
       console.error("❌ Error loading obat:", error);
       this.allObatData = [];
       this.filteredObatData = [];
+      
+      const tbody = document.getElementById("obatTableBody");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: #dc3545;">
+              <i class="bi bi-exclamation-triangle" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+              Gagal memuat data obat: ${error.message}
+            </td>
+          </tr>
+        `;
+      }
+    } finally {
+      this.isLoading = false;
+      this.updateTable();
     }
+  }
+  // ✅ ADD: Helper method to show loading state
+  showLoading(show) {
+    const tbody = document.getElementById("obatTableBody");
+    if (!tbody) return;
     
-    this.isLoading = false;
-    this.updateTable();
+    if (show) {
+      tbody.innerHTML = SkeletonLoader.tableRows(6, 5);
+    }
   }
 
   createModal() {
@@ -782,7 +823,6 @@ class ObatSelectionModal {
           </div>
 
           <div class="obat-modal-body">
-            <!-- Search Section -->
             <div class="search-section">
               <input type="text" 
                      id="obatSearchInput" 
@@ -791,7 +831,6 @@ class ObatSelectionModal {
                      oninput="obatSelectionModal.filterObat(this.value)">
             </div>
 
-            <!-- Table Section -->
             <div class="table-container" style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
               <table class="table table-hover">
                 <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
@@ -810,7 +849,6 @@ class ObatSelectionModal {
               </table>
             </div>
 
-            <!-- Selected Obat Info -->
             <div id="selectedObatInfo" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); border-radius: 8px; border: 2px solid #6366f1;">
               <h4 style="color: #6366f1; margin-bottom: 15px;">📋 Informasi Obat Terpilih</h4>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
@@ -1210,12 +1248,123 @@ class PemeriksaanModal {
       catatan: '',
       detail: ''
     };
+
+    this.currentDoctorId = null;
+    
+    this.formData = {
+      keluhan: '',
+      anamnesis: '',
+      alergi_makanan: 'Tidak Ada',
+      alergi_udara: 'Tidak Ada',
+      alergi_obat: 'Tidak Ada',
+      prognosa: '',
+      terapi_obat: '',
+      terapi_non_obat: '',
+      bmhp: '',
+      body_weight: '',
+      oxygen_sat: '',
+      body_height: '',
+      body_temp: '',
+      blood_pressure: '',
+      heart_rate: '',
+      resp_rate: ''
+    };
   }
 
-  show(queueData) {
-    this.queueData = queueData;
+  show(queueData, doctorId) {
+    this.reset();
+    this.queueData = { ...queueData };
+    this.currentDoctorId = doctorId; // ✅ Store doctor ID
+    
+    console.log("📋 Modal opened with queue data:", this.queueData);
+    console.log("👨‍⚕️ Doctor ID:", this.currentDoctorId);
+    
     this.createModal();
     this.initializeStep(0);
+  }
+
+  reset() {
+    console.log("🔄 Resetting modal data...");
+    this.currentStep = 0;
+    this.drugTableData = [];
+    this.icdxTableData = [];
+    this.icdixTableData = [];
+    this.totalHarga = 0;
+    this.hargaJasa = 0;
+    this.resepData = {
+      nama: '',
+      catatan: '',
+      detail: ''
+    };
+    
+    this.formData = {
+      keluhan: '',
+      anamnesis: '',
+      alergi_makanan: 'Tidak Ada',
+      alergi_udara: 'Tidak Ada',
+      alergi_obat: 'Tidak Ada',
+      prognosa: '',
+      terapi_obat: '',
+      terapi_non_obat: '',
+      bmhp: '',
+      body_weight: '',
+      oxygen_sat: '',
+      body_height: '',
+      body_temp: '',
+      blood_pressure: '',
+      heart_rate: '',
+      resp_rate: ''
+    };
+    
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('#pemeriksaanModal input, #pemeriksaanModal textarea, #pemeriksaanModal select');
+      inputs.forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          input.checked = false;
+        } else if (input.tagName === 'SELECT') {
+          input.selectedIndex = 0;
+        } else {
+          input.value = '';
+        }
+      });
+    }, 100);
+  }
+
+  saveCurrentStepData() {
+    switch (this.currentStep) {
+      case 1:
+        this.formData.keluhan = document.getElementById("keluhan")?.value || "";
+        this.formData.anamnesis = document.getElementById("anamnesis")?.value || "";
+        this.formData.alergi_makanan = document.getElementById("alergiMakanan")?.value || "Tidak Ada";
+        this.formData.alergi_udara = document.getElementById("alergiUdara")?.value || "Tidak Ada";
+        this.formData.alergi_obat = document.getElementById("alergiObat")?.value || "Tidak Ada";
+        this.formData.prognosa = document.getElementById("prognosa")?.value || "";
+        this.formData.terapi_obat = document.getElementById("terapiObat")?.value || "";
+        this.formData.terapi_non_obat = document.getElementById("terapiNonObat")?.value || "";
+        this.formData.bmhp = document.getElementById("bmhp")?.value || "";
+        console.log("💾 Saved Anamnesa data:", this.formData);
+        break;
+        
+      case 2:
+        this.formData.body_weight = document.getElementById("bodyWeight")?.value || "";
+        this.formData.oxygen_sat = document.getElementById("oxygenSat")?.value || "";
+        this.formData.body_height = document.getElementById("bodyHeight")?.value || "";
+        this.formData.body_temp = document.getElementById("bodyTemp")?.value || "";
+        this.formData.blood_pressure = document.getElementById("bloodPressure")?.value || "";
+        this.formData.heart_rate = document.getElementById("heartRate")?.value || "";
+        this.formData.resp_rate = document.getElementById("respRate")?.value || "";
+        console.log("💾 Saved Vital Signs data:", this.formData);
+        break;
+        
+      case 4:
+        const hargaJasaInput = document.getElementById("hargaJasa");
+        if (hargaJasaInput) {
+          const numericValue = hargaJasaInput.value.replace(/[^0-9]/g, '');
+          this.hargaJasa = parseFloat(numericValue) || 0;
+          console.log("💾 Saved Harga Jasa from step 4:", this.hargaJasa);
+        }
+        break;
+    }
   }
 
   createModal() {
@@ -1776,12 +1925,12 @@ class PemeriksaanModal {
         
         <div class="form-group">
           <label>Keluhan Utama *</label>
-          <textarea id="keluhan" placeholder="Tuliskan keluhan utama pasien..." required></textarea>
+          <textarea id="keluhan" placeholder="Tuliskan keluhan utama pasien..." required>${this.formData.keluhan}</textarea>
         </div>
 
         <div class="form-group">
           <label>Anamnesis *</label>
-          <textarea id="anamnesis" placeholder="Riwayat penyakit sekarang, riwayat penyakit dahulu..." required></textarea>
+          <textarea id="anamnesis" placeholder="Riwayat penyakit sekarang, riwayat penyakit dahulu..." required>${this.formData.anamnesis}</textarea>
         </div>
 
         <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">🔔 Riwayat Alergi</h4>
@@ -1790,24 +1939,24 @@ class PemeriksaanModal {
           <div class="form-group">
             <label>Makanan</label>
             <select id="alergiMakanan">
-              <option value="Tidak Ada">Tidak Ada</option>
-              <option value="Ada">Ada</option>
+              <option value="Tidak Ada" ${this.formData.alergi_makanan === "Tidak Ada" ? "selected" : ""}>Tidak Ada</option>
+              <option value="Ada" ${this.formData.alergi_makanan === "Ada" ? "selected" : ""}>Ada</option>
             </select>
           </div>
 
           <div class="form-group">
             <label>Udara</label>
             <select id="alergiUdara">
-              <option value="Tidak Ada">Tidak Ada</option>
-              <option value="Ada">Ada</option>
+              <option value="Tidak Ada" ${this.formData.alergi_udara === "Tidak Ada" ? "selected" : ""}>Tidak Ada</option>
+              <option value="Ada" ${this.formData.alergi_udara === "Ada" ? "selected" : ""}>Ada</option>
             </select>
           </div>
 
           <div class="form-group">
             <label>Obat-Obatan</label>
             <select id="alergiObat">
-              <option value="Tidak Ada">Tidak Ada</option>
-              <option value="Ada">Ada</option>
+              <option value="Tidak Ada" ${this.formData.alergi_obat === "Tidak Ada" ? "selected" : ""}>Tidak Ada</option>
+              <option value="Ada" ${this.formData.alergi_obat === "Ada" ? "selected" : ""}>Ada</option>
             </select>
           </div>
 
@@ -1815,28 +1964,28 @@ class PemeriksaanModal {
             <label>Prognosa</label>
             <select id="prognosa">
               <option value="">Pilih Prognosa</option>
-              <option value="Sanam">Sanam (Sembuh)</option>
-              <option value="Bonam">Bonam (Baik)</option>
-              <option value="Malam">Malam (Buruk/Jelek)</option>
-              <option value="Dubia Ad Sanam">Dubia Ad Sanam/Bonam</option>
-              <option value="Dubia Ad Malam">Dubia Ad Malam</option>
+              <option value="Sanam" ${this.formData.prognosa === "Sanam" ? "selected" : ""}>Sanam (Sembuh)</option>
+              <option value="Bonam" ${this.formData.prognosa === "Bonam" ? "selected" : ""}>Bonam (Baik)</option>
+              <option value="Malam" ${this.formData.prognosa === "Malam" ? "selected" : ""}>Malam (Buruk/Jelek)</option>
+              <option value="Dubia Ad Sanam" ${this.formData.prognosa === "Dubia Ad Sanam" ? "selected" : ""}>Dubia Ad Sanam/Bonam</option>
+              <option value="Dubia Ad Malam" ${this.formData.prognosa === "Dubia Ad Malam" ? "selected" : ""}>Dubia Ad Malam</option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
           <label>Terapi Obat *</label>
-          <textarea id="terapiObat" placeholder="Rencana terapi menggunakan obat..." required></textarea>
+          <textarea id="terapiObat" placeholder="Rencana terapi menggunakan obat..." required>${this.formData.terapi_obat}</textarea>
         </div>
 
         <div class="form-group">
           <label>Terapi Non Obat</label>
-          <textarea id="terapiNonObat" placeholder="Rencana terapi tanpa obat (fisioterapi, diet, dll)..."></textarea>
+          <textarea id="terapiNonObat" placeholder="Rencana terapi tanpa obat (fisioterapi, diet, dll)...">${this.formData.terapi_non_obat}</textarea>
         </div>
 
         <div class="form-group">
           <label>BMHP (Bahan Medis Habis Pakai)</label>
-          <input type="text" id="bmhp" placeholder="Contoh: Kapas, perban, dll...">
+          <input type="text" id="bmhp" placeholder="Contoh: Kapas, perban, dll..." value="${this.formData.bmhp}">
         </div>
       </div>
     `;
@@ -1850,37 +1999,37 @@ class PemeriksaanModal {
         <div class="grid-2">
           <div class="form-group">
             <label>⚖️ Berat Badan (kg)</label>
-            <input type="text" id="bodyWeight" placeholder="Contoh: 65.5">
+            <input type="text" id="bodyWeight" placeholder="Contoh: 65.5" value="${this.formData.body_weight}">
           </div>
 
           <div class="form-group">
             <label>💨 Saturasi Oksigen (%)</label>
-            <input type="text" id="oxygenSat" placeholder="Contoh: 98">
+            <input type="text" id="oxygenSat" placeholder="Contoh: 98" value="${this.formData.oxygen_sat}">
           </div>
 
           <div class="form-group">
             <label>📏 Tinggi Badan (cm)</label>
-            <input type="text" id="bodyHeight" placeholder="Contoh: 170">
+            <input type="text" id="bodyHeight" placeholder="Contoh: 170" value="${this.formData.body_height}">
           </div>
 
           <div class="form-group">
             <label>🌡️ Suhu Tubuh (°C)</label>
-            <input type="text" id="bodyTemp" placeholder="Contoh: 36.5">
+            <input type="text" id="bodyTemp" placeholder="Contoh: 36.5" value="${this.formData.body_temp}">
           </div>
 
           <div class="form-group">
             <label>💉 Tekanan Darah (mmHg)</label>
-            <input type="text" id="bloodPressure" placeholder="Contoh: 120/80">
+            <input type="text" id="bloodPressure" placeholder="Contoh: 120/80" value="${this.formData.blood_pressure}">
           </div>
 
           <div class="form-group">
             <label>💓 Denyut Nadi (bpm)</label>
-            <input type="text" id="heartRate" placeholder="Contoh: 72">
+            <input type="text" id="heartRate" placeholder="Contoh: 72" value="${this.formData.heart_rate}">
           </div>
 
           <div class="form-group">
             <label>🫁 Laju Pernapasan (x/min)</label>
-            <input type="text" id="respRate" placeholder="Contoh: 16">
+            <input type="text" id="respRate" placeholder="Contoh: 16" value="${this.formData.resp_rate}">
           </div>
         </div>
       </div>
@@ -2046,7 +2195,15 @@ class PemeriksaanModal {
   }
 
   showObatSelectionModal() {
-    window.obatSelectionModal = new ObatSelectionModal(this);
+    console.log("💊 Opening Obat Selection Modal with doctor ID:", this.currentDoctorId);
+    
+    if (!this.currentDoctorId) {
+      console.error("❌ No doctor ID available!");
+      alert("Error: Doctor ID tidak ditemukan. Silakan refresh halaman.");
+      return;
+    }
+    
+    window.obatSelectionModal = new ObatSelectionModal(this, this.currentDoctorId);
     window.obatSelectionModal.show();
   }
 
@@ -2074,6 +2231,7 @@ class PemeriksaanModal {
   updateHargaJasa(value) {
     const numericValue = value.replace(/[^0-9]/g, '');
     this.hargaJasa = parseFloat(numericValue) || 0;
+    console.log("💰 Updated Harga Jasa (via input):", this.hargaJasa);
     this.renderStepContent();
   }
 
@@ -2196,6 +2354,7 @@ class PemeriksaanModal {
 
   nextStep() {
     if (!this.validateCurrentStep()) return;
+    this.saveCurrentStepData();
 
     if (this.currentStep < this.totalSteps - 1) {
       this.currentStep++;
@@ -2204,6 +2363,8 @@ class PemeriksaanModal {
   }
 
   previousStep() {
+    this.saveCurrentStepData();
+
     if (this.currentStep > 0) {
       this.currentStep--;
       this.initializeStep(this.currentStep);
@@ -2213,6 +2374,16 @@ class PemeriksaanModal {
   async finish() {
     if (!this.validateCurrentStep()) return;
 
+    // ✅ CRITICAL: Capture hargaJasa from input field BEFORE saving
+    const hargaJasaInput = document.getElementById("hargaJasa");
+    if (hargaJasaInput) {
+        const numericValue = hargaJasaInput.value.replace(/[^0-9]/g, '');
+        this.hargaJasa = parseFloat(numericValue) || 0;
+        console.log("💰 Final Harga Jasa captured:", this.hargaJasa);
+    }
+
+    this.saveCurrentStepData();
+
     if (
       !confirm(
         "🏁 Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui."
@@ -2220,43 +2391,47 @@ class PemeriksaanModal {
     )
       return;
 
+    const totalHargaObat = this.drugTableData.reduce(
+      (sum, drug) => sum + drug.harga * drug.jumlah,
+      0
+    );
+    const totalKeseluruhan = totalHargaObat + this.hargaJasa;
+
     const pemeriksaanData = {
       id_antrian: this.queueData.id_antrian,
-
-      keluhan: document.getElementById("keluhan")?.value || "",
-      anamnesis: document.getElementById("anamnesis")?.value || "",
-      alergi_makanan:
-        document.getElementById("alergiMakanan")?.value || "Tidak Ada",
-      alergi_udara:
-        document.getElementById("alergiUdara")?.value || "Tidak Ada",
-      alergi_obat: document.getElementById("alergiObat")?.value || "Tidak Ada",
-      prognosa: document.getElementById("prognosa")?.value || "",
-      terapi_obat: document.getElementById("terapiObat")?.value || "",
-      terapi_non_obat: document.getElementById("terapiNonObat")?.value || "",
-      bmhp: document.getElementById("bmhp")?.value || "",
-
-      body_weight: document.getElementById("bodyWeight")?.value || "",
-      oxygen_sat: document.getElementById("oxygenSat")?.value || "",
-      body_height: document.getElementById("bodyHeight")?.value || "",
-      body_temp: document.getElementById("bodyTemp")?.value || "",
-      blood_pressure: document.getElementById("bloodPressure")?.value || "",
-      heart_rate: document.getElementById("heartRate")?.value || "",
-      resp_rate: document.getElementById("respRate")?.value || "",
-
+      keluhan: this.formData.keluhan,
+      anamnesis: this.formData.anamnesis,
+      alergi_makanan: this.formData.alergi_makanan,
+      alergi_udara: this.formData.alergi_udara,
+      alergi_obat: this.formData.alergi_obat,
+      prognosa: this.formData.prognosa,
+      terapi_obat: this.formData.terapi_obat,
+      terapi_non_obat: this.formData.terapi_non_obat,
+      bmhp: this.formData.bmhp,
+      body_weight: this.formData.body_weight,
+      oxygen_sat: this.formData.oxygen_sat,
+      body_height: this.formData.body_height,
+      body_temp: this.formData.body_temp,
+      blood_pressure: this.formData.blood_pressure,
+      heart_rate: this.formData.heart_rate,
+      resp_rate: this.formData.resp_rate,
       icdx: this.icdxTableData,
       icdix: this.icdixTableData,
-
       obat: this.drugTableData,
       resep: this.resepData,
       harga_jasa: this.hargaJasa,
-      total:
-        this.drugTableData.reduce(
-          (sum, drug) => sum + drug.harga * drug.jumlah,
-          0
-        ) + this.hargaJasa,
+      total: totalKeseluruhan,
     };
 
-    console.log("💾 Saving pemeriksaan data:", pemeriksaanData);
+    console.log("=".repeat(60));
+    console.log("💾 SAVING PEMERIKSAAN DATA");
+    console.log("=".repeat(60));
+    console.log("📊 id_antrian:", this.queueData.id_antrian);
+    console.log("💰 Harga Jasa:", this.hargaJasa);
+    console.log("💊 Total Harga Obat:", totalHargaObat);
+    console.log("💵 Total Keseluruhan:", totalKeseluruhan);
+    console.log("📦 Full Data:", pemeriksaanData);
+    console.log("=".repeat(60));
 
     try {
       const response = await fetch(
@@ -2315,6 +2490,12 @@ class PemeriksaanFragment {
     this.currentDoctorName = "";
     this.apiUrl = "../API/auth/antrian.php";
     this.profileApiUrl = "../API/auth/profile.php";
+
+    // ✅ Pagination
+        this.currentPage = 1;
+        this.pageSize = 10;
+        this.totalQueues = 0;
+        this.isLoading = false;
   }
 
   render() {
@@ -2500,7 +2681,13 @@ class PemeriksaanFragment {
 
     const queueData = this.queues.find((q) => q.id_antrian === id);
     if (queueData) {
-      window.pemeriksaanModal.show(queueData);
+      const dataToPass = { ...queueData };
+      dataToPass.status_antrian = "Sedang Diperiksa";
+      
+      console.log("📋 Continuing with queue data:", dataToPass);
+      
+      // ✅ PASS DOCTOR ID HERE
+      window.pemeriksaanModal.show(dataToPass, this.currentDoctorId);
     } else {
       alert("❌ Data antrian tidak ditemukan");
     }
@@ -2585,8 +2772,7 @@ class PemeriksaanFragment {
         this.queues = data.filter(
           (q) =>
             q.status_antrian.toLowerCase() === "di terima" ||
-            q.status_antrian.toLowerCase() === "sedang diperiksa" ||
-            q.status_antrian.toLowerCase() === "selesai"
+            q.status_antrian.toLowerCase() === "sedang diperiksa" 
         );
 
         this.updateTable();
@@ -2609,19 +2795,8 @@ class PemeriksaanFragment {
       return;
     }
 
-    if (
-      !confirm(
-        "Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT."
-      )
-    )
+    if (!confirm("Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT."))
       return;
-
-    console.log("=".repeat(50));
-    console.log("🔗 BLOCKCHAIN MODE: NEW EXAMINATION");
-    console.log("=".repeat(50));
-    console.log("🩺 Starting examination for queue ID:", id);
-    console.log("🏥 Creating new SATUSEHAT Encounter");
-    console.log("=".repeat(50));
 
     try {
       const response = await fetch(`${this.apiUrl}?action=periksa&id=${id}`, {
@@ -2630,25 +2805,28 @@ class PemeriksaanFragment {
       });
 
       const result = await response.json();
-      console.log("📥 Server Response:", result);
 
       if (result.success) {
-        console.log("✅ SUCCESS! New examination started!");
-        console.log("🏥 Encounter ID:", result.id_encounter_satusehat);
-        console.log("🔗 Hash:", result.hash);
-        console.log("=".repeat(50));
-
-        queueData.id_encounter_satusehat = result.id_encounter_satusehat;
-        queueData.status_antrian = "Sedang Diperiksa";
-
-        this.loadQueues().catch(err => console.error("Error reloading queues:", err));
-
-        window.pemeriksaanModal.show(queueData);
+        const updatedQueueData = {
+          ...queueData,
+          id_antrian: result.id_antrian,
+          id_encounter_satusehat: result.id_encounter_satusehat,
+          status_antrian: "Sedang Diperiksa"
+        };
+        
+        const queueIndex = this.queues.findIndex((q) => q.id_antrian === id);
+        if (queueIndex !== -1) {
+          this.queues[queueIndex] = updatedQueueData;
+        }
+        
+        this.updateTable();
+        
+        // ✅ PASS DOCTOR ID HERE
+        window.pemeriksaanModal.show(updatedQueueData, this.currentDoctorId);
+        
+        setTimeout(() => this.loadQueues(), 1000);
       } else {
-        alert(
-          "❌ Gagal memulai pemeriksaan: " +
-            (result.message || result.error || "")
-        );
+        alert("❌ Gagal memulai pemeriksaan: " + (result.message || result.error || ""));
       }
     } catch (error) {
       console.error("❌ Error starting examination:", error);
@@ -2663,48 +2841,37 @@ class PemeriksaanFragment {
       return;
     }
 
-    if (
-      !confirm(
-        "Lanjutkan pemeriksaan pasien ini?\n\nAnda akan melanjutkan pemeriksaan yang sudah dimulai sebelumnya."
-      )
-    )
+    if (!confirm("Lanjutkan pemeriksaan pasien ini?"))
       return;
 
-    console.log("=".repeat(50));
-    console.log("▶️ BLOCKCHAIN MODE: RESUME EXAMINATION");
-    console.log("=".repeat(50));
-    console.log("📋 Resuming examination for queue ID:", id);
-    console.log("🔄 Reusing existing SATUSEHAT Encounter");
-    console.log("=".repeat(50));
-
     try {
-      const response = await fetch(
-        `${this.apiUrl}?action=resume_pemeriksaan&id=${id}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
+      const response = await fetch(`${this.apiUrl}?action=resume_pemeriksaan&id=${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
 
       const result = await response.json();
-      console.log("📥 Server Response:", result);
 
       if (result.success) {
-        console.log("✅ SUCCESS! Examination resumed!");
-        console.log("🏥 Encounter ID (reused):", result.id_encounter_satusehat);
-        console.log("🔗 Hash:", result.hash);
-        console.log("=".repeat(50));
-
-        queueData.status_antrian = "Sedang Diperiksa";
-
-        this.loadQueues().catch(err => console.error("Error reloading queues:", err));
-
-        window.pemeriksaanModal.show(queueData);
+        const updatedQueueData = {
+          ...queueData,
+          id_antrian: result.id_antrian,
+          status_antrian: "Sedang Diperiksa"
+        };
+        
+        const queueIndex = this.queues.findIndex((q) => q.id_antrian === id);
+        if (queueIndex !== -1) {
+          this.queues[queueIndex] = updatedQueueData;
+        }
+        
+        this.updateTable();
+        
+        // ✅ PASS DOCTOR ID HERE
+        window.pemeriksaanModal.show(updatedQueueData, this.currentDoctorId);
+        
+        setTimeout(() => this.loadQueues(), 1000);
       } else {
-        alert(
-          "❌ Gagal melanjutkan pemeriksaan: " +
-            (result.message || result.error || "")
-        );
+        alert("❌ Gagal melanjutkan pemeriksaan: " + (result.message || result.error || ""));
       }
     } catch (error) {
       console.error("❌ Error resuming examination:", error);

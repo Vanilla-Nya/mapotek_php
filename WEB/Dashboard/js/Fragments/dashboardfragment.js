@@ -1,70 +1,80 @@
-// Modern Medical Dashboard Fragment - Professional Healthcare Design
+// Complete DashboardFragment with Skeleton Loaders
 class DashboardFragment {
     constructor() {
         this.title = 'Dashboard';
         this.icon = 'bi-house-door';
-        
-        // Queue data
-        this.queueData = [
-            { no: 1, name: 'Adelfa', time: '08:00', status: 'Selesai', statusClass: 'success', type: 'Konsultasi' },
-            { no: 2, name: 'Havanah', time: '09:30', status: 'Selesai', statusClass: 'success', type: 'Check-up' },
-            { no: 3, name: 'Alkon', time: '10:00', status: 'Dalam Pemeriksaan', statusClass: 'info', type: 'Konsultasi' },
-            { no: 4, name: 'Aldi', time: '10:30', status: 'Menunggu', statusClass: 'warning', type: 'Resep' },
-            { no: 5, name: 'Budi', time: '11:00', status: 'Menunggu', statusClass: 'warning', type: 'Konsultasi' },
-            { no: 6, name: 'Citra', time: '11:30', status: 'Menunggu', statusClass: 'warning', type: 'Check-up' },
-            { no: 7, name: 'Dian', time: '12:00', status: 'Menunggu', statusClass: 'warning', type: 'Konsultasi' },
-            { no: 8, name: 'Eko', time: '12:30', status: 'Menunggu', statusClass: 'warning', type: 'Resep' },
-            { no: 9, name: 'Fani', time: '13:00', status: 'Menunggu', statusClass: 'warning', type: 'Check-up' },
-            { no: 10, name: 'Gita', time: '13:30', status: 'Menunggu', statusClass: 'warning', type: 'Konsultasi' }
-        ];
-
-        // Graphics rotation state
+        this.doctorData = null;
+        this.queueData = [];
         this.currentGraphicIndex = 0;
         this.graphicRotationTimer = null;
         this.charts = [];
-        
-        // Get current date info
         this.currentDate = new Date();
+        console.log('🏠 DashboardFragment constructor called')
     }
 
     render() {
+        console.log('🎨 DashboardFragment render() called');
         this.injectStyles();
         
         const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const formattedDate = this.currentDate.toLocaleDateString('id-ID', dateOptions);
+        const currentTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         
         return `
             <div class="dashboard-container">
-                <!-- Welcome Header -->
-                <div class="welcome-section mb-4">
-                    <div class="row align-items-center">
-                        <div class="col-lg-8">
-                            <div class="welcome-content">
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="doctor-avatar me-3">
-                                        <i class="bi bi-person-circle"></i>
+                <!-- Enhanced Doctor Profile Card -->
+                <div class="doctor-profile-card-wrapper mb-4">
+                    <div class="doctor-profile-card" id="doctorProfileCard">
+                        <div class="profile-blur-background" id="profileBlurBg"></div>
+                        <div class="profile-content-overlay">
+                            <div class="container-fluid">
+                                <div class="row align-items-center g-4">
+                                    <!-- Avatar Column -->
+                                    <div class="col-auto text-center">
+                                        <div class="profile-avatar-large" id="profileAvatarLarge">
+                                            <div class="avatar-circle">
+                                                <img id="doctorAvatarImg" src="" alt="Avatar" class="d-none">
+                                                <i id="doctorAvatarIcon" class="bi bi-person-circle"></i>
+                                            </div>
+                                            <div class="online-indicator">
+                                                <span class="pulse-dot"></span>
+                                                <span class="status-text">Online</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h2 class="mb-1 fw-bold text-dark">Selamat Datang, Dr. Vanilla</h2>
-                                        <p class="text-muted mb-0">
-                                            <i class="bi bi-calendar-check me-2"></i>${formattedDate}
-                                        </p>
+
+                                    <!-- Info Column -->
+                                    <div class="col">
+                                        <div class="profile-info">
+                                            <h1 class="doctor-title" id="doctorNameDisplay">Loading...</h1>
+                                            <p class="faskes-subtitle" id="faskesDisplay">Loading...</p>
+                                            <div class="meta-info-row">
+                                                <div class="meta-badge">
+                                                    <i class="bi bi-calendar-event"></i>
+                                                    <span>${formattedDate}</span>
+                                                </div>
+                                                <div class="meta-badge">
+                                                    <i class="bi bi-clock-fill"></i>
+                                                    <span>${currentTime}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions Column -->
+                                    <div class="col-auto">
+                                        <div class="profile-actions">
+                                            <button class="action-btn" id="btnDashboardQR" title="QR Code">
+                                                <i class="bi bi-qr-code"></i>
+                                                <span>QR Code</span>
+                                            </button>
+                                            <button class="action-btn" id="btnGoToProfile" title="View Profile">
+                                                <i class="bi bi-person-gear"></i>
+                                                <span>Profile</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="alert alert-info-custom mb-0" role="alert">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    Anda memiliki <strong>8 pasien</strong> dalam antrian hari ini
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <div class="quick-actions">
-                                <button class="btn btn-medical-primary me-2">
-                                    <i class="bi bi-plus-circle me-2"></i>Pasien Baru
-                                </button>
-                                <button class="btn btn-medical-outline">
-                                    <i class="bi bi-file-medical me-2"></i>Rekam Medis
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -95,7 +105,7 @@ class DashboardFragment {
                             <div class="stat-content">
                                 <div class="stat-value" id="queueToday">10</div>
                                 <div class="stat-label">Antrian Hari Ini</div>
-                                <div class="stat-trend neutral">
+                                <div class="stat-trend neutral" id="queueTrend">
                                     <i class="bi bi-dash"></i> 2 selesai, 8 menunggu
                                 </div>
                             </div>
@@ -133,7 +143,7 @@ class DashboardFragment {
                     </div>
                 </div>
 
-                <!-- Queue and QR Code Row - Same Height -->
+                <!-- Queue and QR Code Row -->
                 <div class="row g-4 mb-4">
                     <!-- Patient Queue Card -->
                     <div class="col-lg-8">
@@ -147,8 +157,8 @@ class DashboardFragment {
                                         <small class="text-muted">Kelola dan pantau antrian pasien</small>
                                     </div>
                                     <div class="queue-status">
-                                        <span class="badge badge-success-soft">2 Selesai</span>
-                                        <span class="badge badge-warning-soft">8 Menunggu</span>
+                                        <span class="badge badge-success-soft" id="badgeSelesai">2 Selesai</span>
+                                        <span class="badge badge-warning-soft" id="badgeMenunggu">8 Menunggu</span>
                                     </div>
                                 </div>
                             </div>
@@ -166,6 +176,11 @@ class DashboardFragment {
                                             </tr>
                                         </thead>
                                         <tbody id="queueTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4 text-muted">
+                                                    <i class="bi bi-hourglass-split me-2"></i>Memuat data antrian...
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -173,7 +188,7 @@ class DashboardFragment {
                         </div>
                     </div>
 
-                    <!-- QR Code Card - Same Height as Queue -->
+                    <!-- QR Code Card -->
                     <div class="col-lg-4">
                         <div class="card medical-card h-100">
                             <div class="card-header-custom text-center">
@@ -183,26 +198,21 @@ class DashboardFragment {
                                 <small class="text-muted">Scan untuk daftar antrian</small>
                             </div>
                             <div class="card-body text-center d-flex flex-column justify-content-center">
-                                <div class="qr-code-wrapper">
-                                    <div class="qr-code-container">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://mapotek.com/queue" 
-                                             alt="QR Code Antrian" 
-                                             class="qr-code-image">
-                                    </div>
-                                    <div class="qr-info mt-3">
-                                        <p class="mb-2 fw-semibold text-dark">Klinik Dr. Vanilla</p>
-                                        <p class="text-muted small mb-0">Pasien dapat scan QR code ini untuk mendaftar antrian secara online</p>
+                                <div class="qr-code-wrapper" id="qrCodeWrapper">
+                                    <div class="text-muted">
+                                        <i class="bi bi-hourglass-split mb-2" style="font-size: 40px;"></i>
+                                        <p class="small">Loading QR Code...</p>
                                     </div>
                                 </div>
-                                <button class="btn btn-medical-outline w-100 mt-3">
-                                    <i class="bi bi-download me-2"></i>Download QR Code
+                                <button class="btn btn-outline-primary mt-3" id="btnQRToProfile">
+                                    <i class="bi bi-gear-fill me-2"></i>Kelola QR Code
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Auto-Rotating Graphics Section - Full Width -->
+                <!-- Charts Section -->
                 <div class="row g-4 mb-4">
                     <div class="col-12">
                         <div class="card medical-card">
@@ -217,19 +227,16 @@ class DashboardFragment {
                                     </div>
                                     <div class="graphic-controls">
                                         <div class="graphic-indicators">
-                                            <button class="indicator active" data-index="0" title="Grafik Pasien"></button>
-                                            <button class="indicator" data-index="1" title="Grafik Keuangan"></button>
+                                            <button class="indicator active" data-index="0"></button>
+                                            <button class="indicator" data-index="1"></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="card-body chart-container-wrapper">
-                                <!-- Graphic 1: Bar Chart -->
                                 <div id="graphic1" class="graphic-container active">
                                     <canvas id="chart1"></canvas>
                                 </div>
-                                
-                                <!-- Graphic 2: Line Chart -->
                                 <div id="graphic2" class="graphic-container">
                                     <canvas id="chart2"></canvas>
                                 </div>
@@ -238,7 +245,7 @@ class DashboardFragment {
                     </div>
                 </div>
 
-                <!-- Financial Summary Section - Full Width Below Chart -->
+                <!-- Financial Summary -->
                 <div class="row g-4">
                     <div class="col-12">
                         <div class="card medical-card">
@@ -250,8 +257,8 @@ class DashboardFragment {
                                         </h5>
                                         <small class="text-muted">Bulan ini</small>
                                     </div>
-                                    <button class="btn btn-icon" title="Lihat Detail">
-                                        <i class="bi bi-three-dots-vertical"></i>
+                                    <button class="btn btn-icon" id="btnFinancialDetail">
+                                        <i class="bi bi-arrow-right"></i>
                                     </button>
                                 </div>
                             </div>
@@ -267,7 +274,7 @@ class DashboardFragment {
                                                     <span class="fw-semibold">Total Pendapatan</span>
                                                 </div>
                                             </div>
-                                            <div class="financial-amount income">Rp 32.500.000</div>
+                                            <div class="financial-amount income" id="totalPendapatan">Rp 32.500.000</div>
                                             <div class="financial-trend positive">
                                                 <i class="bi bi-arrow-up"></i> 15% dari bulan lalu
                                             </div>
@@ -284,7 +291,7 @@ class DashboardFragment {
                                                     <span class="fw-semibold">Total Pengeluaran</span>
                                                 </div>
                                             </div>
-                                            <div class="financial-amount expense">Rp 7.200.000</div>
+                                            <div class="financial-amount expense" id="totalPengeluaran">Rp 7.200.000</div>
                                             <div class="financial-trend negative">
                                                 <i class="bi bi-arrow-up"></i> 8% dari bulan lalu
                                             </div>
@@ -301,7 +308,7 @@ class DashboardFragment {
                                                     <span class="fw-bold">Laba Bersih</span>
                                                 </div>
                                             </div>
-                                            <div class="financial-amount profit">Rp 25.300.000</div>
+                                            <div class="financial-amount profit" id="labaBersih">Rp 25.300.000</div>
                                             <div class="financial-trend positive">
                                                 <i class="bi bi-trophy"></i> Target tercapai
                                             </div>
@@ -310,10 +317,36 @@ class DashboardFragment {
                                 </div>
 
                                 <div class="text-center mt-4">
-                                    <button class="btn btn-medical-primary">
+                                    <button class="btn btn-medical-primary" id="btnLihatLaporanLengkap">
                                         <i class="bi bi-file-earmark-bar-graph me-2"></i>Lihat Laporan Lengkap
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Modal -->
+                <div class="modal fade" id="qrModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-qr-code me-2"></i>QR Code Antrian
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <div class="qr-modal-wrapper" id="qrModalContent"></div>
+                                <p class="mt-3 mb-0 text-muted">
+                                    Pasien scan QR ini untuk daftar antrian
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" id="btnDownloadQR">
+                                    <i class="bi bi-download me-2"></i>Download
+                                </button>
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                             </div>
                         </div>
                     </div>
@@ -340,10 +373,6 @@ class DashboardFragment {
                 --medical-dark: #1E293B;
                 --medical-gray: #64748B;
                 --medical-border: #E2E8F0;
-                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-                --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-                --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
-                --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
             }
 
             .dashboard-container {
@@ -352,76 +381,209 @@ class DashboardFragment {
                 min-height: 100vh;
             }
 
-            /* Welcome Section */
-            .welcome-section {
-                background: white;
-                border-radius: 16px;
-                padding: 24px;
-                box-shadow: var(--shadow-md);
+            /* ⭐ SKELETON LOADER STYLES */
+            .skeleton {
+                background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+                border-radius: 8px;
             }
 
-            .doctor-avatar {
-                width: 60px;
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            .skeleton-text {
+                height: 16px;
+                margin-bottom: 8px;
+                border-radius: 4px;
+            }
+
+            .skeleton-text.large {
+                height: 24px;
+            }
+
+            .skeleton-chart {
+                height: 350px;
+                border-radius: 12px;
+            }
+
+            .skeleton-stat {
                 height: 60px;
-                background: linear-gradient(135deg, var(--medical-primary), var(--medical-secondary));
+                border-radius: 12px;
+                margin-bottom: 8px;
+            }
+
+            /* Enhanced Profile Card */
+            .doctor-profile-card-wrapper {
+                margin-bottom: 2rem;
+            }
+
+            .doctor-profile-card {
+                position: relative;
+                background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
+                border-radius: 24px;
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+                min-height: 200px;
+            }
+
+            .profile-blur-background {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-size: cover;
+                background-position: center;
+                filter: blur(40px);
+                opacity: 0.3;
+                transform: scale(1.2);
+                z-index: 0;
+            }
+
+            .profile-content-overlay {
+                position: relative;
+                z-index: 1;
+                padding: 2rem;
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(20px);
+            }
+
+            .profile-avatar-large {
+                position: relative;
+            }
+
+            .avatar-circle {
+                width: 120px;
+                height: 120px;
                 border-radius: 50%;
+                overflow: hidden;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                border: 5px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+                margin: 0 auto;
+            }
+
+            .avatar-circle img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .avatar-circle i {
+                font-size: 60px;
                 color: white;
-                font-size: 32px;
             }
 
-            .welcome-content h2 {
-                font-size: 24px;
-                color: var(--medical-dark);
-            }
-
-            .alert-info-custom {
-                background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
-                border: 1px solid #BFDBFE;
-                border-radius: 10px;
-                padding: 12px 16px;
-                color: #1E40AF;
-            }
-
-            .quick-actions {
+            .online-indicator {
+                position: absolute;
+                bottom: 5px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--medical-success);
+                color: white;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
                 display: flex;
-                justify-content: flex-end;
-                gap: 8px;
+                align-items: center;
+                gap: 6px;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
             }
 
-            .btn-medical-primary {
-                background: linear-gradient(135deg, var(--medical-primary), var(--medical-primary-dark));
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-                box-shadow: var(--shadow-md);
-            }
-
-            .btn-medical-primary:hover {
-                transform: translateY(-2px);
-                box-shadow: var(--shadow-lg);
-                color: white;
-            }
-
-            .btn-medical-outline {
+            .pulse-dot {
+                width: 8px;
+                height: 8px;
                 background: white;
-                color: var(--medical-primary);
-                border: 2px solid var(--medical-primary);
-                padding: 10px 20px;
-                border-radius: 10px;
-                font-weight: 600;
-                transition: all 0.3s ease;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
             }
 
-            .btn-medical-outline:hover {
-                background: var(--medical-primary);
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(0.8); }
+            }
+
+            .profile-info {
                 color: white;
-                transform: translateY(-2px);
+            }
+
+            .doctor-title {
+                font-size: 36px;
+                font-weight: 700;
+                color: white;
+                margin-bottom: 0.5rem;
+                text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            }
+
+            .faskes-subtitle {
+                font-size: 18px;
+                color: rgba(255, 255, 255, 0.9);
+                margin-bottom: 1rem;
+                font-weight: 500;
+            }
+
+            .meta-info-row {
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .meta-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: rgba(255, 255, 255, 0.2);
+                padding: 8px 16px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 500;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            .meta-badge i {
+                font-size: 16px;
+            }
+
+            .profile-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .action-btn {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 24px;
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 14px;
+                color: white;
+                font-weight: 600;
+                font-size: 15px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+                white-space: nowrap;
+            }
+
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: white;
+                transform: translateX(-4px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .action-btn i {
+                font-size: 20px;
             }
 
             /* Stats Cards */
@@ -431,14 +593,14 @@ class DashboardFragment {
                 padding: 24px;
                 display: flex;
                 gap: 20px;
-                box-shadow: var(--shadow-md);
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+                transition: all 0.3s ease;
                 border: 1px solid var(--medical-border);
             }
 
             .stat-card:hover {
                 transform: translateY(-4px);
-                box-shadow: var(--shadow-xl);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             }
 
             .stat-icon {
@@ -450,22 +612,6 @@ class DashboardFragment {
                 justify-content: center;
                 font-size: 28px;
                 flex-shrink: 0;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .stat-card:hover .stat-icon {
-                transform: scale(1.1) rotate(-5deg);
-                animation: iconPulse 1s ease-in-out;
-            }
-
-            /* Icon pulse animation */
-            @keyframes iconPulse {
-                0%, 100% {
-                    transform: scale(1.1) rotate(-5deg);
-                }
-                50% {
-                    transform: scale(1.15) rotate(-5deg);
-                }
             }
 
             .stat-patients .stat-icon {
@@ -488,9 +634,7 @@ class DashboardFragment {
                 color: var(--medical-danger);
             }
 
-            .stat-content {
-                flex: 1;
-            }
+            .stat-content { flex: 1; }
 
             .stat-value {
                 font-size: 32px;
@@ -515,32 +659,17 @@ class DashboardFragment {
                 gap: 4px;
             }
 
-            .stat-trend.positive {
-                color: var(--medical-success);
-            }
-
-            .stat-trend.negative {
-                color: var(--medical-danger);
-            }
-
-            .stat-trend.neutral {
-                color: var(--medical-gray);
-            }
-
-            .stat-trend.warning {
-                color: var(--medical-warning);
-            }
-
-            .stat-trend.danger {
-                color: var(--medical-danger);
-            }
+            .stat-trend.positive { color: var(--medical-success); }
+            .stat-trend.negative { color: var(--medical-danger); }
+            .stat-trend.neutral { color: var(--medical-gray); }
+            .stat-trend.warning { color: var(--medical-warning); }
 
             /* Medical Card */
             .medical-card {
                 background: white;
                 border-radius: 16px;
                 border: 1px solid var(--medical-border);
-                box-shadow: var(--shadow-md);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
                 overflow: hidden;
             }
 
@@ -557,11 +686,6 @@ class DashboardFragment {
                 margin: 0;
             }
 
-            .card-header-custom small {
-                font-size: 13px;
-            }
-
-            /* Queue Status Badges */
             .queue-status {
                 display: flex;
                 gap: 8px;
@@ -591,10 +715,6 @@ class DashboardFragment {
                 overflow-y: auto;
             }
 
-            .queue-table {
-                margin: 0;
-            }
-
             .queue-table thead {
                 background: var(--medical-light);
                 position: sticky;
@@ -607,7 +727,6 @@ class DashboardFragment {
                 font-weight: 700;
                 color: var(--medical-dark);
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
                 padding: 16px;
                 border-bottom: 2px solid var(--medical-border);
             }
@@ -619,222 +738,28 @@ class DashboardFragment {
                 border-bottom: 1px solid var(--medical-border);
             }
 
-            .queue-table tbody tr {
-                transition: all 0.2s ease;
-            }
-
             .queue-table tbody tr:hover {
                 background: #F8FAFC;
-                transform: scale(1.01);
             }
 
-            .queue-table .badge {
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 12px;
-            }
-
-            .queue-table .badge.bg-success {
-                background: var(--medical-success) !important;
-            }
-
-            .queue-table .badge.bg-warning {
-                background: var(--medical-warning) !important;
-            }
-
-            .queue-table .badge.bg-info {
-                background: var(--medical-info) !important;
-            }
-
-            .btn-action {
-                width: 32px;
-                height: 32px;
-                padding: 0;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 8px;
-                border: none;
-                transition: all 0.2s ease;
-            }
-
-            .btn-outline-primary.btn-action {
-                color: var(--medical-primary);
-                border: 1px solid var(--medical-primary);
-            }
-
-            .btn-outline-primary.btn-action:hover {
-                background: var(--medical-primary);
-                color: white;
-                transform: scale(1.1);
-            }
-
-            .btn-outline-danger.btn-action {
-                color: var(--medical-danger);
-                border: 1px solid var(--medical-danger);
-            }
-
-            .btn-outline-danger.btn-action:hover {
-                background: var(--medical-danger);
-                color: white;
-                transform: scale(1.1);
-            }
-
-            /* Graphics Section */
-            .chart-container-wrapper {
-                position: relative;
-                min-height: 400px;
-                padding: 24px;
-            }
-
-            .graphic-container {
-                position: absolute;
-                top: 24px;
-                left: 24px;
-                right: 24px;
-                bottom: 24px;
-                opacity: 0;
-                transform: scale(0.96) translateY(10px);
-                transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-                pointer-events: none;
-            }
-
-            .graphic-container.active {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-                pointer-events: auto;
-            }
-
-            /* Chart entrance animation */
-            @keyframes chartSlideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(20px) scale(0.98);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-
-            .chart-container-wrapper {
-                animation: chartSlideIn 0.6s ease-out;
-            }
-
-            .graphic-controls {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .graphic-indicators {
-                display: flex;
-                gap: 8px;
-                background: white;
-                padding: 6px;
-                border-radius: 20px;
-                border: 1px solid var(--medical-border);
-            }
-
-            .indicator {
-                width: 12px;
-                height: 12px;
-                border-radius: 50%;
-                background: #CBD5E1;
-                border: none;
-                cursor: pointer;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                padding: 0;
-                position: relative;
-            }
-
-            .indicator:hover {
-                background: #94A3B8;
-                transform: scale(1.2);
-            }
-
-            .indicator.active {
-                background: var(--medical-primary);
-                width: 32px;
-                border-radius: 10px;
-                animation: indicatorPulse 2s ease-in-out infinite;
-            }
-
-            /* Indicator pulse animation */
-            @keyframes indicatorPulse {
-                0%, 100% {
-                    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
-                }
-                50% {
-                    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0);
-                }
-            }
-
-            /* QR Code Card */
-            .qr-code-wrapper {
-                padding: 16px;
-            }
-
-            .qr-code-container {
-                background: linear-gradient(135deg, #F8FAFC, #F1F5F9);
-                padding: 20px;
-                border-radius: 16px;
-                display: inline-block;
-                border: 2px dashed var(--medical-border);
-            }
-
-            .qr-code-image {
-                max-width: 100%;
-                height: auto;
-                border-radius: 8px;
-            }
-
-            .qr-info {
-                padding: 12px 0;
-            }
-
-            /* Financial Section */
+            /* Financial Items */
             .financial-item {
                 padding: 24px;
                 border-radius: 12px;
                 background: var(--medical-light);
                 height: 100%;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.3s ease;
                 border: 2px solid transparent;
             }
 
             .financial-item:hover {
-                transform: translateY(-4px) scale(1.02);
-                box-shadow: var(--shadow-lg);
+                transform: translateY(-4px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             }
 
-            .financial-item.income {
-                border-color: rgba(16, 185, 129, 0.2);
-            }
-
-            .financial-item.income:hover {
-                background: linear-gradient(135deg, #D1FAE5, #F0FDF4);
-                box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
-            }
-
-            .financial-item.expense {
-                border-color: rgba(239, 68, 68, 0.2);
-            }
-
-            .financial-item.expense:hover {
-                background: linear-gradient(135deg, #FEE2E2, #FEF2F2);
-                box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
-            }
-
-            .financial-item.profit {
-                border-color: rgba(13, 110, 253, 0.2);
-            }
-
-            .financial-item.profit:hover {
-                background: linear-gradient(135deg, #DBEAFE, #EFF6FF);
-                box-shadow: 0 8px 16px rgba(13, 110, 253, 0.2);
-            }
+            .financial-item.income { border-color: rgba(16, 185, 129, 0.2); }
+            .financial-item.expense { border-color: rgba(239, 68, 68, 0.2); }
+            .financial-item.profit { border-color: rgba(13, 110, 253, 0.2); }
 
             .financial-icon {
                 width: 48px;
@@ -845,11 +770,6 @@ class DashboardFragment {
                 justify-content: center;
                 font-size: 24px;
                 margin-right: 12px;
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-
-            .financial-item:hover .financial-icon {
-                transform: rotate(8deg) scale(1.1);
             }
 
             .financial-icon.income {
@@ -871,20 +791,11 @@ class DashboardFragment {
                 font-size: 28px;
                 font-weight: 700;
                 margin-bottom: 8px;
-                line-height: 1.2;
             }
 
-            .financial-amount.income {
-                color: var(--medical-success);
-            }
-
-            .financial-amount.expense {
-                color: var(--medical-danger);
-            }
-
-            .financial-amount.profit {
-                color: var(--medical-primary);
-            }
+            .financial-amount.income { color: var(--medical-success); }
+            .financial-amount.expense { color: var(--medical-danger); }
+            .financial-amount.profit { color: var(--medical-primary); }
 
             .financial-trend {
                 font-size: 13px;
@@ -894,12 +805,73 @@ class DashboardFragment {
                 gap: 4px;
             }
 
-            .financial-trend.positive {
-                color: var(--medical-success);
+            .financial-trend.positive { color: var(--medical-success); }
+            .financial-trend.negative { color: var(--medical-danger); }
+
+            /* Charts */
+            .chart-container-wrapper {
+                position: relative;
+                min-height: 400px;
+                padding: 24px;
             }
 
-            .financial-trend.negative {
-                color: var(--medical-danger);
+            .graphic-container {
+                position: absolute;
+                top: 24px;
+                left: 24px;
+                right: 24px;
+                bottom: 24px;
+                opacity: 0;
+                transition: opacity 0.5s ease;
+                pointer-events: none;
+            }
+
+            .graphic-container.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .graphic-indicators {
+                display: flex;
+                gap: 8px;
+                background: white;
+                padding: 6px;
+                border-radius: 20px;
+                border: 1px solid var(--medical-border);
+            }
+
+            .indicator {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                background: #CBD5E1;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                padding: 0;
+            }
+
+            .indicator.active {
+                background: var(--medical-primary);
+                width: 32px;
+                border-radius: 10px;
+            }
+
+            .btn-medical-primary {
+                background: linear-gradient(135deg, var(--medical-primary), var(--medical-primary-dark));
+                color: white;
+                border: none;
+                padding: 12px 28px;
+                border-radius: 12px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                font-size: 15px;
+            }
+
+            .btn-medical-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+                color: white;
             }
 
             .btn-icon {
@@ -917,133 +889,26 @@ class DashboardFragment {
             }
 
             .btn-icon:hover {
-                background: var(--medical-light);
-                color: var(--medical-primary);
+                background: var(--medical-primary);
+                color: white;
+                border-color: var(--medical-primary);
             }
 
-            /* Animations */
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px) scale(0.95);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-
-            .stagger-item {
-                animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-                opacity: 0;
-            }
-
-            /* Table row slide animation */
-            @keyframes slideInFromLeft {
-                from {
-                    opacity: 0;
-                    transform: translateX(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-
-            .queue-table tbody tr {
-                animation: slideInFromLeft 0.5s ease-out forwards;
-                opacity: 0;
-            }
-
-            /* Scrollbar Styling */
-            .queue-table-container::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .queue-table-container::-webkit-scrollbar-track {
-                background: var(--medical-light);
-            }
-
-            .queue-table-container::-webkit-scrollbar-thumb {
-                background: #CBD5E1;
-                border-radius: 3px;
-            }
-
-            .queue-table-container::-webkit-scrollbar-thumb:hover {
-                background: #94A3B8;
-            }
-
-            /* Responsive Design */
+            /* Responsive */
             @media (max-width: 991px) {
-                .quick-actions {
-                    justify-content: flex-start;
-                    margin-top: 16px;
-                }
-
-                .stat-value {
-                    font-size: 28px;
-                }
-
-                .financial-amount {
-                    font-size: 24px;
-                }
-
-                .financial-item {
-                    margin-bottom: 16px;
-                }
+                .doctor-title { font-size: 28px; }
+                .faskes-subtitle { font-size: 16px; }
+                .profile-actions { flex-direction: row; }
+                .action-btn { padding: 10px 20px; font-size: 14px; }
             }
 
             @media (max-width: 767px) {
-                .welcome-section {
-                    padding: 16px;
-                }
-
-                .doctor-avatar {
-                    width: 50px;
-                    height: 50px;
-                    font-size: 24px;
-                }
-
-                .welcome-content h2 {
-                    font-size: 20px;
-                }
-
-                .stat-card {
-                    padding: 16px;
-                }
-
-                .stat-icon {
-                    width: 50px;
-                    height: 50px;
-                    font-size: 24px;
-                }
-
-                .stat-value {
-                    font-size: 24px;
-                }
-
-                .card-header-custom {
-                    padding: 16px;
-                }
-
-                .chart-container-wrapper {
-                    min-height: 300px;
-                    padding: 16px;
-                }
-
-                .financial-amount {
-                    font-size: 20px;
-                }
-
-                .financial-icon {
-                    width: 40px;
-                    height: 40px;
-                    font-size: 20px;
-                }
-
-                .queue-status {
-                    flex-wrap: wrap;
-                }
+                .profile-content-overlay { padding: 1.5rem; }
+                .avatar-circle { width: 100px; height: 100px; }
+                .avatar-circle i { font-size: 50px; }
+                .doctor-title { font-size: 24px; }
+                .action-btn span { display: none; }
+                .action-btn { padding: 10px; }
             }
         `;
         
@@ -1051,29 +916,604 @@ class DashboardFragment {
     }
 
     async onInit() {
-        // Load Chart.js library
-        await this.loadChartJS();
+        console.log('⚙️ DashboardFragment.onInit() called');
         
-        // Render queue table
-        this.renderQueueTable();
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            
+            if (!user || !user.email) {
+                alert('Session expired. Please login again.');
+                window.location.href = '../LandingPage/booksaw-1.0.0/index.html';
+                return;
+            }
+
+            // Load Chart.js FIRST
+            console.log('📦 Loading Chart.js...');
+            await this.loadChartJS();
+            
+            // Wait for Chart.js to initialize
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('📊 Chart.js loaded?', typeof window.Chart !== 'undefined');
+            
+            // Load doctor data
+            await this.loadDoctorData(user.email);
+            
+            // Setup navigation and listeners
+            this.attachNavigationListeners();
+            this.startGraphicRotation();
+            this.setupIndicators();
+            
+            console.log('✅ Dashboard initialized!');
+            
+        } catch (error) {
+            console.error('❌ Error in onInit:', error);
+        }
+    }
+
+    attachNavigationListeners() {
+        console.log('🎧 Attaching navigation listeners...');
         
-        // Animate numbers
-        this.animateNumber('totalPatients', 0, 127, 1500);
-        this.animateNumber('queueToday', 0, 10, 1000);
-        this.animateNumber('obatExpired', 0, 10, 1000);
-        this.animateNumber('obatHabis', 0, 4, 1000);
-
-        // Initialize charts
-        this.initializeCharts();
+        // Profile navigation
+        const btnGoToProfile = document.getElementById('btnGoToProfile');
+        const btnQRToProfile = document.getElementById('btnQRToProfile');
+        const btnDashboardQR = document.getElementById('btnDashboardQR');
         
-        // Start auto-rotation
-        this.startGraphicRotation();
+        if (btnGoToProfile) {
+            btnGoToProfile.addEventListener('click', () => {
+                console.log('Navigate to Profile');
+                this.navigateToFragment('profile');
+            });
+        }
+        
+        if (btnQRToProfile) {
+            btnQRToProfile.addEventListener('click', () => {
+                console.log('Navigate to Profile (from QR card)');
+                this.navigateToFragment('profile');
+            });
+        }
+        
+        if (btnDashboardQR) {
+            btnDashboardQR.addEventListener('click', () => {
+                console.log('Show QR Modal');
+                this.showQRModal();
+            });
+        }
+        
+        // Pembukuan navigation
+        const btnLihatLaporanLengkap = document.getElementById('btnLihatLaporanLengkap');
+        const btnFinancialDetail = document.getElementById('btnFinancialDetail');
+        
+        if (btnLihatLaporanLengkap) {
+            btnLihatLaporanLengkap.addEventListener('click', () => {
+                console.log('Navigate to Pembukuan');
+                this.navigateToFragment('pembukuan');
+            });
+        }
+        
+        if (btnFinancialDetail) {
+            btnFinancialDetail.addEventListener('click', () => {
+                console.log('Navigate to Pembukuan (from icon)');
+                this.navigateToFragment('pembukuan');
+            });
+        }
+        
+        // QR Modal download
+        const btnDownloadQR = document.getElementById('btnDownloadQR');
+        if (btnDownloadQR) {
+            btnDownloadQR.addEventListener('click', () => {
+                this.downloadQRCode();
+            });
+        }
+    }
 
-        // Setup indicator click handlers
-        this.setupIndicators();
+    navigateToFragment(fragmentName) {
+        console.log(`🔄 Navigating to ${fragmentName}...`);
+        
+        if (typeof window.navigateToFragment === 'function') {
+            window.navigateToFragment(fragmentName);
+        } else if (typeof window.loadFragment === 'function') {
+            window.loadFragment(fragmentName);
+        } else if (typeof window.switchFragment === 'function') {
+            window.switchFragment(fragmentName);
+        } else {
+            console.error('❌ Navigation function not found!');
+            alert('Navigation tidak tersedia. Silakan refresh halaman.');
+        }
+    }
 
-        // Add stagger animation to cards
-        this.addStaggerAnimation();
+    async loadDoctorData(email) {
+        try {
+            console.log('👨‍⚕️ Loading doctor data for:', email);
+            
+            // ✅ FIX: Use 'user_role' (underscore) to match auth.js
+            let userType = localStorage.getItem('user_role') || 'dokter';
+            
+            console.log('🔍 User type from localStorage:', userType);
+            console.log('📋 All localStorage keys:', Object.keys(localStorage));
+            
+            // If not cached, detect from database
+            if (!localStorage.getItem('user_role')) {
+                console.log('🔍 User role not cached, detecting from database...');
+                
+                if (window.supabaseClient) {
+                    // First check dokter table
+                    const { data: dokter, error: dokterError } = await window.supabaseClient
+                        .from('dokter')
+                        .select('id_dokter')
+                        .ilike('email', email)
+                        .maybeSingle();
+                    
+                    console.log('📋 Dokter check result:', { dokter, dokterError });
+                    
+                    if (dokter) {
+                        userType = 'dokter';
+                        localStorage.setItem('user_role', 'dokter');
+                        localStorage.setItem('id_dokter', dokter.id_dokter);
+                        console.log('✅ Detected: DOKTER');
+                    } else {
+                        // Check asisten_dokter table
+                        const { data: asisten, error: asistenError } = await window.supabaseClient
+                            .from('asisten_dokter')
+                            .select('id_asisten_dokter, id_dokter')
+                            .ilike('email', email)
+                            .maybeSingle();
+                        
+                        console.log('📋 Asisten check result:', { asisten, asistenError });
+                        
+                        if (asisten) {
+                            userType = 'asisten_dokter';
+                            localStorage.setItem('user_role', 'asisten_dokter');
+                            localStorage.setItem('id_asisten_dokter', asisten.id_asisten_dokter);
+                            localStorage.setItem('id_dokter', asisten.id_dokter); // Parent doctor ID
+                            console.log('✅ Detected: ASISTEN DOKTER');
+                            console.log('   - ID Asisten:', asisten.id_asisten_dokter);
+                            console.log('   - ID Dokter (parent):', asisten.id_dokter);
+                        } else {
+                            console.error('❌ User not found in either table!');
+                            alert(
+                                `⚠️ User tidak ditemukan!\n\n` +
+                                `Email: ${email}\n\n` +
+                                `Akun ini belum terdaftar di sistem.\n` +
+                                `Silakan hubungi administrator.`
+                            );
+                            return;
+                        }
+                    }
+                } else {
+                    console.error('❌ Supabase client not available!');
+                    alert('Supabase client tidak tersedia. Silakan refresh halaman.');
+                    return;
+                }
+            }
+            
+            console.log('📡 Calling dashboard API with user_type:', userType);
+            
+            // Call API with correct user_type
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'get_doctor_data',
+                    email: email,
+                    user_type: userType  // ✅ This will now be correct!
+                })
+            });
+
+            const result = await response.json();
+            console.log('📥 Dashboard API response:', result);
+
+            if (result.success && result.data) {
+                this.doctorData = result.data;
+                
+                // Display name
+                const displayName = result.data.nama_lengkap || 'User';
+                document.getElementById('doctorNameDisplay').textContent = displayName;
+                
+                // Display faskes or role badge
+                const faskesDisplay = document.getElementById('faskesDisplay');
+                if (result.data.user_type === 'asisten_dokter') {
+                    faskesDisplay.textContent = 'Asisten Dokter';
+                    faskesDisplay.classList.add('badge', 'bg-info');
+                    faskesDisplay.style.cssText = 'display: inline-block; padding: 8px 16px; border-radius: 8px;';
+                    console.log('✅ Displayed: ASISTEN DOKTER badge');
+                } else {
+                    faskesDisplay.textContent = result.data.nama_faskes || 'Faskes';
+                    faskesDisplay.classList.remove('badge', 'bg-info');
+                    console.log('✅ Displayed: Faskes name');
+                }
+
+                // Display avatar if available
+                if (result.data.avatar_url) {
+                    this.displayAvatar(result.data.avatar_url);
+                    console.log('✅ Avatar loaded');
+                } else {
+                    console.log('ℹ️ No avatar available');
+                }
+
+                // Display QR Code (only for dokter)
+                if (result.data.user_type === 'dokter' && result.data.qr_code_data) {
+                    this.displayQRCode(result.data.qr_code_data);
+                    console.log('✅ QR Code loaded');
+                } else {
+                    const qrWrapper = document.getElementById('qrCodeWrapper');
+                    if (qrWrapper) {
+                        if (result.data.user_type === 'asisten_dokter') {
+                            qrWrapper.innerHTML = `
+                                <div class="text-muted text-center">
+                                    <i class="bi bi-info-circle mb-2" style="font-size: 40px;"></i>
+                                    <p class="small mb-0">QR Code hanya tersedia untuk dokter utama</p>
+                                </div>
+                            `;
+                            console.log('ℹ️ QR Code hidden for asisten dokter');
+                        } else {
+                            qrWrapper.innerHTML = `
+                                <div class="text-muted text-center">
+                                    <i class="bi bi-qr-code mb-2" style="font-size: 40px; opacity: 0.3;"></i>
+                                    <p class="small mb-0">QR Code belum dibuat</p>
+                                    <p class="small text-primary">Klik "Kelola QR Code" untuk membuat</p>
+                                </div>
+                            `;
+                        }
+                    }
+                }
+
+                // Determine which doctor ID to use for stats
+                // For asisten, use parent doctor's ID; for dokter, use own ID
+                const statsIdDokter = result.data.user_type === 'asisten_dokter' 
+                    ? result.data.id_dokter_parent
+                    : result.data.id_dokter;
+                
+                console.log('📊 Loading stats for doctor ID:', statsIdDokter);
+                console.log('   - User type:', result.data.user_type);
+                
+                if (!statsIdDokter) {
+                    console.error('❌ CRITICAL: No doctor ID available for loading stats!');
+                    alert('Error: ID dokter tidak ditemukan. Stats tidak dapat dimuat.');
+                    return;
+                }
+                
+                // Load all stats and charts
+                await this.loadAllStats(statsIdDokter);
+                
+                console.log('✅ Dashboard data loaded successfully!');
+                
+            } else {
+                console.error('❌ API returned error:', result.message);
+                
+                // Show detailed error message
+                let errorMsg = '❌ Gagal memuat data!\n\n';
+                errorMsg += `Message: ${result.message || 'Unknown error'}\n`;
+                errorMsg += `Email: ${email}\n`;
+                errorMsg += `User Type: ${userType}\n\n`;
+                errorMsg += 'Silakan periksa:\n';
+                errorMsg += '1. Apakah email sudah terdaftar?\n';
+                errorMsg += '2. Apakah data lengkap di database?\n';
+                errorMsg += '3. Lihat console browser (F12) untuk detail';
+                
+                alert(errorMsg);
+                
+                document.getElementById('doctorNameDisplay').textContent = 'Error loading profile';
+                document.getElementById('faskesDisplay').textContent = result.message || 'Unknown error';
+            }
+        } catch (error) {
+            console.error('❌ Error loading doctor data:', error);
+            console.error('Error stack:', error.stack);
+            
+            alert(
+                `❌ Error loading data:\n\n` +
+                `${error.message}\n\n` +
+                `Check browser console (F12) for details.`
+            );
+            
+            document.getElementById('doctorNameDisplay').textContent = 'Error';
+            document.getElementById('faskesDisplay').textContent = error.message;
+        }
+    }
+
+    displayAvatar(avatarUrl) {
+        const img = document.getElementById('doctorAvatarImg');
+        const icon = document.getElementById('doctorAvatarIcon');
+        const blurBg = document.getElementById('profileBlurBg');
+
+        if (avatarUrl && avatarUrl !== '') {
+            img.src = avatarUrl;
+            img.classList.remove('d-none');
+            icon.classList.add('d-none');
+            
+            blurBg.style.backgroundImage = `url('${avatarUrl}')`;
+        }
+    }
+
+    displayQRCode(qrData) {
+        const wrapper = document.getElementById('qrCodeWrapper');
+        wrapper.innerHTML = '';
+        
+        const qrDiv = document.createElement('div');
+        qrDiv.style.cssText = 'background: white; padding: 20px; border-radius: 12px; display: inline-block;';
+        
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrDiv, {
+                text: qrData,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            wrapper.appendChild(qrDiv);
+        }
+    }
+
+    showQRModal() {
+        if (!this.doctorData || !this.doctorData.qr_code_data) {
+            alert('QR Code belum dibuat. Silakan buat di halaman Profile.');
+            this.navigateToFragment('profile');
+            return;
+        }
+
+        const modalContent = document.getElementById('qrModalContent');
+        modalContent.innerHTML = '';
+        
+        const qrDiv = document.createElement('div');
+        qrDiv.style.cssText = 'padding: 20px; background: white; border-radius: 12px;';
+        
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(qrDiv, {
+                text: this.doctorData.qr_code_data,
+                width: 300,
+                height: 300,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            modalContent.appendChild(qrDiv);
+
+            if (typeof bootstrap !== 'undefined') {
+                const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+                modal.show();
+            }
+        }
+    }
+
+    downloadQRCode() {
+        const canvas = document.querySelector('#qrModalContent canvas');
+        if (!canvas) {
+            alert('QR Code tidak ditemukan');
+            return;
+        }
+
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `QR_${this.doctorData?.nama_lengkap || 'Doctor'}.png`;
+        link.href = url;
+        link.click();
+    }
+
+    // ✅ UPDATED: Show skeleton loaders first
+    async loadAllStats(id_dokter) {
+        try {
+            console.log('📊 Loading all stats...');
+            
+            // ✅ Show skeleton loaders FIRST
+            this.showStatsSkeleton();
+            
+            // Load basic stats
+            await Promise.all([
+                this.loadQueueStats(id_dokter),
+                this.loadMedicineAlerts(id_dokter),
+                this.loadFinancialSummary(id_dokter),
+                this.loadPatientStats(id_dokter),
+                this.loadQueueDetails(id_dokter)
+            ]);
+            
+            console.log('✅ Basic stats loaded');
+            
+            // Load chart data
+            console.log('📊 Chart.js available?', typeof window.Chart !== 'undefined');
+            
+            if (typeof window.Chart !== 'undefined') {
+                console.log('✅ Chart.js is available, loading chart data...');
+                await this.loadChartData(id_dokter);
+            } else {
+                console.error('❌ Chart.js still not loaded!');
+                alert('Chart library failed to load. Please refresh the page.');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error loading stats:', error);
+        }
+    }
+
+    // ✅ NEW: Show skeleton loaders for stats
+    showStatsSkeleton() {
+        const statElements = [
+            'totalPatients',
+            'queueToday',
+            'obatExpired',
+            'obatHabis',
+            'totalPendapatan',
+            'totalPengeluaran',
+            'labaBersih'
+        ];
+        
+        statElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.innerHTML = '<div class="skeleton skeleton-stat" style="width: 80px;"></div>';
+            }
+        });
+    }
+
+    async loadQueueStats(id_dokter) {
+        const response = await fetch('../API/dashboard_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_queue_stats', id_dokter: id_dokter })
+        });
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            const stats = result.data;
+            document.getElementById('queueToday').textContent = stats.total || 0;
+            document.getElementById('badgeSelesai').textContent = `${stats.selesai || 0} Selesai`;
+            document.getElementById('badgeMenunggu').textContent = `${stats.menunggu || 0} Menunggu`;
+        }
+    }
+
+    async loadMedicineAlerts(id_dokter) {
+        const response = await fetch('../API/dashboard_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_medicine_alerts', id_dokter: id_dokter })
+        });
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            document.getElementById('obatExpired').textContent = result.data.expiring || 0;
+            document.getElementById('obatHabis').textContent = result.data.low_stock || 0;
+        }
+    }
+
+    async loadFinancialSummary(id_dokter) {
+        const response = await fetch('../API/dashboard_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_financial_summary', id_dokter: id_dokter })
+        });
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            const data = result.data;
+            document.getElementById('totalPendapatan').textContent = 'Rp ' + this.formatNumber(data.pemasukan || 0);
+            document.getElementById('totalPengeluaran').textContent = 'Rp ' + this.formatNumber(data.pengeluaran || 0);
+            document.getElementById('labaBersih').textContent = 'Rp ' + this.formatNumber(data.profit || 0);
+        }
+    }
+
+    async loadPatientStats(id_dokter) {
+        const response = await fetch('../API/dashboard_api.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_patient_stats', id_dokter: id_dokter })
+        });
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            document.getElementById('totalPatients').textContent = result.data.total_patients || 0;
+        }
+    }
+
+    formatNumber(num) {
+        return new Intl.NumberFormat('id-ID').format(num);
+    }
+
+    // ✅ UPDATED: Show skeleton for queue table
+    async loadQueueDetails(id_dokter) {
+        try {
+            // ✅ Show skeleton loader FIRST
+            const tbody = document.getElementById('queueTableBody');
+            if (tbody) {
+                tbody.innerHTML = this.generateQueueSkeleton();
+            }
+            
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'get_queue_details', 
+                    id_dokter: id_dokter 
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success && result.data) {
+                this.displayQueueTable(result.data);
+            } else {
+                this.displayEmptyQueue();
+            }
+        } catch (error) {
+            console.error('❌ Error loading queue details:', error);
+            this.displayEmptyQueue();
+        }
+    }
+
+    // ✅ NEW: Generate queue skeleton
+    generateQueueSkeleton() {
+        return Array(5).fill(0).map(() => `
+            <tr>
+                <td><div class="skeleton skeleton-text" style="width: 60px;"></div></td>
+                <td><div class="skeleton skeleton-text" style="width: ${60 + Math.random() * 40}%;"></div></td>
+                <td><div class="skeleton skeleton-text" style="width: 80px;"></div></td>
+                <td><div class="skeleton skeleton-text" style="width: 70px;"></div></td>
+                <td><div class="skeleton skeleton-text" style="width: 90px;"></div></td>
+                <td class="text-center"><div class="skeleton skeleton-text" style="width: 40px; margin: 0 auto;"></div></td>
+            </tr>
+        `).join('');
+    }
+
+    displayQueueTable(queueData) {
+        const tbody = document.getElementById('queueTableBody');
+        
+        if (!queueData || queueData.length === 0) {
+            this.displayEmptyQueue();
+            return;
+        }
+        
+        tbody.innerHTML = queueData.map(item => {
+            const statusClass = this.getStatusClass(item.status_antrian);
+            const statusBadge = this.getStatusBadge(item.status_antrian);
+            const jenisClass = item.jenis_pasien === 'BPJS' ? 'badge bg-success' : 'badge bg-primary';
+            
+            return `
+                <tr>
+                    <td><strong>${item.no_antrian}</strong></td>
+                    <td>${item.nama_pasien}</td>
+                    <td>${item.jam_antrian || '-'}</td>
+                    <td><span class="${jenisClass}">${item.jenis_pasien}</span></td>
+                    <td><span class="badge ${statusClass}">${statusBadge}</span></td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewQueueDetail('${item.id_antrian}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    displayEmptyQueue() {
+        const tbody = document.getElementById('queueTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox me-2"></i>Tidak ada antrian hari ini
+                </td>
+            </tr>
+        `;
+    }
+
+    getStatusClass(status) {
+        const statusMap = {
+            'Belum Periksa': 'bg-warning',
+            'Menunggu': 'bg-warning',
+            'Dalam Pemeriksaan': 'bg-info',
+            'Selesai': 'bg-success'
+        };
+        return statusMap[status] || 'bg-secondary';
+    }
+
+    getStatusBadge(status) {
+        const statusMap = {
+            'Belum Periksa': 'Menunggu',
+            'Menunggu': 'Menunggu',
+            'Dalam Pemeriksaan': 'Diperiksa',
+            'Selesai': 'Selesai'
+        };
+        return statusMap[status] || status;
     }
 
     async loadChartJS() {
@@ -1091,284 +1531,185 @@ class DashboardFragment {
         });
     }
 
-    initializeCharts() {
-        // Chart 1: Bar Chart - Patient Statistics with Animations
+    // ✅ UPDATED: Show skeleton for charts
+    async loadChartData(id_dokter) {
+        try {
+            console.log('📊 Loading chart data for doctor:', id_dokter);
+            
+            // ✅ Show skeleton loaders for charts
+            const chart1Container = document.getElementById('graphic1');
+            const chart2Container = document.getElementById('graphic2');
+            
+            if (chart1Container) {
+                chart1Container.innerHTML = '<div class="skeleton skeleton-chart"></div>';
+            }
+            if (chart2Container) {
+                chart2Container.innerHTML = '<div class="skeleton skeleton-chart"></div>';
+            }
+            
+            // Load patient visit chart
+            const visitResponse = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'get_patient_visit_chart', 
+                    id_dokter: id_dokter 
+                })
+            });
+            const visitResult = await visitResponse.json();
+            
+            // Load financial chart
+            const financialResponse = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    action: 'get_financial_chart', 
+                    id_dokter: id_dokter 
+                })
+            });
+            const financialResult = await financialResponse.json();
+            
+            // ✅ Restore canvas elements before creating charts
+            if (chart1Container) {
+                chart1Container.innerHTML = '<canvas id="chart1"></canvas>';
+            }
+            if (chart2Container) {
+                chart2Container.innerHTML = '<canvas id="chart2"></canvas>';
+            }
+            
+            // Update charts with real data
+            if (visitResult.success && financialResult.success) {
+                console.log('✅ Updating charts with data...');
+                this.updateChartsWithData(visitResult.data, financialResult.data);
+            }
+        } catch (error) {
+            console.error('❌ Error loading chart data:', error);
+        }
+    }
+
+    updateChartsWithData(visitData, financialData) {
+        console.log('📊 updateChartsWithData called');
+        console.log('📊 Visit data:', visitData);
+        console.log('📊 Financial data:', financialData);
+        
+        // Destroy old charts
+        this.charts.forEach(chart => {
+            if (chart) {
+                console.log('🗑️ Destroying old chart');
+                chart.destroy();
+            }
+        });
+        this.charts = [];
+        
+        // Patient Visit Chart
         const ctx1 = document.getElementById('chart1');
-        if (ctx1) {
+        console.log('📊 Chart1 canvas:', ctx1);
+        
+        if (ctx1 && window.Chart) {
+            console.log('✅ Creating patient visit chart');
+            const labels = visitData.map(d => d.month);
+            const data = visitData.map(d => d.count);
+            
+            console.log('📊 Chart1 labels:', labels);
+            console.log('📊 Chart1 data:', data);
+            
             this.charts[0] = new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                    labels: labels,
                     datasets: [{
                         label: 'Jumlah Pasien',
-                        data: [65, 78, 90, 81, 96, 105, 112, 98, 87, 95, 103, 110],
+                        data: data,
                         backgroundColor: 'rgba(13, 110, 253, 0.8)',
-                        borderColor: 'rgba(13, 110, 253, 1)',
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        borderSkipped: false,
+                        borderRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    // 🎬 ANIMATION CONFIGURATION
-                    animation: {
-                        duration: 2000, // 2 seconds
-                        easing: 'easeInOutQuart',
-                        delay: (context) => {
-                            // Stagger animation for each bar
-                            let delay = 0;
-                            if (context.type === 'data' && context.mode === 'default') {
-                                delay = context.dataIndex * 100; // 100ms delay between bars
-                            }
-                            return delay;
-                        },
-                        // Animation when chart first loads
-                        onProgress: function(animation) {
-                            // Optional: Add progress tracking
-                        },
-                        onComplete: function(animation) {
-                            // Optional: Trigger something when animation completes
-                        }
-                    },
-                    // Hover animation
-                    hover: {
-                        animationDuration: 400
-                    },
-                    // Animation when data updates
-                    transitions: {
-                        active: {
-                            animation: {
-                                duration: 400
-                            }
-                        }
-                    },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 13,
-                                    weight: '600'
-                                },
-                                padding: 16,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
+                        legend: { display: true },
                         tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
-                            padding: 12,
-                            borderColor: 'rgba(226, 232, 240, 0.3)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            titleFont: {
-                                size: 14,
-                                weight: '600'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
                             callbacks: {
                                 label: function(context) {
                                     return context.dataset.label + ': ' + context.parsed.y + ' pasien';
                                 }
-                            },
-                            // Tooltip animation
-                            animation: {
-                                duration: 300
                             }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)',
-                                drawBorder: false
-                            },
                             ticks: {
-                                font: {
-                                    size: 12
-                                },
-                                color: '#64748B'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                },
-                                color: '#64748B'
+                                stepSize: 10
                             }
                         }
                     }
                 }
             });
+            console.log('✅ Patient chart created:', this.charts[0]);
+        } else {
+            console.error('❌ Cannot create chart1:', { ctx1, Chart: window.Chart });
         }
-
-        // Chart 2: Line Chart - Revenue Trend with Animations
+        
+        // Financial Trend Chart
         const ctx2 = document.getElementById('chart2');
-        if (ctx2) {
+        console.log('📊 Chart2 canvas:', ctx2);
+        
+        if (ctx2 && window.Chart) {
+            console.log('✅ Creating financial chart');
+            const labels = financialData.map(d => d.month);
+            const data = financialData.map(d => d.income);
+            
+            console.log('📊 Chart2 labels:', labels);
+            console.log('📊 Chart2 data:', data);
+            
             this.charts[1] = new Chart(ctx2, {
                 type: 'line',
                 data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
-                    datasets: [
-                        {
-                            label: 'Pendapatan (Juta Rp)',
-                            data: [25, 28, 32, 30, 35, 38, 42, 39, 36, 40, 43, 45],
-                            borderColor: '#10B981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#10B981',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            // Point hover animation
-                            pointHitRadius: 10
-                        },
-                        {
-                            label: 'Pengeluaran (Juta Rp)',
-                            data: [8, 7, 9, 8, 10, 9, 11, 10, 9, 11, 10, 12],
-                            borderColor: '#EF4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            pointBackgroundColor: '#EF4444',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointHitRadius: 10
-                        }
-                    ]
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pendapatan (Juta Rp)',
+                        data: data,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    // 🎬 ANIMATION CONFIGURATION
-                    animation: {
-                        duration: 2500, // 2.5 seconds
-                        easing: 'easeInOutCubic',
-                        // Progressive line drawing effect
-                        x: {
-                            type: 'number',
-                            easing: 'linear',
-                            duration: 2000,
-                            from: 0
-                        },
-                        y: {
-                            type: 'number',
-                            easing: 'easeInOutQuart',
-                            duration: 2000,
-                            from: (ctx) => {
-                                if (ctx.type === 'data') {
-                                    return 0;
-                                }
-                            }
-                        },
-                        delay: (context) => {
-                            // Stagger animation for points
-                            let delay = 0;
-                            if (context.type === 'data' && context.mode === 'default') {
-                                delay = context.dataIndex * 80;
-                            }
-                            return delay;
-                        }
-                    },
-                    // Hover animation
-                    hover: {
-                        animationDuration: 400
-                    },
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: {
-                                font: {
-                                    size: 13,
-                                    weight: '600'
-                                },
-                                padding: 16,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
+                        legend: { display: true },
                         tooltip: {
-                            enabled: true,
-                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
-                            padding: 12,
-                            borderColor: 'rgba(226, 232, 240, 0.3)',
-                            borderWidth: 1,
-                            cornerRadius: 8,
-                            titleFont: {
-                                size: 14,
-                                weight: '600'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': Rp ' + context.parsed.y + ' juta';
+                                    return 'Rp ' + context.parsed.y + ' juta';
                                 }
-                            },
-                            animation: {
-                                duration: 300
                             }
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)',
-                                drawBorder: false
-                            },
                             ticks: {
-                                font: {
-                                    size: 12
-                                },
-                                color: '#64748B',
                                 callback: function(value) {
                                     return 'Rp ' + value + 'jt';
                                 }
                             }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                },
-                                color: '#64748B'
-                            }
                         }
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index'
                     }
                 }
             });
+            console.log('✅ Financial chart created:', this.charts[1]);
+        } else {
+            console.error('❌ Cannot create chart2:', { ctx2, Chart: window.Chart });
         }
     }
 
     startGraphicRotation() {
-        // Rotate every 8 seconds
         this.graphicRotationTimer = setInterval(() => {
             this.rotateGraphic();
         }, 8000);
@@ -1379,22 +1720,17 @@ class DashboardFragment {
         const indicators = document.querySelectorAll('.indicator');
         const titleElement = document.getElementById('graphicTitle');
         
-        // Remove active class from current
+        if (graphics.length === 0) return;
+        
         graphics[this.currentGraphicIndex].classList.remove('active');
         indicators[this.currentGraphicIndex].classList.remove('active');
         
-        // Move to next graphic
         this.currentGraphicIndex = (this.currentGraphicIndex + 1) % 2;
         
-        // Add active class to next
         graphics[this.currentGraphicIndex].classList.add('active');
         indicators[this.currentGraphicIndex].classList.add('active');
         
-        // Update title
-        const titles = [
-            'Statistik Kunjungan Pasien',
-            'Tren Keuangan Bulanan'
-        ];
+        const titles = ['Statistik Kunjungan Pasien', 'Tren Keuangan Bulanan'];
         titleElement.textContent = titles[this.currentGraphicIndex];
     }
 
@@ -1402,10 +1738,8 @@ class DashboardFragment {
         const indicators = document.querySelectorAll('.indicator');
         indicators.forEach((indicator, index) => {
             indicator.addEventListener('click', () => {
-                // Stop auto-rotation temporarily
                 clearInterval(this.graphicRotationTimer);
                 
-                // Switch to clicked graphic
                 const graphics = document.querySelectorAll('.graphic-container');
                 const allIndicators = document.querySelectorAll('.indicator');
                 const titleElement = document.getElementById('graphicTitle');
@@ -1416,99 +1750,25 @@ class DashboardFragment {
                 graphics[index].classList.add('active');
                 indicator.classList.add('active');
                 
-                const titles = [
-                    'Statistik Kunjungan Pasien',
-                    'Tren Keuangan Bulanan'
-                ];
+                const titles = ['Statistik Kunjungan Pasien', 'Tren Keuangan Bulanan'];
                 titleElement.textContent = titles[index];
                 
                 this.currentGraphicIndex = index;
                 
-                // Resume auto-rotation after 15 seconds
-                setTimeout(() => {
-                    this.startGraphicRotation();
-                }, 15000);
+                setTimeout(() => this.startGraphicRotation(), 15000);
             });
         });
     }
 
-    renderQueueTable() {
-        const tbody = document.getElementById('queueTableBody');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        this.queueData.forEach((item, index) => {
-            const row = document.createElement('tr');
-            row.style.animationDelay = `${index * 0.08}s`;
-            
-            row.innerHTML = `
-                <td class="fw-bold text-primary">#${item.no}</td>
-                <td class="fw-semibold">${item.name}</td>
-                <td>
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-clock me-2 text-muted"></i>
-                        <span class="text-muted">${item.time}</span>
-                    </div>
-                </td>
-                <td>
-                    <span class="badge bg-light text-dark border">${item.type}</span>
-                </td>
-                <td>
-                    <span class="badge bg-${item.statusClass}">${item.status}</span>
-                </td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary btn-action me-1" title="Lihat Detail">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger btn-action" title="Hapus">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
-
-    addStaggerAnimation() {
-        const cards = document.querySelectorAll('.stat-card, .medical-card');
-        cards.forEach((card, index) => {
-            card.classList.add('stagger-item');
-            card.style.animationDelay = `${index * 0.1}s`;
-        });
-    }
-
-    animateNumber(elementId, start, end, duration) {
-        const element = document.getElementById(elementId);
-        if (!element) return;
-
-        const range = end - start;
-        const increment = range / (duration / 16);
-        let current = start;
-
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= end) {
-                element.textContent = end;
-                clearInterval(timer);
-            } else {
-                element.textContent = Math.floor(current);
-            }
-        }, 16);
-    }
-
     onDestroy() {
-        // Clear rotation timer
         if (this.graphicRotationTimer) {
             clearInterval(this.graphicRotationTimer);
         }
 
-        // Destroy charts
         this.charts.forEach(chart => {
             if (chart) chart.destroy();
         });
 
-        // Remove styles
         const styleElement = document.getElementById('dashboard-styles');
         if (styleElement) {
             styleElement.remove();

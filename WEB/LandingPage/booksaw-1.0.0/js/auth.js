@@ -1,8 +1,8 @@
 // ========================================
-// FILE: auth.js - Complete Authentication Handler (FIXED for Pembukuan)
+// FILE: auth.js - Enhanced Authentication (Doctor + Asisten Dokter)
 // ========================================
 
-console.log("🔐 Auth script loaded");
+console.log("🔐 Auth script loaded (Enhanced for Asisten)");
 
 // Wait for DOM to be fully loaded
 document.addEventListener("DOMContentLoaded", function () {
@@ -19,9 +19,8 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("user", JSON.stringify(session.user));
         localStorage.setItem("isLoggedIn", "true");
         
-        // 🔑 CRITICAL FIX: Store id_dokter
-        localStorage.setItem("id_dokter", session.user.id);
-        console.log("🔑 Restored id_dokter from session:", session.user.id);
+        // Determine if doctor or assistant
+        await determineUserRole(session.user);
         
         return session.user;
       }
@@ -30,6 +29,71 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (error) {
       console.error("❌ Error checking session:", error);
       return null;
+    }
+  }
+
+  // ========================================
+  // DETERMINE USER ROLE (DOCTOR OR ASISTEN)
+  // ========================================
+  async function determineUserRole(user) {
+    console.log("🔍 Determining user role for:", user.id);
+    console.log("📧 User email:", user.email);
+    
+    try {
+      // First, check if user is a doctor (by UUID)
+      const { data: dokterData, error: dokterError } = await supabaseClient
+        .from('dokter')
+        .select('*')
+        .eq('id_dokter', user.id)
+        .single();
+      
+      if (dokterData && !dokterError) {
+        console.log("👨‍⚕️ User is a DOCTOR");
+        localStorage.setItem("user_role", "dokter");
+        localStorage.setItem("user_type", "dokter");
+        localStorage.setItem("id_dokter", dokterData.id_dokter);
+        localStorage.setItem("dokter_data", JSON.stringify(dokterData));
+        return "dokter";
+      }
+      
+      console.log("❌ Not a doctor, checking asisten...");
+      
+      // Check asisten_dokter by UUID
+      const { data: asistenData, error: asistenError } = await supabaseClient
+        .from('asisten_dokter')
+        .select('*')
+        .eq('id_asisten_dokter', user.id)
+        .single();
+      
+      console.log("🔍 Asisten query result:", asistenData);
+      console.log("🔍 Asisten query error:", asistenError);
+      
+      if (asistenData && !asistenError) {
+        console.log("👔 User is an ASISTEN DOKTER:", asistenData);
+        localStorage.setItem("user_role", "asisten_dokter");
+        localStorage.setItem("user_type", "asisten_dokter");
+        localStorage.setItem("id_asisten_dokter", asistenData.id_asisten_dokter);
+        localStorage.setItem("id_dokter", asistenData.id_dokter); // Parent dokter ID
+        localStorage.setItem("asisten_data", JSON.stringify(asistenData));
+        return "asisten_dokter";
+      }
+      
+      // No match found
+      console.error("❌ User not found in dokter or asisten_dokter tables!");
+      alert(
+        `⚠️ Akun Tidak Terdaftar!\n\n` +
+        `Email: ${user.email}\n` +
+        `User ID: ${user.id}\n\n` +
+        `Akun ini belum terdaftar sebagai Dokter atau Asisten.\n` +
+        `Silakan hubungi administrator.`
+      );
+      
+      return "unknown";
+      
+    } catch (error) {
+      console.error("❌ Error determining user role:", error);
+      alert(`Error: ${error.message}`);
+      return "unknown";
     }
   }
 
@@ -101,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // ========================================
-  // HANDLE LOGIN (FIXED FOR PEMBUKUAN)
+  // HANDLE LOGIN (ENHANCED FOR DOCTOR + ASISTEN)
   // ========================================
   const loginFormElement = loginForm ? loginForm.querySelector("form") : null;
   if (loginFormElement) {
@@ -147,49 +211,38 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("isLoggedIn", "true");
         
-        // 🔑 CRITICAL FIX: Store id_dokter for API calls (Pembukuan, etc.)
-        localStorage.setItem("id_dokter", user.id);
-        
-        console.log("🔑 Stored id_dokter:", user.id);
-        console.log("✅ This will be used by Pembukuan API!");
-        
-        // Get user metadata to determine role
-        const userMetadata = user.user_metadata || {};
-        const userRole = userMetadata.role || 'user';
-        
-        console.log("👤 User role:", userRole);
-        
-        // Fetch additional user data from dokter table
-        try {
-          const { data: dokterData, error: dokterError } = await supabaseClient
-            .from('dokter')
-            .select('*')
-            .eq('id_dokter', user.id)
-            .single();
-          
-          if (!dokterError && dokterData) {
-            console.log("👨‍⚕️ Doctor data loaded:", dokterData);
-            localStorage.setItem("dokter_data", JSON.stringify(dokterData));
-            
-            // Double-check id_dokter is stored (use dokter table ID if different)
-            localStorage.setItem("id_dokter", dokterData.id_dokter);
-            console.log("✅ Confirmed id_dokter from dokter table:", dokterData.id_dokter);
-          }
-        } catch (err) {
-          console.warn("⚠️ Could not load doctor data:", err);
-          console.warn("⚠️ Will use auth user ID as fallback");
-        }
+        // 🔍 DETERMINE IF USER IS DOCTOR OR ASISTEN
+        const userRole = await determineUserRole(user);
         
         // Final verification
         const storedId = localStorage.getItem("id_dokter");
-        console.log("🎯 FINAL CHECK - id_dokter in localStorage:", storedId);
+        const storedRole = localStorage.getItem("user_role");
+        
+        console.log("🎯 FINAL CHECK:");
+        console.log("   - Role:", storedRole);
+        console.log("   - id_dokter:", storedId);
         
         if (!storedId) {
           console.error("❌ CRITICAL: id_dokter NOT stored!");
-          alert("Warning: Doctor ID not stored. Pembukuan might not work.");
+          alert("Warning: User ID not stored properly.");
         }
         
-        alert("Login berhasil! Selamat datang, " + (user.email || "User"));
+        // Create personalized welcome message
+        let welcomeMessage = "Login berhasil!\n\n";
+        
+        if (userRole === "dokter") {
+          const dokterData = JSON.parse(localStorage.getItem("dokter_data") || "{}");
+          welcomeMessage += `Selamat datang, Dr. ${dokterData.nama_lengkap || user.email}!\n`;
+          welcomeMessage += `Role: Dokter`;
+        } else if (userRole === "asisten_dokter") {
+          const asistenData = JSON.parse(localStorage.getItem("asisten_data") || "{}");
+          welcomeMessage += `Selamat datang, ${asistenData.nama_lengkap || user.email}!\n`;
+          welcomeMessage += `Role: Asisten Dokter`;
+        } else {
+          welcomeMessage += `Selamat datang, ${user.email}!`;
+        }
+        
+        alert(welcomeMessage);
         
         // Close modal
         modal.style.display = "none";
@@ -197,8 +250,19 @@ document.addEventListener("DOMContentLoaded", function () {
         // Wait a bit for session to be fully established
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Redirect to dashboard
-        window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
+        // Redirect based on role
+        if (userRole === "dokter") {
+          window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
+        } else if (userRole === "asisten_dokter") {
+          // You can redirect asisten to a different dashboard or the same one
+          window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
+          // OR: window.location.href = "/mapotek_php/WEB/Dashboard/asisten.html";
+        } else {
+          // Unknown role - should not happen, but fallback
+          alert("Role tidak dikenali. Silakan hubungi administrator.");
+          await supabaseClient.auth.signOut();
+          localStorage.clear();
+        }
         
       } catch (error) {
         console.error("❌ Login Error:", error);
@@ -399,5 +463,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  console.log("✅ Auth handlers ready");
+  console.log("✅ Auth handlers ready (Enhanced for Asisten)");
 }); // End of DOMContentLoaded

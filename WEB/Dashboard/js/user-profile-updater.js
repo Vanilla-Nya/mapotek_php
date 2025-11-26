@@ -65,27 +65,32 @@ async function loadUserData() {
         }
         
         const user = JSON.parse(userStr);
-        console.log('👤 User from localStorage:', user);
+        const userType = localStorage.getItem('user_type') || localStorage.getItem('user_role') || 'dokter';
         
-        // Check if we have cached dokter_data
-        const dokterDataStr = localStorage.getItem('dokter_data');
-        if (dokterDataStr) {
+        console.log('👤 User:', user);
+        console.log('👤 User type:', userType);
+        
+        // Check cached data first
+        const cacheKey = userType === 'asisten_dokter' ? 'asisten_data' : 'dokter_data';
+        const cachedDataStr = localStorage.getItem(cacheKey);
+        
+        if (cachedDataStr) {
             try {
-                const dokterData = JSON.parse(dokterDataStr);
-                console.log('📦 Using cached dokter data:', dokterData);
+                const cachedData = JSON.parse(cachedDataStr);
+                console.log('📦 Using cached data:', cachedData);
                 
-                const name = dokterData.nama_lengkap || user.email;
-                const email = dokterData.email || user.email;
-                const avatar = dokterData.foto_profil || dokterData.avatar_url || null;
+                const name = cachedData.nama_lengkap || user.email;
+                const email = cachedData.email || user.email;
+                const avatar = cachedData.avatar_url || null;
                 
                 window.updateUserProfile(name, email, avatar);
                 return;
             } catch (e) {
-                console.warn('⚠️ Failed to parse cached dokter_data');
+                console.warn('⚠️ Failed to parse cached data');
             }
         }
         
-        // If no cache, fetch from Supabase
+        // Fetch fresh data from Supabase
         if (!window.supabaseClient) {
             console.warn('⚠️ Supabase client not initialized yet, retrying...');
             setTimeout(loadUserData, 500);
@@ -94,33 +99,35 @@ async function loadUserData() {
         
         console.log('🔄 Fetching fresh data from Supabase...');
         
+        const tableName = userType === 'asisten_dokter' ? 'asisten_dokter' : 'dokter';
+        const idField = userType === 'asisten_dokter' ? 'id_asisten_dokter' : 'id_dokter';
+        
         const { data, error } = await window.supabaseClient
-            .from('dokter')
-            .select('nama_lengkap, email, foto_profil, avatar_url')
-            .eq('id_dokter', user.id)
+            .from(tableName)
+            .select('nama_lengkap, email, avatar_url')
+            .eq(idField, user.id)
             .single();
         
         if (error) {
-            console.error('❌ Error fetching dokter data:', error);
-            // Fallback to user email
+            console.error('❌ Error fetching user data:', error);
             window.updateUserProfile(user.email, user.email, null);
             return;
         }
         
         if (data) {
-            console.log('✅ Dokter data loaded:', data);
+            console.log('✅ User data loaded:', data);
             
             // Cache the data
-            localStorage.setItem('dokter_data', JSON.stringify(data));
+            localStorage.setItem(cacheKey, JSON.stringify(data));
             
             // Update UI
             const name = data.nama_lengkap || user.email;
             const email = data.email || user.email;
-            const avatar = data.foto_profil || data.avatar_url || null;
+            const avatar = data.avatar_url || null;
             
             window.updateUserProfile(name, email, avatar);
         } else {
-            console.warn('⚠️ No dokter data found');
+            console.warn('⚠️ No user data found');
             window.updateUserProfile(user.email, user.email, null);
         }
         

@@ -1,4 +1,4 @@
-console.log("🔥 ANTRIAN FRAGMENT - WITH SATUSEHAT AUTO-REGISTER 🔥");
+console.log("🔥 ANTRIAN FRAGMENT - WITH SATUSEHAT AUTO-REGISTER & SKELETON LOADERS 🔥");
 
 class AntrianFragment {
   constructor() {
@@ -13,6 +13,11 @@ class AntrianFragment {
     this.selectedPatientId = null;
     this.satusehatChecked = false;
     this.currentQueueData = null;
+    
+    // Payment properties
+    this.currentPaymentQueue = null;
+    this.paymentData = null;
+    this.paymentMethod = 'cash';
   }
 
   render() {
@@ -98,121 +103,121 @@ class AntrianFragment {
         </div>
       </div>
 
-      <!-- ⭐ ADD THIS MODAL (Missing from your code!) -->
-    <div class="modal fade" id="addQueueModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content modal-content-antrian">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="bi bi-plus-circle me-2"></i>Tambah Antrian Baru
-            </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form id="addQueueForm">
-              <div class="mb-3">
-                <label class="form-label">Cari Pasien <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="patientSearch" placeholder="Ketik nama atau NIK pasien...">
-                  <button class="btn btn-outline-secondary" type="button" id="searchPatientBtn">
-                    <i class="bi bi-search"></i> Cari
-                  </button>
-                </div>
-                <small class="text-muted">Ketik minimal 3 karakter</small>
-              </div>
-
-              <div class="mb-3" id="patientSelectContainer" style="display: none;">
-                <label class="form-label">Pilih Pasien <span class="text-danger">*</span></label>
-                <select class="form-select" id="patientSelect" required>
-                  <option value="">-- Pilih Pasien --</option>
-                </select>
-              </div>
-
-              <div class="alert alert-info" id="selectedPatientInfo" style="display: none;">
-                <strong><i class="bi bi-person-check me-2"></i>Pasien Terpilih:</strong>
-                <div id="patientInfoText" class="mt-2"></div>
-              </div>
-
-              <div class="mb-4" id="jenisPatienContainer" style="display: none;">
-                <label class="form-label fw-bold">Jenis Pasien <span class="text-danger">*</span></label>
-                <div class="d-flex gap-4">
-                  <div class="form-check form-check-custom">
-                    <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisBPJS" value="BPJS" required>
-                    <label class="form-check-label" for="jenisBPJS">
-                      <i class="bi bi-shield-check text-primary me-1"></i>
-                      <strong>BPJS</strong>
-                    </label>
+      <!-- ADD QUEUE MODAL -->
+      <div class="modal fade" id="addQueueModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content modal-content-antrian">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-plus-circle me-2"></i>Tambah Antrian Baru
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="addQueueForm">
+                <div class="mb-3">
+                  <label class="form-label">Cari Pasien <span class="text-danger">*</span></label>
+                  <div class="input-group">
+                    <input type="text" class="form-control" id="patientSearch" placeholder="Ketik nama atau NIK pasien...">
+                    <button class="btn btn-outline-secondary" type="button" id="searchPatientBtn">
+                      <i class="bi bi-search"></i> Cari
+                    </button>
                   </div>
-                  <div class="form-check form-check-custom">
-                    <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisUMUM" value="UMUM" required>
-                    <label class="form-check-label" for="jenisUMUM">
-                      <i class="bi bi-wallet2 text-success me-1"></i>
-                      <strong>UMUM</strong>
-                    </label>
-                  </div>
+                  <small class="text-muted">Ketik minimal 3 karakter</small>
                 </div>
-              </div>
 
-              <div class="alert alert-warning" id="satusehatCheckStatus" style="display: none;">
-                <div class="d-flex align-items-center">
-                  <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                  <span>Memeriksa SATUSEHAT...</span>
+                <div class="mb-3" id="patientSelectContainer" style="display: none;">
+                  <label class="form-label">Pilih Pasien <span class="text-danger">*</span></label>
+                  <select class="form-select" id="patientSelect" required>
+                    <option value="">-- Pilih Pasien --</option>
+                  </select>
                 </div>
-              </div>
 
-              <div class="alert alert-success" id="satusehatFoundAlert" style="display: none;">
-                <i class="bi bi-check-circle-fill me-2"></i>
-                <strong>Pasien terdaftar di SATUSEHAT</strong>
-                <div id="satusehatIdText" class="mt-2"></div>
-              </div>
+                <div class="alert alert-info" id="selectedPatientInfo" style="display: none;">
+                  <strong><i class="bi bi-person-check me-2"></i>Pasien Terpilih:</strong>
+                  <div id="patientInfoText" class="mt-2"></div>
+                </div>
 
-              <div class="alert alert-info" id="satusehatNotFoundAlert" style="display: none;">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                <strong>Pasien belum terdaftar di SATUSEHAT</strong>
-                <p class="mb-0 mt-2">Antrian tetap dapat dibuat tanpa ID SATUSEHAT</p>
-              </div>
-
-              <hr>
-
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">Tanggal Antrian <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control" id="queueDate" required value="${
-                      new Date().toISOString().split("T")[0]
-                    }">
+                <div class="mb-4" id="jenisPatienContainer" style="display: none;">
+                  <label class="form-label fw-bold">Jenis Pasien <span class="text-danger">*</span></label>
+                  <div class="d-flex gap-4">
+                    <div class="form-check form-check-custom">
+                      <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisBPJS" value="BPJS" required>
+                      <label class="form-check-label" for="jenisBPJS">
+                        <i class="bi bi-shield-check text-primary me-1"></i>
+                        <strong>BPJS</strong>
+                      </label>
+                    </div>
+                    <div class="form-check form-check-custom">
+                      <input class="form-check-input" type="radio" name="jenis_pasien" id="jenisUMUM" value="UMUM" required>
+                      <label class="form-check-label" for="jenisUMUM">
+                        <i class="bi bi-wallet2 text-success me-1"></i>
+                        <strong>UMUM</strong>
+                      </label>
+                    </div>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">Jam Antrian <span class="text-danger">*</span></label>
-                    <input type="time" class="form-control" id="queueTime" required>
+
+                <div class="alert alert-warning" id="satusehatCheckStatus" style="display: none;">
+                  <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <span>Memeriksa SATUSEHAT...</span>
                   </div>
                 </div>
-              </div>
 
-              <div class="mb-3">
-                <label class="form-label">No Antrian (Auto)</label>
-                <input type="text" class="form-control bg-light" id="queueNumber" placeholder="Auto-generated..." readonly required>
-                <small class="text-muted">Format: [Nomor][Tanggal] - Contoh: 1081025</small>
-              </div>
+                <div class="alert alert-success" id="satusehatFoundAlert" style="display: none;">
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                  <strong>Pasien terdaftar di SATUSEHAT</strong>
+                  <div id="satusehatIdText" class="mt-2"></div>
+                </div>
 
-              <input type="hidden" id="selectedPatientId">
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-              <i class="bi bi-x-circle me-2"></i>Batal
-            </button>
-            <button type="button" class="btn btn-custom-teal" id="saveQueueBtn">
-              <i class="bi bi-save me-2"></i>Simpan
-            </button>
+                <div class="alert alert-info" id="satusehatNotFoundAlert" style="display: none;">
+                  <i class="bi bi-info-circle-fill me-2"></i>
+                  <strong>Pasien belum terdaftar di SATUSEHAT</strong>
+                  <p class="mb-0 mt-2">Antrian tetap dapat dibuat tanpa ID SATUSEHAT</p>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Tanggal Antrian <span class="text-danger">*</span></label>
+                      <input type="date" class="form-control" id="queueDate" required value="${
+                        new Date().toISOString().split("T")[0]
+                      }">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Jam Antrian <span class="text-danger">*</span></label>
+                      <input type="time" class="form-control" id="queueTime" required>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">No Antrian (Auto)</label>
+                  <input type="text" class="form-control bg-light" id="queueNumber" placeholder="Auto-generated..." readonly required>
+                  <small class="text-muted">Format: [Nomor][Tanggal] - Contoh: 1081025</small>
+                </div>
+
+                <input type="hidden" id="selectedPatientId">
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-2"></i>Batal
+              </button>
+              <button type="button" class="btn btn-custom-teal" id="saveQueueBtn">
+                <i class="bi bi-save me-2"></i>Simpan
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-      <!-- 🔥 Action Modal (Detail Pasien) -->
+      <!-- ACTION QUEUE MODAL (Detail Pasien) -->
       <div class="modal fade" id="actionQueueModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content modal-content-antrian">
@@ -274,7 +279,7 @@ class AntrianFragment {
 
               <hr>
 
-              <!-- 🔥 SATUSEHAT Registration Section -->
+              <!-- SATUSEHAT Registration Section -->
               <div class="alert alert-warning" id="satusehatNotRegistered" style="display: none;">
                 <div class="d-flex justify-content-between align-items-center">
                   <div>
@@ -334,6 +339,206 @@ class AntrianFragment {
               </button>
               <button type="button" class="btn btn-success" id="terimaQueueBtn">
                 <i class="bi bi-check-circle me-2"></i>Terima
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 💳 ENHANCED PAYMENT MODAL WITH QRIS -->
+      <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+              <h5 class="modal-title">
+                <i class="bi bi-cash-coin me-2"></i>Form Pembayaran
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4" style="background-color: #f8f9fa;">
+              
+              <!-- Success Animation Overlay -->
+              <div id="paymentSuccessOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center;">
+                <div style="background-color: white; padding: 3rem; border-radius: 1rem; text-align: center;">
+                  <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                  <h2 class="mt-3 text-success">Pembayaran Berhasil!</h2>
+                </div>
+              </div>
+
+              <!-- Patient Type Selection -->
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h6 class="card-title mb-3">
+                    <i class="bi bi-person me-2"></i>Jenis Pasien
+                  </h6>
+                  <div class="d-flex gap-3">
+                    <button type="button" class="btn btn-outline-primary flex-fill patient-type-btn" data-type="BPJS">
+                      <i class="bi bi-shield-check me-2"></i>BPJS (Gratis)
+                    </button>
+                    <button type="button" class="btn btn-outline-success flex-fill patient-type-btn" data-type="UMUM">
+                      <i class="bi bi-wallet2 me-2"></i>UMUM
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <!-- Left Panel - Patient Details -->
+                <div class="col-md-6">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <h6 class="card-title border-bottom border-primary pb-2 mb-3">Detail Pasien</h6>
+                      <div class="mb-2">
+                        <small class="text-muted">Nama:</small>
+                        <div class="fw-bold" id="paymentPatientName">-</div>
+                      </div>
+                      <div class="mb-2">
+                        <small class="text-muted">No. Antrian:</small>
+                        <div class="fw-bold text-primary" id="paymentQueueNumber">-</div>
+                      </div>
+                      <div class="mb-3">
+                        <small class="text-muted">Jenis Pasien:</small>
+                        <div id="paymentPatientType">-</div>
+                      </div>
+                      <hr>
+                      <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Total Tagihan:</span>
+                        <span class="fs-4 fw-bold text-primary" id="paymentGrandTotal">Rp 0</span>
+                      </div>
+
+                      <!-- Payment Method Selection (Only for UMUM) -->
+                      <div id="paymentMethodContainer" style="display: none;">
+                        <h6 class="card-title border-bottom border-success pb-2 mt-4 mb-3">Metode Pembayaran</h6>
+                        <div class="d-flex gap-2">
+                          <button type="button" class="btn btn-outline-success flex-fill payment-method-btn" data-method="cash">
+                            <i class="bi bi-wallet2 me-2"></i>Cash
+                          </button>
+                          <button type="button" class="btn btn-outline-success flex-fill payment-method-btn" data-method="qris">
+                            <i class="bi bi-qr-code me-2"></i>QRIS
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- BPJS Info -->
+                      <div id="bpjsInfoContainer" style="display: none;">
+                        <div class="alert alert-info mt-3 mb-0">
+                          <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-shield-check me-2"></i>
+                            <strong>Pasien BPJS</strong>
+                          </div>
+                          <small>
+                            ✅ Pembayaran ditanggung oleh BPJS<br>
+                            ✅ Tidak ada biaya yang harus dibayar<br>
+                            ✅ Klik tombol "Proses Pembayaran" untuk menyelesaikan
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Panel - Payment Input OR QRIS Display -->
+                <div class="col-md-6">
+                  <div class="card h-100">
+                    <div class="card-body">
+                      <!-- Cash Payment Input -->
+                      <div id="paymentInputContainer">
+                        <h6 class="card-title border-bottom border-success pb-2 mb-3">Input Pembayaran</h6>
+                        <div class="mb-3">
+                          <label class="form-label fw-bold">Jumlah Uang:</label>
+                          <input type="number" class="form-control form-control-lg" id="paymentAmount" placeholder="Masukkan jumlah uang...">
+                        </div>
+                        <div class="mb-0">
+                          <label class="form-label fw-bold">Kembalian:</label>
+                          <div class="alert alert-success mb-0 py-2">
+                            <h4 class="mb-0 text-success" id="paymentChange">Rp 0</h4>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- QRIS Display (Hidden by default) -->
+                      <div id="qrisDisplayContainer" style="display: none;">
+                        <h6 class="card-title border-bottom border-success pb-2 mb-3">
+                          <i class="bi bi-qr-code-scan me-2"></i>Scan QRIS untuk Pembayaran
+                        </h6>
+                        <div class="text-center">
+                          <div class="bg-white p-4 rounded d-inline-block shadow-sm mb-3" style="border: 3px solid #10b981;">
+                            <img id="qrisPaymentImage" src="" alt="QRIS Code" style="max-width: 280px; max-height: 280px; display: none;">
+                            <div id="qrisLoadingSpinner" class="text-center py-5">
+                              <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+                                <span class="visually-hidden">Loading...</span>
+                              </div>
+                              <p class="mt-3 text-muted">Memuat QRIS...</p>
+                            </div>
+                            <div id="qrisNotAvailable" style="display: none;" class="text-center py-5">
+                              <i class="bi bi-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                              <p class="mt-3 text-muted">QRIS belum tersedia</p>
+                              <small class="text-muted">Upload QRIS di halaman Profil</small>
+                            </div>
+                          </div>
+                          <div class="alert alert-info mb-0">
+                            <small>
+                              <i class="bi bi-info-circle me-1"></i>
+                              <strong>Total: Rp <span id="qrisTotalAmount">0</span></strong><br>
+                              Scan QR code di atas menggunakan aplikasi e-wallet Anda
+                            </small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- BPJS Placeholder -->
+                      <div id="bpjsPlaceholder" style="display: none;" class="d-flex flex-column align-items-center justify-content-center h-100 text-center text-primary">
+                        <i class="bi bi-shield-check" style="font-size: 4rem;"></i>
+                        <p class="mt-3">Pasien BPJS tidak memerlukan<br>input pembayaran</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Drug Table -->
+              <div class="card mb-3">
+                <div class="card-body">
+                  <h6 class="card-title border-bottom border-primary pb-2 mb-3">Detail Obat & Jasa</h6>
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead class="table-primary">
+                        <tr>
+                          <th>Nama Obat</th>
+                          <th>Jenis</th>
+                          <th class="text-center">Jumlah</th>
+                          <th>Signa</th>
+                          <th class="text-end">Harga Obat</th>
+                          <th class="text-end">Harga Jasa</th>
+                          <th class="text-end">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody id="paymentDrugTableBody">
+                        <tr>
+                          <td colspan="7" class="text-center">Memuat data...</td>
+                        </tr>
+                      </tbody>
+                      <tfoot class="table-light">
+                        <tr>
+                          <td colspan="6" class="text-end fw-bold">TOTAL TAGIHAN:</td>
+                          <td class="text-end fw-bold text-primary fs-5" id="paymentTableTotal">Rp 0</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-circle me-2"></i>Batal
+              </button>
+              <button type="button" class="btn btn-primary" id="previewBillBtn">
+                <i class="bi bi-printer me-2"></i>Preview Tagihan
+              </button>
+              <button type="button" class="btn btn-success" id="processPaymentBtn">
+                <i class="bi bi-check-circle me-2"></i>Bayar
               </button>
             </div>
           </div>
@@ -447,7 +652,7 @@ class AntrianFragment {
       .status-belum-periksa { background-color: #ffc107; color: #000; }
       .status-di-terima { background-color: #17a2b8; color: white; }
       .status-sedang-periksa { background-color: #0dcaf0; color: #000; }
-      .status-selesai { background-color: #198754; color: white; }
+      .status-selesai-periksa { background-color: #198754; color: white; }
       .status-batal { background-color: #dc3545; color: white; }
       
       .table thead th { font-weight: 600; font-size: 0.85rem; padding: 1rem; }
@@ -463,8 +668,98 @@ class AntrianFragment {
       
       .form-check-custom .form-check-input { width: 20px; height: 20px; margin-top: 2px; }
       .form-check-custom .form-check-label { font-size: 1.1rem; cursor: pointer; }
+
+      /* ✅ SKELETON LOADER STYLES */
+      .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 8px;
+      }
+
+      @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .skeleton-text {
+        height: 16px;
+        margin-bottom: 0;
+        border-radius: 4px;
+      }
+
+      .skeleton-badge {
+        height: 24px;
+        width: 80px;
+        border-radius: 12px;
+        display: inline-block;
+      }
+
+      .skeleton-button {
+        height: 32px;
+        width: 80px;
+        border-radius: 20px;
+        display: inline-block;
+      }
+
+      /* Payment Modal Styles */
+      .patient-type-btn.active {
+        background-color: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+      }
+      .patient-type-btn.active[data-type="BPJS"] {
+        background-color: #6366f1;
+        border-color: #6366f1;
+      }
+      .patient-type-btn.active[data-type="UMUM"] {
+        background-color: #10b981;
+        border-color: #10b981;
+      }
+      .payment-method-btn.active {
+        background-color: #10b981;
+        color: white;
+        border-color: #10b981;
+      }
+      .bg-gradient-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      }
     </style>
     `;
+  }
+
+  // ========================================
+  // ✅ SKELETON GENERATOR FUNCTIONS
+  // ========================================
+
+  generateQueueTableSkeleton(rows = 5) {
+    return Array(rows).fill(0).map(() => `
+      <tr>
+        <td><div class="skeleton skeleton-text" style="width: 80px; margin: 0 auto;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: ${70 + Math.random() * 20}%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: 60px;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: ${60 + Math.random() * 30}%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: ${60 + Math.random() * 20}%;"></div></td>
+        <td><div class="skeleton skeleton-badge"></div></td>
+        <td><div class="skeleton skeleton-badge"></div></td>
+        <td><div class="skeleton skeleton-badge"></div></td>
+        <td class="text-center"><div class="skeleton skeleton-button" style="margin: 0 auto;"></div></td>
+      </tr>
+    `).join('');
+  }
+
+  generatePaymentDrugSkeleton(rows = 3) {
+    return Array(rows).fill(0).map(() => `
+      <tr>
+        <td><div class="skeleton skeleton-text" style="width: ${60 + Math.random() * 30}%;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: 70px;"></div></td>
+        <td class="text-center"><div class="skeleton skeleton-text" style="width: 30px; margin: 0 auto;"></div></td>
+        <td><div class="skeleton skeleton-text" style="width: ${50 + Math.random() * 30}%;"></div></td>
+        <td class="text-end"><div class="skeleton skeleton-text" style="width: 90px; margin-left: auto;"></div></td>
+        <td class="text-end"><div class="skeleton skeleton-text" style="width: 90px; margin-left: auto;"></div></td>
+        <td class="text-end"><div class="skeleton skeleton-text" style="width: 100px; margin-left: auto;"></div></td>
+      </tr>
+    `).join('');
   }
 
   renderQueueRows() {
@@ -507,7 +802,7 @@ class AntrianFragment {
 
         // Change button based on status
         let actionButton;
-        if (queue.status_antrian === "Selesai") {
+        if (queue.status_antrian === "Selesai Periksa") {
           actionButton = `<button class="btn btn-success btn-sm" onclick="window.currentFragment.showPaymentModal('${queue.id_antrian}')">
           <i class="bi bi-cash-coin me-1"></i>BAYAR
         </button>`;
@@ -532,30 +827,8 @@ class AntrianFragment {
       .join("");
   }
 
-  // Add this new method for payment modal
-  showPaymentModal(queueId) {
-    console.log("💳 Opening payment modal for queue:", queueId);
-
-    const queue = this.queues.find((q) => q.id_antrian === queueId);
-
-    if (!queue) {
-      alert("Error: Data antrian tidak ditemukan");
-      return;
-    }
-
-    // You can create a custom payment modal or redirect to payment page
-    alert(
-      `Pembayaran untuk:\n\nNo. Antrian: ${queue.no_antrian}\nPasien: ${queue.nama}\nJenis: ${queue.jenis_pasien}\n\n(Fitur pembayaran akan segera ditambahkan)`
-    );
-
-    // Example: Redirect to payment page
-    // window.location.href = `payment.html?queue_id=${queueId}`;
-
-    // Or you could show a payment modal similar to actionQueueModal
-  }
-
   async onInit() {
-    console.log("🎬 Antrian Fragment Initialized with SATUSEHAT Auto-Register");
+    console.log("🎬 Antrian Fragment Initialized with SATUSEHAT Auto-Register & Skeleton Loaders");
     window.currentFragment = this;
 
     await this.loadCurrentDoctor();
@@ -579,45 +852,120 @@ class AntrianFragment {
     console.log("👨‍⚕️ Loading current doctor profile...");
 
     try {
-      const token = localStorage.getItem("access_token");
-      const data = JSON.parse(localStorage.getItem("user")).email;
+      // ✅ FIX 1: Check cache first
+      const cached = localStorage.getItem('currentDokterId');
+      const cachedName = localStorage.getItem('currentDoctorName');
+      
+      if (cached && cachedName) {
+        this.currentDoctorId = cached;
+        this.currentDoctorName = cachedName;
+        console.log('✅ Using cached doctor:', this.currentDoctorName, '(ID:', cached, ')');
+        
+        const doctorInfo = document.getElementById("doctorInfo");
+        if (doctorInfo) {
+          doctorInfo.innerHTML = `<i class="bi bi-person-circle me-1"></i>Antrian untuk: <strong>Dr. ${this.currentDoctorName}</strong>`;
+        }
+        return;
+      }
 
-      if (!token) {
+      // ✅ FIX 2: Get user data
+      const user = JSON.parse(localStorage.getItem("user") || '{}');
+      const userEmail = user.email;
+
+      if (!userEmail) {
         console.error("❌ No user email found in session");
         alert("Error: Anda belum login. Silakan login terlebih dahulu.");
         return;
       }
 
-      const response = await fetch(this.profileApiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          action: "get",
-          email: data,
-        }),
-      });
+      console.log("📧 User email:", userEmail);
 
-      const result = await response.json();
+      // ✅ FIX 3: Wait for Supabase to be ready
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (!window.supabaseClient && attempts < maxAttempts) {
+        console.log(`⏳ Waiting for Supabase... (${attempts + 1}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+      
+      if (!window.supabaseClient) {
+        throw new Error('Supabase tidak tersedia');
+      }
 
-      if (result.success && result.data) {
-        this.currentDoctorId = result.data.id_dokter;
-        this.currentDoctorName = result.data.nama_lengkap;
+      console.log('✅ Supabase ready');
 
+      // ✅ FIX 4: Try to find doctor first
+      console.log('🔍 Checking dokter table...');
+      const { data: dokter, error: dokterError } = await window.supabaseClient
+        .from('dokter')
+        .select('id_dokter, nama_lengkap, email')
+        .ilike('email', userEmail)
+        .maybeSingle();
+
+      if (dokter && !dokterError) {
+        // User is a doctor
+        this.currentDoctorId = dokter.id_dokter;
+        this.currentDoctorName = dokter.nama_lengkap;
+        
+        // Cache the results
+        localStorage.setItem('currentDokterId', this.currentDoctorId);
+        localStorage.setItem('currentDoctorName', this.currentDoctorName);
+        localStorage.setItem('userRole', 'dokter');
+        
+        console.log('✅ Found doctor:', dokter.nama_lengkap, '(ID:', dokter.id_dokter, ')');
+        
         const doctorInfo = document.getElementById("doctorInfo");
         if (doctorInfo) {
           doctorInfo.innerHTML = `<i class="bi bi-person-circle me-1"></i>Antrian untuk: <strong>Dr. ${this.currentDoctorName}</strong>`;
         }
-      } else {
-        console.error("❌ Failed to load profile:", result.message);
-        alert(
-          "Error: Tidak dapat memuat profil dokter. " + (result.message || "")
-        );
+        return;
       }
+
+      // ✅ FIX 5: If not found in dokter table, check asisten_dokter table
+      console.log('🔍 Not found in dokter table, checking asisten_dokter table...');
+      const { data: asisten, error: asistenError } = await window.supabaseClient
+        .from('asisten_dokter')
+        .select('id_dokter, nama_lengkap, email, dokter:id_dokter(id_dokter, nama_lengkap)')
+        .ilike('email', userEmail)
+        .maybeSingle();
+
+      console.log('📋 Asisten query result:', asisten);
+      console.log('❌ Asisten query error:', asistenError);
+
+      if (asisten && !asistenError && asisten.dokter) {
+        // User is an assistant doctor - use supervising doctor's ID
+        this.currentDoctorId = asisten.dokter.id_dokter;
+        this.currentDoctorName = asisten.dokter.nama_lengkap;
+        
+        // Cache the results
+        localStorage.setItem('currentDokterId', this.currentDoctorId);
+        localStorage.setItem('currentDoctorName', this.currentDoctorName);
+        localStorage.setItem('userRole', 'asisten_dokter');
+        localStorage.setItem('asistenName', asisten.nama_lengkap);
+        
+        console.log('✅ Found assistant doctor:', asisten.nama_lengkap);
+        console.log('✅ Supervising doctor:', this.currentDoctorName, '(ID:', this.currentDoctorId, ')');
+        
+        const doctorInfo = document.getElementById("doctorInfo");
+        if (doctorInfo) {
+          doctorInfo.innerHTML = `<i class="bi bi-person-circle me-1"></i>Asisten: <strong>${asisten.nama_lengkap}</strong> | Dokter: <strong>Dr. ${this.currentDoctorName}</strong>`;
+        }
+        return;
+      }
+
+      // ✅ If neither found, show error
+      console.error("❌ No doctor or assistant found with email:", userEmail);
+      alert(
+        `⚠️ DATA TIDAK DITEMUKAN\n\n` +
+        `Email yang dicari: ${userEmail}\n\n` +
+        `Pastikan email Anda sesuai dengan data di database.\n` +
+        `Coba login ulang atau hubungi administrator.`
+      );
+
     } catch (error) {
-      console.error("❌ Error loading profile:", error);
+      console.error("❌ Error loading doctor:", error);
       alert("Error: " + error.message);
     }
   }
@@ -631,16 +979,16 @@ class AntrianFragment {
           return;
         }
 
-        // ✅ Reset state first (before accessing DOM elements)
+        // Reset state first
         this.satusehatChecked = false;
 
-        // ✅ Generate queue number
+        // Generate queue number
         await this.generateQueueNumber();
 
-        // ✅ Show modal first
+        // Show modal
         window.modalHelper.showBootstrapModal("addQueueModal");
 
-        // ✅ Then hide alerts and reset form (after modal is shown)
+        // Hide alerts and reset form
         setTimeout(() => {
           this.hideAllSatusehatAlerts();
           const jenisContainer = document.getElementById(
@@ -704,7 +1052,6 @@ class AntrianFragment {
   }
 
   hideAllSatusehatAlerts() {
-    // ✅ Add null checks before accessing style
     const checkStatus = document.getElementById("satusehatCheckStatus");
     const foundAlert = document.getElementById("satusehatFoundAlert");
     const notFoundAlert = document.getElementById("satusehatNotFoundAlert");
@@ -920,7 +1267,6 @@ class AntrianFragment {
           "block";
       }
 
-      // ✅ Use modal helper instead of creating new instance
       window.modalHelper.showBootstrapModal("actionQueueModal");
     } catch (error) {
       console.error("❌ Error showing action modal:", error);
@@ -947,8 +1293,8 @@ class AntrianFragment {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id_pasien: this.currentQueueData.id_pasien,      // ✅ CORRECT
-          id_dokter: this.currentDoctorId,                 // ✅ ADD THIS TOO!
+          id_pasien: this.currentQueueData.id_pasien,
+          id_dokter: this.currentDoctorId,
         }),
       });
 
@@ -1023,8 +1369,8 @@ class AntrianFragment {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                id_pasien: this.currentQueueData.id_pasien,     // ✅ CORRECT
-                id_dokter: this.currentDoctorId,                // ✅ ADD THIS TOO!
+                id_pasien: this.currentQueueData.id_pasien,
+                id_dokter: this.currentDoctorId,
               }),
             }
           );
@@ -1162,7 +1508,16 @@ class AntrianFragment {
       return;
     }
 
+    // ✅ SHOW SKELETON FIRST
+    const tbody = document.getElementById("queueTableBody");
+    if (tbody) {
+      tbody.innerHTML = this.generateQueueTableSkeleton(5);
+    }
+
     try {
+      // ✅ Small delay to show skeleton animation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       let { data, error } = await window.supabaseClient.rpc(
         "get_latest_antrian_for_dokter",
         { p_dokter: this.currentDoctorId }
@@ -1174,21 +1529,17 @@ class AntrianFragment {
 
         const countBadge = document.getElementById("queueCount");
         if (countBadge) {
-          const countBadge = document.getElementById("queueCount");
-          if (countBadge) {
-            // Only count these statuses
-            const allowedStatuses = [
-              "Belum Diperiksa",
-              "Di Terima",
-              "Sedang Diperiksa",
-              "Selesai Diperiksa",
-            ];
+          const allowedStatuses = [
+            "Belum Diperiksa",
+            "Di Terima",
+            "Sedang Diperiksa",
+            "Selesai Periksa",
+          ];
 
-            const visibleCount = this.queues.filter((q) =>
-              allowedStatuses.includes(q.status_antrian)
-            ).length;
-            countBadge.textContent = `${visibleCount} Pasien`;
-          }
+          const visibleCount = this.queues.filter((q) =>
+            allowedStatuses.includes(q.status_antrian)
+          ).length;
+          countBadge.textContent = `${visibleCount} Pasien`;
         }
       }
     } catch (error) {
@@ -1208,7 +1559,16 @@ class AntrianFragment {
     const jamMulai = document.getElementById("filterStartTime").value;
     const jamAkhir = document.getElementById("filterEndTime").value;
 
+    // ✅ SHOW SKELETON FIRST
+    const tbody = document.getElementById("queueTableBody");
+    if (tbody) {
+      tbody.innerHTML = this.generateQueueTableSkeleton(5);
+    }
+
     try {
+      // ✅ Small delay to show skeleton animation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       const url = `${this.apiUrl}?action=filter_by_hour&tanggal=${tanggal}&jam_mulai=${jamMulai}&jam_akhir=${jamAkhir}&dokter_id=${this.currentDoctorId}`;
       const response = await fetch(url);
       const data = await response.json();
@@ -1219,21 +1579,17 @@ class AntrianFragment {
 
         const countBadge = document.getElementById("queueCount");
         if (countBadge) {
-          const countBadge = document.getElementById("queueCount");
-          if (countBadge) {
-            // Only count these statuses
-            const allowedStatuses = [
-              "Belum Diperiksa",
-              "Di Terima",
-              "Sedang Diperiksa",
-              "Selesai Diperiksa",
-            ];
+          const allowedStatuses = [
+            "Belum Diperiksa",
+            "Di Terima",
+            "Sedang Diperiksa",
+            "Selesai Periksa",
+          ];
 
-            const visibleCount = this.queues.filter((q) =>
-              allowedStatuses.includes(q.status_antrian)
-            ).length;
-            countBadge.textContent = `${visibleCount} Pasien`;
-          }
+          const visibleCount = this.queues.filter((q) =>
+            allowedStatuses.includes(q.status_antrian)
+          ).length;
+          countBadge.textContent = `${visibleCount} Pasien`;
         }
       }
     } catch (error) {
@@ -1324,29 +1680,496 @@ class AntrianFragment {
     const tbody = document.getElementById("queueTableBody");
     if (!tbody) return;
 
-    // Apply the same filter
     const visibleQueues = this.queues.filter(
       (queue) =>
         queue.status_antrian === "Belum Periksa" ||
         queue.status_antrian === "Selesai Periksa"
     );
 
-    // Render only filtered queues
     tbody.innerHTML = this.renderQueueRows();
 
-    // Update count badge
     const countBadge = document.getElementById("queueCount");
     if (countBadge) {
       countBadge.textContent = `${visibleQueues.length} Pasien`;
     }
   }
 
+  // ========================================
+  // 💳 PAYMENT METHODS
+  // ========================================
+
+  async showPaymentModal(queueId) {
+    console.log("💳 Opening payment modal for queue:", queueId);
+
+    const queue = this.queues.find((q) => q.id_antrian === queueId);
+
+    if (!queue) {
+      alert("Error: Data antrian tidak ditemukan");
+      return;
+    }
+
+    // Store current queue for payment processing
+    this.currentPaymentQueue = queue;
+
+    // Initialize payment data
+    this.paymentData = {
+      queueNumber: queue.no_antrian,
+      patientName: queue.nama,
+      patientType: queue.jenis_pasien || 'UMUM',
+      drugs: [],
+      totalDrugs: 0,
+      serviceCharge: 50000,
+      grandTotal: 0
+    };
+
+    // Show modal first
+    window.modalHelper.showBootstrapModal('paymentModal');
+
+    // Then load payment details
+    await this.loadPaymentDetails(queueId);
+  }
+
+  async loadPaymentDetails(queueId) {
+    // ✅ SHOW SKELETON IN DRUG TABLE
+    const tbody = document.getElementById('paymentDrugTableBody');
+    if (tbody) {
+      tbody.innerHTML = this.generatePaymentDrugSkeleton(3);
+    }
+
+    try {
+      // ✅ Small delay to show skeleton animation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const response = await fetch(`${this.apiUrl}?action=get_payment_details&id=${queueId}`);
+      const result = await response.json();
+
+      console.log("💳 Payment Details Response:", result);
+
+      if (result.success && result.data) {
+        this.paymentData.drugs = result.data.drugs || [];
+        this.paymentData.serviceCharge = result.data.harga_jasa || 0;
+        this.paymentData.totalDrugs = result.data.total_drugs || 0;
+        this.paymentData.grandTotal = result.data.grand_total || 0;
+        
+        console.log("💰 Grand Total:", this.paymentData.grandTotal);
+      }
+
+      this.populatePaymentModal();
+      this.setupPaymentEventListeners();
+    } catch (error) {
+      console.error("❌ Error:", error);
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data</td></tr>';
+      }
+    }
+  }
+
+  populatePaymentModal() {
+    const data = this.paymentData;
+
+    // Set patient info
+    document.getElementById('paymentPatientName').textContent = data.patientName;
+    document.getElementById('paymentQueueNumber').textContent = data.queueNumber;
+    
+    // Set patient type
+    this.updatePatientType(data.patientType);
+    
+    // Set totals
+    this.updateTotals();
+    
+    // Populate drug table
+    this.populateDrugTable();
+  }
+
+  updatePatientType(type) {
+    this.paymentData.patientType = type;
+    
+    // Update buttons
+    document.querySelectorAll('.patient-type-btn').forEach(btn => {
+      if (btn.dataset.type === type) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Update patient type badge
+    const badge = type === 'BPJS' 
+      ? '<span class="badge bg-primary"><i class="bi bi-shield-check me-1"></i>BPJS</span>'
+      : '<span class="badge bg-success"><i class="bi bi-wallet2 me-1"></i>UMUM</span>';
+    document.getElementById('paymentPatientType').innerHTML = badge;
+
+    // Show/hide relevant sections
+    if (type === 'BPJS') {
+      // Reset payment method when switching to BPJS
+      this.paymentMethod = 'bpjs';
+      
+      // Hide UMUM payment sections
+      document.getElementById('paymentMethodContainer').style.display = 'none';
+      document.getElementById('paymentInputContainer').style.display = 'none';
+      document.getElementById('qrisDisplayContainer').style.display = 'none';
+      
+      // Show BPJS sections
+      document.getElementById('bpjsInfoContainer').style.display = 'block';
+      document.getElementById('bpjsPlaceholder').style.display = 'flex';
+      
+      // Update button text
+      document.getElementById('processPaymentBtn').innerHTML = '<i class="bi bi-check-circle me-2"></i>Proses Pembayaran';
+      
+      // Reset payment method buttons
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+    } else {
+      // Reset to cash by default for UMUM
+      this.paymentMethod = 'cash';
+      
+      // Show UMUM sections
+      document.getElementById('paymentMethodContainer').style.display = 'block';
+      document.getElementById('paymentInputContainer').style.display = 'block';
+      document.getElementById('qrisDisplayContainer').style.display = 'none';
+      
+      // Hide BPJS sections
+      document.getElementById('bpjsInfoContainer').style.display = 'none';
+      document.getElementById('bpjsPlaceholder').style.display = 'none';
+      
+      // Update button text
+      document.getElementById('processPaymentBtn').innerHTML = '<i class="bi bi-check-circle me-2"></i>Bayar';
+      
+      // Set cash as default active
+      document.querySelectorAll('.payment-method-btn').forEach(btn => {
+        if (btn.dataset.method === 'cash') {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      
+      // Clear payment input
+      document.getElementById('paymentAmount').value = '';
+      document.getElementById('paymentChange').textContent = 'Rp 0';
+    }
+  }
+
+  updatePaymentMethod(method) {
+    this.paymentMethod = method;
+    
+    // Update buttons
+    document.querySelectorAll('.payment-method-btn').forEach(btn => {
+      if (btn.dataset.method === method) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Show/hide appropriate containers
+    if (method === 'qris') {
+      // Hide cash input, show QRIS display
+      document.getElementById('paymentInputContainer').style.display = 'none';
+      document.getElementById('qrisDisplayContainer').style.display = 'block';
+      
+      // Load and display QRIS
+      this.displayQRISForPayment();
+      
+      // Auto-set payment amount to exact total
+      document.getElementById('paymentAmount').value = this.paymentData.grandTotal;
+    } else {
+      // Show cash input, hide QRIS display
+      document.getElementById('paymentInputContainer').style.display = 'block';
+      document.getElementById('qrisDisplayContainer').style.display = 'none';
+      
+      // Enable manual input for cash
+      document.getElementById('paymentAmount').disabled = false;
+      document.getElementById('paymentAmount').value = '';
+      document.getElementById('paymentChange').textContent = 'Rp 0';
+    }
+  }
+
+  calculateChange() {
+    if (this.paymentData.patientType === 'UMUM' && this.paymentMethod === 'cash') {
+      const paid = parseFloat(document.getElementById('paymentAmount').value) || 0;
+      const change = paid - this.paymentData.grandTotal;
+      const changeAmount = change > 0 ? change : 0;
+      document.getElementById('paymentChange').textContent = 'Rp ' + changeAmount.toLocaleString('id-ID');
+    } else {
+      document.getElementById('paymentChange').textContent = 'Rp 0';
+    }
+  }
+
+  updateTotals() {
+    const total = this.paymentData.grandTotal;
+    document.getElementById('paymentGrandTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+    document.getElementById('paymentTableTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  }
+
+  populateDrugTable() {
+    const tbody = document.getElementById('paymentDrugTableBody');
+    
+    if (!this.paymentData.drugs || this.paymentData.drugs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data obat</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = this.paymentData.drugs.map(drug => `
+      <tr>
+        <td>${drug.name}</td>
+        <td>${drug.type}</td>
+        <td class="text-center">${drug.qty}</td>
+        <td>${drug.signa}</td>
+        <td class="text-end">Rp ${(drug.qty * drug.price).toLocaleString('id-ID')}</td>
+        <td class="text-end">Rp ${drug.serviceCharge.toLocaleString('id-ID')}</td>
+        <td class="text-end fw-bold">Rp ${(drug.qty * drug.price + drug.serviceCharge).toLocaleString('id-ID')}</td>
+      </tr>
+    `).join('');
+  }
+
+  setupPaymentEventListeners() {
+    // Patient type buttons
+    document.querySelectorAll('.patient-type-btn').forEach(btn => {
+      btn.removeEventListener('click', btn._clickHandler);
+      btn._clickHandler = () => this.updatePatientType(btn.dataset.type);
+      btn.addEventListener('click', btn._clickHandler);
+    });
+
+    // Payment method buttons
+    document.querySelectorAll('.payment-method-btn').forEach(btn => {
+      btn.removeEventListener('click', btn._clickHandler);
+      btn._clickHandler = () => this.updatePaymentMethod(btn.dataset.method);
+      btn.addEventListener('click', btn._clickHandler);
+    });
+
+    // Payment amount input
+    const amountInput = document.getElementById('paymentAmount');
+    if (amountInput) {
+      amountInput.removeEventListener('input', amountInput._inputHandler);
+      amountInput._inputHandler = () => this.calculateChange();
+      amountInput.addEventListener('input', amountInput._inputHandler);
+    }
+
+    // Process payment button
+    const processBtn = document.getElementById('processPaymentBtn');
+    if (processBtn) {
+      processBtn.removeEventListener('click', processBtn._clickHandler);
+      processBtn._clickHandler = () => this.handlePayment();
+      processBtn.addEventListener('click', processBtn._clickHandler);
+    }
+
+    // Preview bill button
+    const previewBtn = document.getElementById('previewBillBtn');
+    if (previewBtn) {
+      previewBtn.removeEventListener('click', previewBtn._clickHandler);
+      previewBtn._clickHandler = () => this.printBill();
+      previewBtn.addEventListener('click', previewBtn._clickHandler);
+    }
+  }
+
+  async handlePayment() {
+    // Validation for UMUM payment
+    if (this.paymentData.patientType === 'UMUM') {
+      if (this.paymentMethod === 'cash') {
+        const paid = parseFloat(document.getElementById('paymentAmount').value) || 0;
+        if (paid < this.paymentData.grandTotal) {
+          alert('⚠️ Jumlah uang masih kurang!');
+          return;
+        }
+      } else if (this.paymentMethod === 'qris') {
+        // For QRIS, check if QRIS image is available
+        const qrisImage = document.getElementById('qrisPaymentImage');
+        if (!qrisImage.src || qrisImage.style.display === 'none') {
+          alert('⚠️ QRIS tidak tersedia!\n\nSilakan upload QRIS di halaman Profil terlebih dahulu atau gunakan metode Cash.');
+          return;
+        }
+        
+        // Confirm QRIS payment
+        if (!confirm('✅ Konfirmasi pembayaran QRIS?\n\nPastikan pasien sudah melakukan pembayaran via scan QRIS.')) {
+          return;
+        }
+      }
+    }
+
+    // Show success animation
+    document.getElementById('paymentSuccessOverlay').style.display = 'flex';
+
+    try {
+      const response = await fetch(`${this.apiUrl}?action=process_payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          queue_id: this.currentPaymentQueue.id_antrian,
+          patient_type: this.paymentData.patientType,
+          payment_method: this.paymentMethod || 'bpjs',
+          amount_paid: document.getElementById('paymentAmount')?.value || 0,
+          total_bill: this.paymentData.grandTotal
+        })
+      });
+
+      const result = await response.json();
+
+      setTimeout(() => {
+        document.getElementById('paymentSuccessOverlay').style.display = 'none';
+        
+        if (result.success) {
+          const paymentMethodText = this.paymentMethod === 'qris' ? 'QRIS' : 
+                                    this.paymentMethod === 'cash' ? 'Cash' : 'BPJS';
+          
+          alert(`✅ Pembayaran berhasil (${paymentMethodText})!\n\nStatus antrian diperbarui ke "Selesai".`);
+          
+          // Ask to print bill
+          if (confirm('🖨️ Cetak tagihan?')) {
+            this.printBill();
+          }
+          
+          // Close modal and refresh
+          const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+          modal.hide();
+          this.loadQueues();
+        } else {
+          alert('❌ Gagal memproses pembayaran: ' + (result.message || result.error || 'Unknown error'));
+        }
+      }, 1500);
+    } catch (error) {
+      document.getElementById('paymentSuccessOverlay').style.display = 'none';
+      console.error('❌ Error processing payment:', error);
+      alert('❌ Error: ' + error.message);
+    }
+  }
+
+  async loadDoctorQRIS() {
+    if (!this.currentDoctorId) {
+      console.error('❌ No doctor ID for QRIS');
+      return null;
+    }
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('dokter')
+        .select('qris_url')
+        .eq('id_dokter', this.currentDoctorId)
+        .single();
+
+      if (error) {
+        console.error('❌ Error loading QRIS:', error);
+        return null;
+      }
+
+      return data?.qris_url || null;
+    } catch (error) {
+      console.error('❌ Exception loading QRIS:', error);
+      return null;
+    }
+  }
+
+  async displayQRISForPayment() {
+    const qrisImage = document.getElementById('qrisPaymentImage');
+    const qrisLoading = document.getElementById('qrisLoadingSpinner');
+    const qrisNotAvailable = document.getElementById('qrisNotAvailable');
+
+    // Show loading
+    qrisLoading.style.display = 'block';
+    qrisImage.style.display = 'none';
+    qrisNotAvailable.style.display = 'none';
+
+    // Load QRIS URL
+    const qrisUrl = await this.loadDoctorQRIS();
+
+    // Hide loading
+    qrisLoading.style.display = 'none';
+
+    if (qrisUrl) {
+      qrisImage.src = qrisUrl;
+      qrisImage.style.display = 'block';
+      
+      // Update total amount in QRIS section
+      document.getElementById('qrisTotalAmount').textContent = 
+        this.paymentData.grandTotal.toLocaleString('id-ID');
+    } else {
+      qrisNotAvailable.style.display = 'block';
+    }
+  }
+
+  printBill() {
+    const data = this.paymentData;
+    const now = new Date().toLocaleString('id-ID');
+    const paymentAmount = document.getElementById('paymentAmount')?.value || 0;
+    const changeText = document.getElementById('paymentChange')?.textContent || 'Rp 0';
+    const change = parseFloat(changeText.replace('Rp ', '').replace(/\./g, '').replace(',', '.')) || 0;
+
+    const billContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Tagihan - ${data.queueNumber}</title>
+        <style>
+          body { font-family: 'Courier New', monospace; font-size: 12px; padding: 20px; }
+          .center { text-align: center; }
+          .bold { font-weight: bold; }
+          .line { border-top: 1px dashed #000; margin: 10px 0; }
+          table { width: 100%; border-collapse: collapse; }
+          td { padding: 5px 0; }
+          .right { text-align: right; }
+        </style>
+      </head>
+      <body>
+        <div class="center bold">
+          <h2>KLINIK SEHAT SENTOSA</h2>
+          <p>Jl. Kesehatan No. 123<br>Telp: (021) 12345678</p>
+        </div>
+        <div class="line"></div>
+        <table>
+          <tr><td>No. Antrian</td><td class="right">${data.queueNumber}</td></tr>
+          <tr><td>Pasien</td><td class="right">${data.patientName}</td></tr>
+          <tr><td>Jenis</td><td class="right">${data.patientType}</td></tr>
+          <tr><td>Tanggal</td><td class="right">${now}</td></tr>
+        </table>
+        <div class="line"></div>
+        <table>
+          ${data.drugs.map(drug => `
+            <tr>
+              <td colspan="2" class="bold">${drug.name}</td>
+            </tr>
+            <tr>
+              <td>  ${drug.qty} x Rp ${drug.price.toLocaleString('id-ID')}</td>
+              <td class="right">Rp ${(drug.qty * drug.price).toLocaleString('id-ID')}</td>
+            </tr>
+            ${drug.serviceCharge > 0 ? `
+              <tr>
+                <td>  Jasa Dokter</td>
+                <td class="right">Rp ${drug.serviceCharge.toLocaleString('id-ID')}</td>
+              </tr>
+            ` : ''}
+          `).join('')}
+        </table>
+        <div class="line"></div>
+        <table>
+          <tr class="bold"><td>TOTAL</td><td class="right">Rp ${data.grandTotal.toLocaleString('id-ID')}</td></tr>
+          ${data.patientType === 'UMUM' ? `
+            <tr><td>Dibayar (${(this.paymentMethod || 'cash').toUpperCase()})</td><td class="right">Rp ${parseFloat(paymentAmount).toLocaleString('id-ID')}</td></tr>
+            ${this.paymentMethod === 'cash' ? `<tr><td>Kembalian</td><td class="right">Rp ${change.toLocaleString('id-ID')}</td></tr>` : ''}
+          ` : `
+            <tr><td colspan="2" class="center bold">GRATIS (BPJS)</td></tr>
+          `}
+        </table>
+        <div class="line"></div>
+        <div class="center">
+          <p>Terima kasih atas kunjungan Anda<br>Semoga lekas sembuh!</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '', 'width=400,height=600');
+    printWindow.document.write(billContent);
+    printWindow.document.close();
+    printWindow.print();
+  }
+
   onDestroy() {
     window.currentFragment = null;
     this.currentQueueData = null;
+    this.currentPaymentQueue = null;
+    this.paymentData = null;
   }
 }
 
-console.log(
-  "✅ AntrianFragment with SATUSEHAT Auto-Register loaded successfully"
-);
+console.log("✅ AntrianFragment with SATUSEHAT Auto-Register, Payment System & Skeleton Loaders loaded successfully");
