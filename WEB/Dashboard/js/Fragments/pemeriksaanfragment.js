@@ -1,99 +1,14 @@
-console.log("🔥 PEMERIKSAAN SYSTEM - WITH SKELETON LOADERS 🔥");
+console.log("🔥 PEMERIKSAAN SYSTEM - WITH CUSTOM ALERTS & SHARED COMPONENTS 🔥");
 
 // ========================================
-// SKELETON LOADER STYLES & UTILITIES
+// NOTE: LoadingOverlay, CustomAlert, Toast are loaded from antrianfragment.js
+// Make sure antrianfragment.js loads BEFORE this file
 // ========================================
-const skeletonStyles = `
-  <style>
-    /* Skeleton Loading Styles */
-    .skeleton {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-      background-size: 200% 100%;
-      animation: skeleton-loading 1.5s infinite;
-      border-radius: 4px;
-    }
 
-    @keyframes skeleton-loading {
-      0% {
-        background-position: 200% 0;
-      }
-      100% {
-        background-position: -200% 0;
-      }
-    }
-
-    .skeleton-text {
-      height: 16px;
-      margin-bottom: 8px;
-      border-radius: 4px;
-    }
-
-    .skeleton-text.large {
-      height: 24px;
-    }
-
-    .skeleton-text.small {
-      height: 12px;
-    }
-
-    .skeleton-circle {
-      border-radius: 50%;
-    }
-
-    .skeleton-rect {
-      border-radius: 4px;
-    }
-
-    /* Wave effect variant */
-    .skeleton-wave {
-      position: relative;
-      overflow: hidden;
-      background: #f0f0f0;
-    }
-
-    .skeleton-wave::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      transform: translateX(-100%);
-      background: linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0) 0,
-        rgba(255, 255, 255, 0.3) 20%,
-        rgba(255, 255, 255, 0.5) 60%,
-        rgba(255, 255, 255, 0)
-      );
-      animation: skeleton-wave 2s infinite;
-    }
-
-    @keyframes skeleton-wave {
-      100% {
-        transform: translateX(100%);
-      }
-    }
-
-    /* Pulse effect variant */
-    .skeleton-pulse {
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes skeleton-pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.4;
-      }
-    }
-  </style>
-`;
-
-// Skeleton Loader Utility Functions
-const SkeletonLoader = {
-  // Generate table skeleton
+// ========================================
+// SKELETON LOADER UTILITIES (Local to this file)
+// ========================================
+const PemeriksaanSkeletonLoader = {
   tableRows(columns, rows = 5) {
     let html = '';
     for (let i = 0; i < rows; i++) {
@@ -110,7 +25,6 @@ const SkeletonLoader = {
     return html;
   },
 
-  // Generate search results skeleton
   searchResults(count = 5) {
     let html = '';
     for (let i = 0; i < count; i++) {
@@ -129,7 +43,6 @@ const SkeletonLoader = {
     return html;
   },
 
-  // Generate card skeleton
   card() {
     return `
       <div style="padding: 20px;">
@@ -141,6 +54,37 @@ const SkeletonLoader = {
     `;
   }
 };
+
+// Skeleton styles
+const pemeriksaanSkeletonStyles = `
+  <style>
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text {
+      height: 16px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+    }
+
+    .skeleton-text.large {
+      height: 24px;
+    }
+
+    .skeleton-text.small {
+      height: 12px;
+    }
+  </style>
+`;
 
 // ========================================
 // ICDX SELECTION MODAL CLASS
@@ -169,7 +113,7 @@ class ICDXSelectionModal {
     console.log("📦 Loading ICDX data from JSON file...");
     const tbody = document.getElementById("icdxTableBody");
     
-    tbody.innerHTML = SkeletonLoader.searchResults(8);
+    tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(8);
     
     try {
       const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd10.json');
@@ -239,14 +183,14 @@ class ICDXSelectionModal {
 
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
               <table class="table table-hover">
-                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                <thead style="position: sticky; top: 0; background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); z-index: 1;">
                   <tr>
                     <th style="color: white; width: 120px;">Kode ICDX</th>
                     <th style="color: white;">Deskripsi</th>
                   </tr>
                 </thead>
                 <tbody id="icdxTableBody">
-                  ${SkeletonLoader.searchResults(8)}
+                  ${PemeriksaanSkeletonLoader.searchResults(8)}
                 </tbody>
               </table>
             </div>
@@ -263,7 +207,7 @@ class ICDXSelectionModal {
         </div>
       </div>
 
-      ${skeletonStyles}
+      ${pemeriksaanSkeletonStyles}
 
       <style>
         .icdx-modal-container {
@@ -294,8 +238,8 @@ class ICDXSelectionModal {
         }
 
         .table tbody tr.selected {
-          background: #dbeafe !important;
-          border-left: 4px solid #6366f1;
+          background: #d1fae5 !important;
+          border-left: 4px solid #065f46;
         }
       </style>
     `;
@@ -310,7 +254,7 @@ class ICDXSelectionModal {
     }
 
     const tbody = document.getElementById("icdxTableBody");
-    tbody.innerHTML = SkeletonLoader.searchResults(5);
+    tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(5);
 
     this.searchTimeout = setTimeout(() => {
       this.searchICDX();
@@ -406,7 +350,11 @@ class ICDXSelectionModal {
 
   selectICDX() {
     if (!this.selectedICDX) {
-      alert("⚠️ Pilih salah satu data ICDX!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Pilih salah satu data ICDX!", "Pilih Data");
+      } else {
+        alert("⚠️ Pilih salah satu data ICDX!");
+      }
       return;
     }
 
@@ -416,7 +364,9 @@ class ICDXSelectionModal {
     this.pemeriksaanModal.icdxTableData.push({ kode, deskripsi });
     this.pemeriksaanModal.renderICDXTable();
     
-    alert(`✅ ICDX "${kode}" berhasil ditambahkan!`);
+    if (window.Toast) {
+      Toast.success(`ICDX "${kode}" berhasil ditambahkan!`);
+    }
     this.close();
   }
 
@@ -456,7 +406,7 @@ class ICDIXSelectionModal {
     console.log("📦 Loading ICDIX data from JSON file...");
     const tbody = document.getElementById("icdixTableBody");
     
-    tbody.innerHTML = SkeletonLoader.searchResults(8);
+    tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(8);
     
     try {
       const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd9.json');
@@ -525,14 +475,14 @@ class ICDIXSelectionModal {
 
             <div class="table-container" style="max-height: 400px; overflow-y: auto;">
               <table class="table table-hover">
-                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                <thead style="position: sticky; top: 0; background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); z-index: 1;">
                   <tr>
                     <th style="color: white; width: 120px;">Kode ICDIX</th>
                     <th style="color: white;">Deskripsi</th>
                   </tr>
                 </thead>
                 <tbody id="icdixTableBody">
-                  ${SkeletonLoader.searchResults(8)}
+                  ${PemeriksaanSkeletonLoader.searchResults(8)}
                 </tbody>
               </table>
             </div>
@@ -549,7 +499,7 @@ class ICDIXSelectionModal {
         </div>
       </div>
 
-      ${skeletonStyles}
+      ${pemeriksaanSkeletonStyles}
 
       <style>
         .icdix-modal-container {
@@ -580,8 +530,8 @@ class ICDIXSelectionModal {
         }
 
         .table tbody tr.selected {
-          background: #dbeafe !important;
-          border-left: 4px solid #6366f1;
+          background: #d1fae5 !important;
+          border-left: 4px solid #065f46;
         }
       </style>
     `;
@@ -596,7 +546,7 @@ class ICDIXSelectionModal {
     }
 
     const tbody = document.getElementById("icdixTableBody");
-    tbody.innerHTML = SkeletonLoader.searchResults(5);
+    tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(5);
 
     this.searchTimeout = setTimeout(() => {
       this.searchICDIX();
@@ -614,16 +564,13 @@ class ICDIXSelectionModal {
 
     this.filteredICDIXData = this.allICDIXData.filter(icdix => {
       if (!icdix) return false;
-      
-      // ✅ Convert to string first, then lowercase
       const code = String(icdix.code || "").toLowerCase();
       const display = String(icdix.display || "").toLowerCase();
-      
       return code.includes(keyword) || display.includes(keyword);
     });
     
     this.renderICDIXTable();
-}
+  }
 
   renderICDIXTable() {
     const tbody = document.getElementById("icdixTableBody");
@@ -690,7 +637,11 @@ class ICDIXSelectionModal {
 
   selectICDIX() {
     if (!this.selectedICDIX) {
-      alert("⚠️ Pilih salah satu data ICDIX!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Pilih salah satu data ICDIX!", "Pilih Data");
+      } else {
+        alert("⚠️ Pilih salah satu data ICDIX!");
+      }
       return;
     }
 
@@ -700,7 +651,9 @@ class ICDIXSelectionModal {
     this.pemeriksaanModal.icdixTableData.push({ kode, deskripsi });
     this.pemeriksaanModal.renderICDIXTable();
     
-    alert(`✅ ICDIX "${kode}" berhasil ditambahkan!`);
+    if (window.Toast) {
+      Toast.success(`ICDIX "${kode}" berhasil ditambahkan!`);
+    }
     this.close();
   }
 
@@ -753,7 +706,6 @@ class ObatSelectionModal {
     }
     
     try {
-      // ✅ Filter by doctor ID
       const url = `/MAPOTEK_PHP/WEB/API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
       console.log("📤 Fetching from:", url);
       
@@ -798,13 +750,13 @@ class ObatSelectionModal {
       this.updateTable();
     }
   }
-  // ✅ ADD: Helper method to show loading state
+
   showLoading(show) {
     const tbody = document.getElementById("obatTableBody");
     if (!tbody) return;
     
     if (show) {
-      tbody.innerHTML = SkeletonLoader.tableRows(6, 5);
+      tbody.innerHTML = PemeriksaanSkeletonLoader.tableRows(6, 5);
     }
   }
 
@@ -833,7 +785,7 @@ class ObatSelectionModal {
 
             <div class="table-container" style="margin-top: 20px; max-height: 300px; overflow-y: auto;">
               <table class="table table-hover">
-                <thead style="position: sticky; top: 0; background: #6366f1; z-index: 1;">
+                <thead style="position: sticky; top: 0; background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); z-index: 1;">
                   <tr>
                     <th style="color: white;">NO</th>
                     <th style="color: white;">BARCODE</th>
@@ -844,13 +796,13 @@ class ObatSelectionModal {
                   </tr>
                 </thead>
                 <tbody id="obatTableBody">
-                  ${SkeletonLoader.tableRows(6, 5)}
+                  ${PemeriksaanSkeletonLoader.tableRows(6, 5)}
                 </tbody>
               </table>
             </div>
 
-            <div id="selectedObatInfo" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%); border-radius: 8px; border: 2px solid #6366f1;">
-              <h4 style="color: #6366f1; margin-bottom: 15px;">📋 Informasi Obat Terpilih</h4>
+            <div id="selectedObatInfo" style="display: none; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #d1fae5 0%, #cffafe 100%); border-radius: 8px; border: 2px solid #065f46;">
+              <h4 style="color: #065f46; margin-bottom: 15px;">📋 Informasi Obat Terpilih</h4>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
                 <div><strong>Nama Obat:</strong> <span id="selectedNama">-</span></div>
                 <div><strong>Jenis:</strong> <span id="selectedJenis">-</span></div>
@@ -890,7 +842,7 @@ class ObatSelectionModal {
         </div>
       </div>
 
-      ${skeletonStyles}
+      ${pemeriksaanSkeletonStyles}
 
       <style>
         .obat-modal-container {
@@ -925,8 +877,8 @@ class ObatSelectionModal {
         }
 
         .table tbody tr.selected {
-          background: #dbeafe !important;
-          border-left: 4px solid #6366f1;
+          background: #d1fae5 !important;
+          border-left: 4px solid #065f46;
         }
       </style>
     `;
@@ -944,7 +896,7 @@ class ObatSelectionModal {
 
   renderObatTableRows() {
     if (this.isLoading) {
-      return SkeletonLoader.tableRows(6, 5);
+      return PemeriksaanSkeletonLoader.tableRows(6, 5);
     }
 
     if (this.filteredObatData.length === 0) {
@@ -1026,9 +978,13 @@ class ObatSelectionModal {
     }
   }
 
-  addObat() {
+  async addObat() {
     if (!this.selectedObat) {
-      alert("⚠️ Silakan pilih obat terlebih dahulu!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Silakan pilih obat terlebih dahulu!", "Pilih Obat");
+      } else {
+        alert("⚠️ Silakan pilih obat terlebih dahulu!");
+      }
       return;
     }
 
@@ -1039,36 +995,100 @@ class ObatSelectionModal {
     const signa = signaInput.value.trim();
 
     if (!jumlah || jumlah <= 0) {
-      alert("⚠️ Jumlah harus lebih dari 0!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Jumlah harus lebih dari 0!", "Jumlah Invalid");
+      } else {
+        alert("⚠️ Jumlah harus lebih dari 0!");
+      }
       jumlahInput.focus();
       return;
     }
 
     if (jumlah > this.selectedObat.stock) {
-      alert(`⚠️ Stock tidak mencukupi!\nStock tersedia: ${this.selectedObat.stock}`);
+      if (window.CustomAlert) {
+        CustomAlert.warning(`Stock tidak mencukupi!\nStock tersedia: ${this.selectedObat.stock}`, "Stock Kurang");
+      } else {
+        alert(`⚠️ Stock tidak mencukupi!\nStock tersedia: ${this.selectedObat.stock}`);
+      }
       jumlahInput.focus();
       return;
     }
 
     if (!signa) {
-      alert("⚠️ Signa (aturan pakai) harus diisi!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Signa (aturan pakai) harus diisi!", "Signa Kosong");
+      } else {
+        alert("⚠️ Signa (aturan pakai) harus diisi!");
+      }
       signaInput.focus();
       return;
     }
 
-    const obatData = {
-      id_obat: this.selectedObat.id_obat,
-      nama: this.selectedObat.nama_obat,
-      jenis: this.selectedObat.jenis_obat || '-',
-      jumlah: jumlah,
-      harga: parseFloat(this.selectedObat.harga_jual || 0),
-      signa: signa
-    };
+    // Get the batch using supabaseClient (FIFO - First In First Out)
+    try {
+      console.log('🔍 Finding batch for medicine:', this.selectedObat.id_obat);
+      
+      const { data: batches, error } = await window.supabaseClient
+        .from('detail_obat')
+        .select('id_detail_obat, stock, tanggal_expired, harga_jual')
+        .eq('id_obat', this.selectedObat.id_obat)
+        .eq('status_batch', 'aktif')
+        .gt('stock', 0)
+        .order('tanggal_expired', { ascending: true })
+        .limit(1);
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (!batches || batches.length === 0) {
+        if (window.CustomAlert) {
+          CustomAlert.warning("Tidak ada batch aktif dengan stock tersedia untuk obat ini!", "Batch Tidak Tersedia");
+        } else {
+          alert(`⚠️ Tidak ada batch aktif dengan stock tersedia untuk obat ini!`);
+        }
+        return;
+      }
+      
+      const selectedBatch = batches[0];
+      console.log('✅ Selected batch (FIFO):', selectedBatch);
+      
+      if (selectedBatch.stock < jumlah) {
+        if (window.CustomAlert) {
+          CustomAlert.warning(`Stock batch tidak mencukupi!\nStock batch tersedia: ${selectedBatch.stock}\nDiminta: ${jumlah}`, "Stock Batch Kurang");
+        } else {
+          alert(`⚠️ Stock batch tidak mencukupi!\nStock batch tersedia: ${selectedBatch.stock}\nDiminta: ${jumlah}`);
+        }
+        return;
+      }
+      
+      const obatData = {
+        id_obat: this.selectedObat.id_obat,
+        id_detail_obat: selectedBatch.id_detail_obat,
+        nama: this.selectedObat.nama_obat,
+        jenis: this.selectedObat.jenis_obat || '-',
+        jumlah: jumlah,
+        harga: parseFloat(selectedBatch.harga_jual || 0),
+        signa: signa
+      };
 
-    this.pemeriksaanModal.addOrUpdateDrug(obatData);
-    
-    alert(`✅ Obat "${obatData.nama}" berhasil ditambahkan!`);
-    this.close();
+      console.log('💊 Adding medicine with batch tracking:', obatData);
+
+      this.pemeriksaanModal.addOrUpdateDrug(obatData);
+      
+      if (window.Toast) {
+        Toast.success(`Obat "${obatData.nama}" berhasil ditambahkan!`);
+      }
+      this.close();
+      
+    } catch (error) {
+      console.error('❌ Error finding batch:', error);
+      if (window.CustomAlert) {
+        CustomAlert.error('Gagal menemukan batch obat.\n\n' + error.message, "Error");
+      } else {
+        alert('❌ Error: Gagal menemukan batch obat.\n\n' + error.message);
+      }
+    }
   }
 
   close() {
@@ -1109,7 +1129,7 @@ class ResepModal {
           </div>
 
           <div class="resep-modal-body">
-            <div class="alert alert-info" style="background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+            <div class="alert alert-info" style="background: #cffafe; border: 1px solid #0891b2; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
               <i class="bi bi-info-circle me-2"></i>
               <strong>Info:</strong> Resep ini adalah catatan terpisah dari daftar obat. Resep bersifat opsional.
             </div>
@@ -1184,13 +1204,21 @@ class ResepModal {
     const detail = document.getElementById("resepDetail")?.value.trim();
 
     if (!nama) {
-      alert("⚠️ Nama resep harus diisi!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Nama resep harus diisi!", "Nama Kosong");
+      } else {
+        alert("⚠️ Nama resep harus diisi!");
+      }
       document.getElementById("resepNama")?.focus();
       return;
     }
 
     if (!detail) {
-      alert("⚠️ Detail resep obat harus diisi!");
+      if (window.CustomAlert) {
+        CustomAlert.warning("Detail resep obat harus diisi!", "Detail Kosong");
+      } else {
+        alert("⚠️ Detail resep obat harus diisi!");
+      }
       document.getElementById("resepDetail")?.focus();
       return;
     }
@@ -1201,15 +1229,22 @@ class ResepModal {
       detail: detail
     };
 
-    alert(`✅ Resep "${nama}" berhasil disimpan!`);
+    if (window.Toast) {
+      Toast.success(`Resep "${nama}" berhasil disimpan!`);
+    }
     this.pemeriksaanModal.renderStepContent();
     this.close();
   }
 
-  clearResep() {
-    if (!confirm("⚠️ Hapus resep yang sudah diisi?\n\nData resep akan dihapus.")) {
-      return;
+  async clearResep() {
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm("Hapus resep yang sudah diisi?\n\nData resep akan dihapus.", "Hapus Resep?");
+    } else {
+      confirmed = confirm("⚠️ Hapus resep yang sudah diisi?\n\nData resep akan dihapus.");
     }
+
+    if (!confirmed) return;
 
     this.pemeriksaanModal.resepData = {
       nama: '',
@@ -1217,7 +1252,9 @@ class ResepModal {
       detail: ''
     };
 
-    alert("✅ Resep berhasil dihapus!");
+    if (window.Toast) {
+      Toast.success("Resep berhasil dihapus!");
+    }
     this.pemeriksaanModal.renderStepContent();
     this.close();
   }
@@ -1250,6 +1287,7 @@ class PemeriksaanModal {
     };
 
     this.currentDoctorId = null;
+    this.isProcessing = false;
     
     this.formData = {
       keluhan: '',
@@ -1274,7 +1312,7 @@ class PemeriksaanModal {
   show(queueData, doctorId) {
     this.reset();
     this.queueData = { ...queueData };
-    this.currentDoctorId = doctorId; // ✅ Store doctor ID
+    this.currentDoctorId = doctorId;
     
     console.log("📋 Modal opened with queue data:", this.queueData);
     console.log("👨‍⚕️ Doctor ID:", this.currentDoctorId);
@@ -1291,6 +1329,7 @@ class PemeriksaanModal {
     this.icdixTableData = [];
     this.totalHarga = 0;
     this.hargaJasa = 0;
+    this.isProcessing = false;
     this.resepData = {
       nama: '',
       catatan: '',
@@ -1553,9 +1592,9 @@ class PemeriksaanModal {
       }
 
       .step.active .step-number {
-        background: #6366f1;
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        box-shadow: 0 4px 12px rgba(6, 95, 70, 0.4);
         transform: scale(1.1);
       }
 
@@ -1572,7 +1611,7 @@ class PemeriksaanModal {
       }
 
       .step.active .step-label {
-        color: #6366f1;
+        color: #065f46;
         font-weight: 600;
       }
 
@@ -1599,7 +1638,7 @@ class PemeriksaanModal {
         font-weight: 600;
         margin-bottom: 20px;
         color: #333;
-        border-bottom: 2px solid #6366f1;
+        border-bottom: 2px solid #065f46;
         padding-bottom: 10px;
       }
 
@@ -1632,8 +1671,8 @@ class PemeriksaanModal {
       .form-group textarea:focus,
       .form-group select:focus {
         outline: none;
-        border-color: #6366f1;
-        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+        border-color: #0891b2;
+        box-shadow: 0 0 0 0.25rem rgba(8, 145, 178, 0.25);
       }
 
       .form-group textarea {
@@ -1648,7 +1687,7 @@ class PemeriksaanModal {
         border-radius: 0.5rem;
         padding: 1.5rem;
         margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        box-shadow: 0 4px 15px rgba(6, 95, 70, 0.3);
       }
 
       .info-row {
@@ -1726,12 +1765,12 @@ class PemeriksaanModal {
       }
 
       .btn-primary {
-        background: #14b8a6;
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
       }
 
       .btn-primary:hover {
-        background: #0d9488;
+        background: linear-gradient(135deg, #064e3b 0%, #0e7490 100%);
       }
 
       .btn-secondary {
@@ -1764,14 +1803,14 @@ class PemeriksaanModal {
       }
 
       .btn-add {
-        background: #14b8a6;
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
         color: white;
         padding: 10px 20px;
         margin-top: 10px;
       }
 
       .btn-add:hover {
-        background: #4f46e5;
+        background: linear-gradient(135deg, #064e3b 0%, #0e7490 100%);
       }
 
       .grid-2 {
@@ -1795,7 +1834,7 @@ class PemeriksaanModal {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        box-shadow: 0 4px 15px rgba(6, 95, 70, 0.3);
       }
 
       .total-section .form-group {
@@ -1835,6 +1874,12 @@ class PemeriksaanModal {
       .total-section .total-value {
         font-size: 32px;
         font-weight: 700;
+      }
+      
+      .btn-primary:disabled,
+      .btn-success:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     </style>
     `;
@@ -1933,7 +1978,7 @@ class PemeriksaanModal {
           <textarea id="anamnesis" placeholder="Riwayat penyakit sekarang, riwayat penyakit dahulu..." required>${this.formData.anamnesis}</textarea>
         </div>
 
-        <h4 style="margin-top: 30px; margin-bottom: 15px; color: #667eea;">🔔 Riwayat Alergi</h4>
+        <h4 style="margin-top: 30px; margin-bottom: 15px; color: #065f46;">🔔 Riwayat Alergi</h4>
         
         <div class="grid-2">
           <div class="form-group">
@@ -2042,7 +2087,7 @@ class PemeriksaanModal {
         <h3>🔬 Diagnosa Pasien</h3>
         
         <div style="margin-bottom: 30px;">
-          <h4 style="color: #667eea; margin-bottom: 15px;">📋 ICDX (Diagnosa Penyakit)</h4>
+          <h4 style="color: #065f46; margin-bottom: 15px;">📋 ICDX (Diagnosa Penyakit)</h4>
           <button class="btn-add" onclick="pemeriksaanModal.addICDX()">
             <i class="bi bi-plus-circle me-2"></i>Tambah ICDX
           </button>
@@ -2067,7 +2112,7 @@ class PemeriksaanModal {
         </div>
 
         <div>
-          <h4 style="color: #667eea; margin-bottom: 15px;">⚕️ ICDIX (Prosedur Medis)</h4>
+          <h4 style="color: #065f46; margin-bottom: 15px;">⚕️ ICDIX (Prosedur Medis)</h4>
           <button class="btn-add" onclick="pemeriksaanModal.addICDIX()">
             <i class="bi bi-plus-circle me-2"></i>Tambah ICDIX
           </button>
@@ -2111,7 +2156,7 @@ class PemeriksaanModal {
           <button class="btn-add" onclick="pemeriksaanModal.showObatSelectionModal()" style="flex: 1;">
             <i class="bi bi-plus-circle me-2"></i>Tambah Obat
           </button>
-          <button class="btn-add" onclick="pemeriksaanModal.showResepModal()" style="flex: 1; background: ${hasResep ? '#10b981' : '#0d9488'};">
+          <button class="btn-add" onclick="pemeriksaanModal.showResepModal()" style="flex: 1; background: ${hasResep ? '#10b981' : 'linear-gradient(135deg, #065f46 0%, #0891b2 100%)'};">
             <i class="bi bi-file-earmark-medical me-2"></i>${hasResep ? '✓ Edit Resep' : 'Tambah Resep'}
           </button>
         </div>
@@ -2199,7 +2244,11 @@ class PemeriksaanModal {
     
     if (!this.currentDoctorId) {
       console.error("❌ No doctor ID available!");
-      alert("Error: Doctor ID tidak ditemukan. Silakan refresh halaman.");
+      if (window.CustomAlert) {
+        CustomAlert.error("Doctor ID tidak ditemukan. Silakan refresh halaman.", "Error");
+      } else {
+        alert("Error: Doctor ID tidak ditemukan. Silakan refresh halaman.");
+      }
       return;
     }
     
@@ -2221,8 +2270,15 @@ class PemeriksaanModal {
     this.renderStepContent();
   }
 
-  removeDrug(index) {
-    if (confirm("Hapus obat ini?")) {
+  async removeDrug(index) {
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm("Hapus obat ini dari daftar?", "Hapus Obat?");
+    } else {
+      confirmed = confirm("Hapus obat ini?");
+    }
+    
+    if (confirmed) {
       this.drugTableData.splice(index, 1);
       this.renderStepContent();
     }
@@ -2293,8 +2349,15 @@ class PemeriksaanModal {
     window.icdxSelectionModal.show();
   }
 
-  removeICDX(index) {
-    if (confirm("Hapus data ICDX ini?")) {
+  async removeICDX(index) {
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm("Hapus data ICDX ini?", "Hapus ICDX?");
+    } else {
+      confirmed = confirm("Hapus data ICDX ini?");
+    }
+    
+    if (confirmed) {
       this.icdxTableData.splice(index, 1);
       this.renderICDXTable();
     }
@@ -2305,8 +2368,15 @@ class PemeriksaanModal {
     window.icdixSelectionModal.show();
   }
 
-  removeICDIX(index) {
-    if (confirm("Hapus data ICDIX ini?")) {
+  async removeICDIX(index) {
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm("Hapus data ICDIX ini?", "Hapus ICDIX?");
+    } else {
+      confirmed = confirm("Hapus data ICDIX ini?");
+    }
+    
+    if (confirmed) {
       this.icdixTableData.splice(index, 1);
       this.renderICDIXTable();
     }
@@ -2336,13 +2406,18 @@ class PemeriksaanModal {
         const terapiObat = document.getElementById("terapiObat")?.value.trim();
 
         if (!keluhan || !anamnesis || !terapiObat) {
-          alert("⚠️ Field yang bertanda (*) wajib diisi!");
+          if (window.CustomAlert) {
+            CustomAlert.warning("Field yang bertanda (*) wajib diisi!", "Data Tidak Lengkap");
+          } else {
+            alert("⚠️ Field yang bertanda (*) wajib diisi!");
+          }
           return false;
         }
         break;
 
       case 4:
         if (this.drugTableData.length === 0) {
+          // Use sync confirm for this case
           if (!confirm("⚠️ Belum ada obat yang ditambahkan. Lanjutkan?")) {
             return false;
           }
@@ -2372,9 +2447,13 @@ class PemeriksaanModal {
   }
 
   async finish() {
+    if (this.isProcessing) {
+      console.log("⏳ Already processing, ignoring duplicate click");
+      return;
+    }
+    
     if (!this.validateCurrentStep()) return;
 
-    // ✅ CRITICAL: Capture hargaJasa from input field BEFORE saving
     const hargaJasaInput = document.getElementById("hargaJasa");
     if (hargaJasaInput) {
         const numericValue = hargaJasaInput.value.replace(/[^0-9]/g, '');
@@ -2384,12 +2463,31 @@ class PemeriksaanModal {
 
     this.saveCurrentStepData();
 
-    if (
-      !confirm(
-        "🏁 Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui."
-      )
-    )
-      return;
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm(
+        "Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui.",
+        "Selesaikan Pemeriksaan?"
+      );
+    } else {
+      confirmed = confirm("🏁 Selesaikan pemeriksaan ini?\n\nData akan disimpan dan status antrian akan diperbarui.");
+    }
+
+    if (!confirmed) return;
+
+    this.isProcessing = true;
+    const finishBtn = document.getElementById("finishBtn");
+    if (finishBtn) {
+      finishBtn.disabled = true;
+      finishBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Menyimpan...';
+    }
+
+    if (window.LoadingOverlay) {
+      LoadingOverlay.show(
+        "Menyimpan Data Pemeriksaan",
+        "Mengirim data ke server dan memperbarui status..."
+      );
+    }
 
     const totalHargaObat = this.drugTableData.reduce(
       (sum, drug) => sum + drug.harga * drug.jumlah,
@@ -2434,6 +2532,10 @@ class PemeriksaanModal {
     console.log("=".repeat(60));
 
     try {
+      if (window.LoadingOverlay) {
+        LoadingOverlay.updateMessage("Menyimpan ke Database", "Mohon tunggu sebentar...");
+      }
+      
       const response = await fetch(
         `../API/auth/antrian.php?action=finish_pemeriksaan&id=${this.queueData.id_antrian}`,
         {
@@ -2446,24 +2548,55 @@ class PemeriksaanModal {
       const result = await response.json();
       console.log("📥 Server Response:", result);
 
-      if (result.success) {
-        alert(
-          "✅ Pemeriksaan berhasil diselesaikan!\n\nData telah tersimpan di sistem."
-        );
-        this.close();
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
 
-        if (window.currentFragment && window.currentFragment.loadQueues) {
-          await window.currentFragment.loadQueues();
+      if (result.success) {
+        if (window.LoadingOverlay) {
+          LoadingOverlay.show("✅ Pemeriksaan Berhasil!", "Memperbarui daftar pasien...");
         }
+        
+        setTimeout(async () => {
+          if (window.LoadingOverlay) {
+            LoadingOverlay.hide();
+          }
+          this.close();
+
+          if (window.currentFragment && window.currentFragment.loadQueues) {
+            await window.currentFragment.loadQueues();
+          }
+          
+          if (window.Toast) {
+            Toast.success("Pemeriksaan berhasil disimpan!");
+          }
+        }, 1500);
       } else {
-        alert(
-          "❌ Gagal menyimpan pemeriksaan:\n" +
-            (result.message || result.error || "Unknown error")
-        );
+        if (window.CustomAlert) {
+          CustomAlert.error(
+            result.message || result.error || "Unknown error",
+            "Gagal Menyimpan Pemeriksaan"
+          );
+        } else {
+          alert("❌ Gagal menyimpan pemeriksaan:\n" + (result.message || result.error || "Unknown error"));
+        }
       }
     } catch (error) {
       console.error("❌ Error saving pemeriksaan:", error);
-      alert("❌ Error: " + error.message);
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
+      if (window.CustomAlert) {
+        CustomAlert.error(error.message, "Error");
+      } else {
+        alert("❌ Error: " + error.message);
+      }
+    } finally {
+      this.isProcessing = false;
+      if (finishBtn) {
+        finishBtn.disabled = false;
+        finishBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Selesai';
+      }
     }
   }
 
@@ -2490,12 +2623,12 @@ class PemeriksaanFragment {
     this.currentDoctorName = "";
     this.apiUrl = "../API/auth/antrian.php";
     this.profileApiUrl = "../API/auth/profile.php";
+    this.isProcessingQueue = false;
 
-    // ✅ Pagination
-        this.currentPage = 1;
-        this.pageSize = 10;
-        this.totalQueues = 0;
-        this.isLoading = false;
+    this.currentPage = 1;
+    this.pageSize = 10;
+    this.totalQueues = 0;
+    this.isLoading = false;
   }
 
   render() {
@@ -2538,7 +2671,7 @@ class PemeriksaanFragment {
                   </tr>
                 </thead>
                 <tbody id="queueTableBody">
-                  ${SkeletonLoader.tableRows(8, 5)}
+                  ${PemeriksaanSkeletonLoader.tableRows(8, 5)}
                 </tbody>
               </table>
             </div>
@@ -2546,38 +2679,53 @@ class PemeriksaanFragment {
         </div>
       </div>
 
-      ${skeletonStyles}
+      ${pemeriksaanSkeletonStyles}
 
       <style>
         .btn-periksa { 
-          background-color: #0d6efd; 
+          background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); 
           color: white; 
           border: none; 
           padding: 6px 20px; 
           border-radius: 20px; 
           font-size: 0.85rem; 
         }
-        .btn-periksa:hover { background-color: #0b5ed7; }
+        .btn-periksa:hover { 
+          background: linear-gradient(135deg, #064e3b 0%, #0e7490 100%); 
+          color: white;
+        }
+        .btn-periksa:disabled { 
+          opacity: 0.6; 
+          cursor: not-allowed; 
+        }
         
         .btn-resume { 
-          background-color: #17a2b8; 
+          background-color: #0891b2; 
           color: white; 
           border: none; 
           padding: 6px 20px; 
           border-radius: 20px; 
           font-size: 0.85rem; 
         }
-        .btn-resume:hover { background-color: #138496; }
+        .btn-resume:hover { background-color: #0e7490; color: white; }
+        .btn-resume:disabled { 
+          opacity: 0.6; 
+          cursor: not-allowed; 
+        }
         
         .btn-continue {
-          background-color: #0dcaf0;
+          background-color: #10b981;
           color: white;
           border: none;
           padding: 6px 16px;
           border-radius: 20px;
           font-size: 0.85rem;
         }
-        .btn-continue:hover { background-color: #0bb5d6; }
+        .btn-continue:hover { background-color: #059669; color: white; }
+        .btn-continue:disabled { 
+          opacity: 0.6; 
+          cursor: not-allowed; 
+        }
         
         .badge-status { 
           padding: 6px 16px; 
@@ -2586,13 +2734,13 @@ class PemeriksaanFragment {
           font-weight: 500; 
         }
         .status-belum-periksa { background-color: #ffc107; color: #000; }
-        .status-di-terima { background-color: #17a2b8; color: white; }
-        .status-sedang-diperiksa { background-color: #0dcaf0; color: #000; }
+        .status-di-terima { background-color: #0891b2; color: white; }
+        .status-sedang-diperiksa { background-color: #10b981; color: white; }
         .status-selesai { background-color: #198754; color: white; }
         
         .encounter-badge { 
-          background-color: #e7f3ff; 
-          color: #0066cc; 
+          background-color: #d1fae5; 
+          color: #065f46; 
           padding: 4px 12px; 
           border-radius: 12px; 
           font-size: 0.75rem;
@@ -2626,20 +2774,20 @@ class PemeriksaanFragment {
         if (queue.status_antrian.toLowerCase() === "di terima") {
           if (hasEncounter) {
             actionButtons = `
-            <button class="btn btn-resume btn-sm" onclick="window.currentFragment.resumeQueue('${queue.id_antrian}')">
+            <button class="btn btn-resume btn-sm" onclick="window.currentFragment.resumeQueue('${queue.id_antrian}')" id="btn-resume-${queue.id_antrian}">
               <i class="bi bi-play-circle me-1"></i>LANJUTKAN
             </button>
           `;
           } else {
             actionButtons = `
-            <button class="btn btn-periksa btn-sm" onclick="window.currentFragment.periksaQueue('${queue.id_antrian}')">
+            <button class="btn btn-periksa btn-sm" onclick="window.currentFragment.periksaQueue('${queue.id_antrian}')" id="btn-periksa-${queue.id_antrian}">
               <i class="bi bi-heart-pulse me-1"></i>PERIKSA
             </button>
           `;
           }
         } else if (queue.status_antrian.toLowerCase() === "sedang diperiksa") {
           actionButtons = `
-          <button class="btn btn-continue btn-sm" onclick="window.currentFragment.continueExamination('${queue.id_antrian}')" title="Lanjutkan Pemeriksaan">
+          <button class="btn btn-continue btn-sm" onclick="window.currentFragment.continueExamination('${queue.id_antrian}')" id="btn-continue-${queue.id_antrian}" title="Lanjutkan Pemeriksaan">
             <i class="bi bi-clipboard-pulse me-1"></i>LANJUT
           </button>
         `;
@@ -2686,10 +2834,13 @@ class PemeriksaanFragment {
       
       console.log("📋 Continuing with queue data:", dataToPass);
       
-      // ✅ PASS DOCTOR ID HERE
       window.pemeriksaanModal.show(dataToPass, this.currentDoctorId);
     } else {
-      alert("❌ Data antrian tidak ditemukan");
+      if (window.CustomAlert) {
+        CustomAlert.error("Data antrian tidak ditemukan", "Error");
+      } else {
+        alert("❌ Data antrian tidak ditemukan");
+      }
     }
   }
 
@@ -2713,7 +2864,11 @@ class PemeriksaanFragment {
 
       if (!token) {
         console.error("❌ No user email found");
-        alert("Error: Anda belum login.");
+        if (window.CustomAlert) {
+          CustomAlert.error("Anda belum login.", "Sesi Tidak Valid");
+        } else {
+          alert("Error: Anda belum login.");
+        }
         return;
       }
 
@@ -2738,11 +2893,19 @@ class PemeriksaanFragment {
         }
       } else {
         console.error("❌ Failed to load profile");
-        alert("Error: Tidak dapat memuat profil dokter.");
+        if (window.CustomAlert) {
+          CustomAlert.error("Tidak dapat memuat profil dokter.", "Error");
+        } else {
+          alert("Error: Tidak dapat memuat profil dokter.");
+        }
       }
     } catch (error) {
       console.error("❌ Error loading profile:", error);
-      alert("Error: " + error.message);
+      if (window.CustomAlert) {
+        CustomAlert.error(error.message, "Error");
+      } else {
+        alert("Error: " + error.message);
+      }
     }
   }
 
@@ -2784,27 +2947,73 @@ class PemeriksaanFragment {
       }
     } catch (error) {
       console.error("❌ Error loading queues:", error);
-      alert("Error loading queues: " + error.message);
+      if (window.CustomAlert) {
+        CustomAlert.error("Gagal memuat data antrian: " + error.message, "Error");
+      } else {
+        alert("Error loading queues: " + error.message);
+      }
     }
   }
 
   async periksaQueue(id) {
-    const queueData = this.queues.find((q) => q.id_antrian === id);
-    if (!queueData) {
-      alert("❌ Data antrian tidak ditemukan");
+    if (this.isProcessingQueue) {
+      console.log("⏳ Already processing, ignoring duplicate click");
       return;
     }
 
-    if (!confirm("Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT."))
+    const queueData = this.queues.find((q) => q.id_antrian === id);
+    if (!queueData) {
+      if (window.CustomAlert) {
+        CustomAlert.error("Data antrian tidak ditemukan", "Error");
+      } else {
+        alert("❌ Data antrian tidak ditemukan");
+      }
       return;
+    }
+
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm(
+        "Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT.",
+        "Mulai Pemeriksaan?"
+      );
+    } else {
+      confirmed = confirm("Mulai pemeriksaan untuk pasien ini?\n\nIni akan membuat Encounter baru di SATUSEHAT.");
+    }
+
+    if (!confirmed) return;
+
+    this.isProcessingQueue = true;
+    const periksaBtn = document.getElementById(`btn-periksa-${id}`);
+    if (periksaBtn) {
+      periksaBtn.disabled = true;
+      periksaBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
+    }
+
+    if (window.LoadingOverlay) {
+      LoadingOverlay.show(
+        "Membuat Encounter SATUSEHAT",
+        "Menghubungi server SATUSEHAT untuk membuat encounter baru..."
+      );
+    }
 
     try {
+      setTimeout(() => {
+        if (window.LoadingOverlay) {
+          LoadingOverlay.updateMessage("Memproses Data Pasien", "Menyinkronkan data dengan SATUSEHAT...");
+        }
+      }, 1500);
+      
       const response = await fetch(`${this.apiUrl}?action=periksa&id=${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
 
       const result = await response.json();
+
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
 
       if (result.success) {
         const updatedQueueData = {
@@ -2821,28 +3030,76 @@ class PemeriksaanFragment {
         
         this.updateTable();
         
-        // ✅ PASS DOCTOR ID HERE
         window.pemeriksaanModal.show(updatedQueueData, this.currentDoctorId);
         
         setTimeout(() => this.loadQueues(), 1000);
       } else {
-        alert("❌ Gagal memulai pemeriksaan: " + (result.message || result.error || ""));
+        if (window.CustomAlert) {
+          CustomAlert.error(
+            result.message || result.error || "Unknown error",
+            "Gagal Memulai Pemeriksaan"
+          );
+        } else {
+          alert("❌ Gagal memulai pemeriksaan: " + (result.message || result.error || ""));
+        }
       }
     } catch (error) {
       console.error("❌ Error starting examination:", error);
-      alert("❌ Error: " + error.message);
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
+      if (window.CustomAlert) {
+        CustomAlert.error(error.message, "Error");
+      } else {
+        alert("❌ Error: " + error.message);
+      }
+    } finally {
+      this.isProcessingQueue = false;
+      if (periksaBtn) {
+        periksaBtn.disabled = false;
+        periksaBtn.innerHTML = '<i class="bi bi-heart-pulse me-1"></i>PERIKSA';
+      }
     }
   }
 
   async resumeQueue(id) {
-    const queueData = this.queues.find((q) => q.id_antrian === id);
-    if (!queueData) {
-      alert("❌ Data antrian tidak ditemukan");
+    if (this.isProcessingQueue) {
+      console.log("⏳ Already processing, ignoring duplicate click");
       return;
     }
 
-    if (!confirm("Lanjutkan pemeriksaan pasien ini?"))
+    const queueData = this.queues.find((q) => q.id_antrian === id);
+    if (!queueData) {
+      if (window.CustomAlert) {
+        CustomAlert.error("Data antrian tidak ditemukan", "Error");
+      } else {
+        alert("❌ Data antrian tidak ditemukan");
+      }
       return;
+    }
+
+    let confirmed = false;
+    if (window.CustomAlert) {
+      confirmed = await CustomAlert.confirm("Lanjutkan pemeriksaan pasien ini?", "Lanjutkan Pemeriksaan?");
+    } else {
+      confirmed = confirm("Lanjutkan pemeriksaan pasien ini?");
+    }
+
+    if (!confirmed) return;
+
+    this.isProcessingQueue = true;
+    const resumeBtn = document.getElementById(`btn-resume-${id}`);
+    if (resumeBtn) {
+      resumeBtn.disabled = true;
+      resumeBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Loading...';
+    }
+
+    if (window.LoadingOverlay) {
+      LoadingOverlay.show(
+        "Melanjutkan Pemeriksaan",
+        "Memuat data pemeriksaan sebelumnya..."
+      );
+    }
 
     try {
       const response = await fetch(`${this.apiUrl}?action=resume_pemeriksaan&id=${id}`, {
@@ -2851,6 +3108,10 @@ class PemeriksaanFragment {
       });
 
       const result = await response.json();
+
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
 
       if (result.success) {
         const updatedQueueData = {
@@ -2866,16 +3127,35 @@ class PemeriksaanFragment {
         
         this.updateTable();
         
-        // ✅ PASS DOCTOR ID HERE
         window.pemeriksaanModal.show(updatedQueueData, this.currentDoctorId);
         
         setTimeout(() => this.loadQueues(), 1000);
       } else {
-        alert("❌ Gagal melanjutkan pemeriksaan: " + (result.message || result.error || ""));
+        if (window.CustomAlert) {
+          CustomAlert.error(
+            result.message || result.error || "Unknown error",
+            "Gagal Melanjutkan Pemeriksaan"
+          );
+        } else {
+          alert("❌ Gagal melanjutkan pemeriksaan: " + (result.message || result.error || ""));
+        }
       }
     } catch (error) {
       console.error("❌ Error resuming examination:", error);
-      alert("❌ Error: " + error.message);
+      if (window.LoadingOverlay) {
+        LoadingOverlay.hide();
+      }
+      if (window.CustomAlert) {
+        CustomAlert.error(error.message, "Error");
+      } else {
+        alert("❌ Error: " + error.message);
+      }
+    } finally {
+      this.isProcessingQueue = false;
+      if (resumeBtn) {
+        resumeBtn.disabled = false;
+        resumeBtn.innerHTML = '<i class="bi bi-play-circle me-1"></i>LANJUTKAN';
+      }
     }
   }
 
@@ -2892,6 +3172,7 @@ class PemeriksaanFragment {
   }
 }
 
-console.log("✅ Pemeriksaan System loaded with Skeleton Loaders");
+console.log("✅ Pemeriksaan System loaded with Custom Alerts & Shared Components");
 
+// Export to window
 window.PemeriksaanFragment = PemeriksaanFragment;

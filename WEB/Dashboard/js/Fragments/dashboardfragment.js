@@ -1026,25 +1026,20 @@ class DashboardFragment {
         try {
             console.log('👨‍⚕️ Loading doctor data for:', email);
             
-            // ✅ FIX: Use 'user_role' (underscore) to match auth.js
             let userType = localStorage.getItem('user_role') || 'dokter';
             
             console.log('🔍 User type from localStorage:', userType);
-            console.log('📋 All localStorage keys:', Object.keys(localStorage));
             
             // If not cached, detect from database
             if (!localStorage.getItem('user_role')) {
                 console.log('🔍 User role not cached, detecting from database...');
                 
                 if (window.supabaseClient) {
-                    // First check dokter table
                     const { data: dokter, error: dokterError } = await window.supabaseClient
                         .from('dokter')
                         .select('id_dokter')
                         .ilike('email', email)
                         .maybeSingle();
-                    
-                    console.log('📋 Dokter check result:', { dokter, dokterError });
                     
                     if (dokter) {
                         userType = 'dokter';
@@ -1052,42 +1047,26 @@ class DashboardFragment {
                         localStorage.setItem('id_dokter', dokter.id_dokter);
                         console.log('✅ Detected: DOKTER');
                     } else {
-                        // Check asisten_dokter table
                         const { data: asisten, error: asistenError } = await window.supabaseClient
                             .from('asisten_dokter')
                             .select('id_asisten_dokter, id_dokter')
                             .ilike('email', email)
                             .maybeSingle();
                         
-                        console.log('📋 Asisten check result:', { asisten, asistenError });
-                        
                         if (asisten) {
                             userType = 'asisten_dokter';
                             localStorage.setItem('user_role', 'asisten_dokter');
                             localStorage.setItem('id_asisten_dokter', asisten.id_asisten_dokter);
-                            localStorage.setItem('id_dokter', asisten.id_dokter); // Parent doctor ID
+                            localStorage.setItem('id_dokter', asisten.id_dokter);
                             console.log('✅ Detected: ASISTEN DOKTER');
-                            console.log('   - ID Asisten:', asisten.id_asisten_dokter);
-                            console.log('   - ID Dokter (parent):', asisten.id_dokter);
                         } else {
                             console.error('❌ User not found in either table!');
-                            alert(
-                                `⚠️ User tidak ditemukan!\n\n` +
-                                `Email: ${email}\n\n` +
-                                `Akun ini belum terdaftar di sistem.\n` +
-                                `Silakan hubungi administrator.`
-                            );
+                            alert('User tidak ditemukan di sistem.');
                             return;
                         }
                     }
-                } else {
-                    console.error('❌ Supabase client not available!');
-                    alert('Supabase client tidak tersedia. Silakan refresh halaman.');
-                    return;
                 }
             }
-            
-            console.log('📡 Calling dashboard API with user_type:', userType);
             
             // Call API with correct user_type
             const response = await fetch('../API/dashboard_api.php', {
@@ -1096,7 +1075,7 @@ class DashboardFragment {
                 body: JSON.stringify({
                     action: 'get_doctor_data',
                     email: email,
-                    user_type: userType  // ✅ This will now be correct!
+                    user_type: userType
                 })
             });
 
@@ -1116,60 +1095,44 @@ class DashboardFragment {
                     faskesDisplay.textContent = 'Asisten Dokter';
                     faskesDisplay.classList.add('badge', 'bg-info');
                     faskesDisplay.style.cssText = 'display: inline-block; padding: 8px 16px; border-radius: 8px;';
-                    console.log('✅ Displayed: ASISTEN DOKTER badge');
                 } else {
                     faskesDisplay.textContent = result.data.nama_faskes || 'Faskes';
                     faskesDisplay.classList.remove('badge', 'bg-info');
-                    console.log('✅ Displayed: Faskes name');
                 }
 
-                // Display avatar if available
+                // Display avatar
                 if (result.data.avatar_url) {
                     this.displayAvatar(result.data.avatar_url);
-                    console.log('✅ Avatar loaded');
-                } else {
-                    console.log('ℹ️ No avatar available');
                 }
 
-                // Display QR Code (only for dokter)
-                if (result.data.user_type === 'dokter' && result.data.qr_code_data) {
+                // ✅ FIX: Load parent doctor's QR code for asisten dokter
+                if (result.data.user_type === 'asisten_dokter' && result.data.id_dokter_parent) {
+                    console.log('🔍 Asisten dokter detected, loading parent doctor QR code...');
+                    await this.loadParentDoctorQR(result.data.id_dokter_parent);
+                } else if (result.data.user_type === 'dokter' && result.data.qr_code_data) {
+                    // Regular doctor QR code
                     this.displayQRCode(result.data.qr_code_data);
                     console.log('✅ QR Code loaded');
                 } else {
+                    // No QR available
                     const qrWrapper = document.getElementById('qrCodeWrapper');
                     if (qrWrapper) {
-                        if (result.data.user_type === 'asisten_dokter') {
-                            qrWrapper.innerHTML = `
-                                <div class="text-muted text-center">
-                                    <i class="bi bi-info-circle mb-2" style="font-size: 40px;"></i>
-                                    <p class="small mb-0">QR Code hanya tersedia untuk dokter utama</p>
-                                </div>
-                            `;
-                            console.log('ℹ️ QR Code hidden for asisten dokter');
-                        } else {
-                            qrWrapper.innerHTML = `
-                                <div class="text-muted text-center">
-                                    <i class="bi bi-qr-code mb-2" style="font-size: 40px; opacity: 0.3;"></i>
-                                    <p class="small mb-0">QR Code belum dibuat</p>
-                                    <p class="small text-primary">Klik "Kelola QR Code" untuk membuat</p>
-                                </div>
-                            `;
-                        }
+                        qrWrapper.innerHTML = `
+                            <div class="text-muted text-center">
+                                <i class="bi bi-qr-code mb-2" style="font-size: 40px; opacity: 0.3;"></i>
+                                <p class="small mb-0">QR Code belum dibuat</p>
+                            </div>
+                        `;
                     }
                 }
 
                 // Determine which doctor ID to use for stats
-                // For asisten, use parent doctor's ID; for dokter, use own ID
                 const statsIdDokter = result.data.user_type === 'asisten_dokter' 
                     ? result.data.id_dokter_parent
                     : result.data.id_dokter;
                 
-                console.log('📊 Loading stats for doctor ID:', statsIdDokter);
-                console.log('   - User type:', result.data.user_type);
-                
                 if (!statsIdDokter) {
                     console.error('❌ CRITICAL: No doctor ID available for loading stats!');
-                    alert('Error: ID dokter tidak ditemukan. Stats tidak dapat dimuat.');
                     return;
                 }
                 
@@ -1180,34 +1143,51 @@ class DashboardFragment {
                 
             } else {
                 console.error('❌ API returned error:', result.message);
-                
-                // Show detailed error message
-                let errorMsg = '❌ Gagal memuat data!\n\n';
-                errorMsg += `Message: ${result.message || 'Unknown error'}\n`;
-                errorMsg += `Email: ${email}\n`;
-                errorMsg += `User Type: ${userType}\n\n`;
-                errorMsg += 'Silakan periksa:\n';
-                errorMsg += '1. Apakah email sudah terdaftar?\n';
-                errorMsg += '2. Apakah data lengkap di database?\n';
-                errorMsg += '3. Lihat console browser (F12) untuk detail';
-                
-                alert(errorMsg);
-                
-                document.getElementById('doctorNameDisplay').textContent = 'Error loading profile';
-                document.getElementById('faskesDisplay').textContent = result.message || 'Unknown error';
+                alert(`Gagal memuat data: ${result.message}`);
             }
         } catch (error) {
             console.error('❌ Error loading doctor data:', error);
-            console.error('Error stack:', error.stack);
+            alert(`Error: ${error.message}`);
+        }
+    }
+
+    async loadParentDoctorQR(parentDoctorId) {
+        try {
+            console.log('📡 Loading parent doctor QR for ID:', parentDoctorId);
             
-            alert(
-                `❌ Error loading data:\n\n` +
-                `${error.message}\n\n` +
-                `Check browser console (F12) for details.`
-            );
-            
-            document.getElementById('doctorNameDisplay').textContent = 'Error';
-            document.getElementById('faskesDisplay').textContent = error.message;
+            if (window.supabaseClient) {
+                const { data, error } = await window.supabaseClient
+                    .from('dokter')
+                    .select('qr_code_data')
+                    .eq('id_dokter', parentDoctorId)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error('❌ Error fetching parent QR:', error);
+                    return;
+                }
+                
+                if (data && data.qr_code_data) {
+                    console.log('✅ Parent doctor QR code found, displaying...');
+                    this.displayQRCode(data.qr_code_data);
+                    
+                    // Store parent QR in doctorData for modal use
+                    this.doctorData.qr_code_data = data.qr_code_data;
+                } else {
+                    console.log('⚠️ Parent doctor has no QR code');
+                    const qrWrapper = document.getElementById('qrCodeWrapper');
+                    if (qrWrapper) {
+                        qrWrapper.innerHTML = `
+                            <div class="text-muted text-center">
+                                <i class="bi bi-info-circle mb-2" style="font-size: 40px;"></i>
+                                <p class="small mb-0">Dokter pembimbing belum membuat QR Code</p>
+                            </div>
+                        `;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error in loadParentDoctorQR:', error);
         }
     }
 

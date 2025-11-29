@@ -76,6 +76,63 @@ switch ($action) {
     case 'get_patient_stats':
         getPatientStats($id_dokter);
         break;
+
+    case 'get_doctor_info':
+        $dokterId = $_GET['dokter_id'] ?? null;
+        
+        if (!$dokterId) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Doctor ID tidak ditemukan'
+            ]);
+            return;
+        }
+        
+        try {
+            // ✅ ONLY SELECT COLUMNS THAT EXIST
+            $doctorQuery = "id_dokter=eq.$dokterId&select=id_dokter,nama_lengkap,nama_faskes,no_telp,alamat,avatar_url";
+            
+            error_log("🔍 Doctor Query: $doctorQuery");
+            
+            $doctor = supabase('GET', 'dokter', $doctorQuery);
+            
+            error_log("📥 Doctor Result: " . json_encode($doctor));
+            
+            if (!isset($doctor['error']) && is_array($doctor) && count($doctor) > 0) {
+                // ✅ RETURN ONLY EXISTING COLUMNS (no no_str, no spesialisasi)
+                $doctorData = [
+                    'nama_lengkap' => $doctor[0]['nama_lengkap'] ?? 'Dokter',
+                    'nama_faskes' => $doctor[0]['nama_faskes'] ?? 'Klinik',
+                    'no_telp' => $doctor[0]['no_telp'] ?? '-',
+                    'alamat' => $doctor[0]['alamat'] ?? '-',
+                    'avatar_url' => $doctor[0]['avatar_url'] ?? null
+                ];
+                
+                error_log("✅ Doctor data prepared: " . json_encode($doctorData));
+                
+                echo json_encode([
+                    'success' => true,
+                    'data' => $doctorData
+                ]);
+            } else {
+                error_log("❌ Doctor not found or error");
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Data dokter tidak ditemukan',
+                    'debug' => [
+                        'query' => $doctorQuery,
+                        'result' => $doctor
+                    ]
+                ]);
+            }
+        } catch (Exception $e) {
+            error_log("❌ Exception: " . $e->getMessage());
+            echo json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+        break;
     
     default:
         echo json_encode([
@@ -89,7 +146,7 @@ switch ($action) {
  */
 function getPembukuan($id_dokter) {
     try {
-        // ✅ NEW DEFAULT: Show TODAY's data only
+        // ✅ Show TODAY's data by default
         $today = date('Y-m-d');
         
         $startDateTime = $today . 'T00:00:00Z';
@@ -102,7 +159,7 @@ function getPembukuan($id_dokter) {
             "id_dokter=eq.$id_dokter&created_at=gte.$startDateTime&created_at=lte.$endDateTime&select=*&order=created_at.desc"
         );
         
-        // Get pengeluaran - TODAY ONLY
+        // ✅ Get pengeluaran - NOW SELECTING 'total' FIELD
         $pengeluaran = supabase('GET', 'pengeluaran', 
             "id_dokter=eq.$id_dokter&tanggal=gte.$today&tanggal=lte.$today&select=*,pengeluaran_detail(*)&order=created_at.desc"
         );
@@ -128,7 +185,7 @@ function getPembukuan($id_dokter) {
             }
         }
         
-        // Process pengeluaran
+        // ✅ Process pengeluaran - PRIORITIZE 'total' FIELD
         if (!isset($pengeluaran['error']) && is_array($pengeluaran)) {
             foreach ($pengeluaran as $item) {
                 $tanggal = $item['tanggal'] ?? date('Y-m-d');
@@ -142,12 +199,20 @@ function getPembukuan($id_dokter) {
                     ];
                 }
                 
-                // Calculate total from detail
-                $total = 0;
-                if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
-                    foreach ($item['pengeluaran_detail'] as $detail) {
-                        $total += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
+                // ✅ CRITICAL: Check if 'total' field exists first (for BPJS patients)
+                if (isset($item['total']) && $item['total'] !== null && $item['total'] > 0) {
+                    // Use 'total' field directly (BPJS patients)
+                    $total = floatval($item['total']);
+                    error_log("💰 Using pengeluaran.total: Rp $total (id_pengeluaran: {$item['id_pengeluaran']})");
+                } else {
+                    // Fallback: Calculate from detail (old records)
+                    $total = 0;
+                    if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
+                        foreach ($item['pengeluaran_detail'] as $detail) {
+                            $total += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
+                        }
                     }
+                    error_log("📊 Calculated from detail: Rp $total (id_pengeluaran: {$item['id_pengeluaran']})");
                 }
                 
                 $groupedByDate[$tanggal]['pengeluaran'] += $total;
@@ -167,6 +232,12 @@ function getPembukuan($id_dokter) {
             $day['saldo'] = $saldo;
         }
         
+        error_log("📊 SUMMARY:");
+        error_log("   Days: " . count($dailySummary));
+        foreach ($dailySummary as $day) {
+            error_log("   {$day['tanggal']}: +Rp {$day['pemasukan']} -Rp {$day['pengeluaran']} = Rp {$day['saldo']}");
+        }
+        
         echo json_encode([
             'success' => true,
             'data' => $dailySummary,
@@ -178,6 +249,7 @@ function getPembukuan($id_dokter) {
         ]);
         
     } catch (Exception $e) {
+        error_log("❌ ERROR: " . $e->getMessage());
         echo json_encode([
             'success' => false,
             'message' => $e->getMessage()
@@ -356,7 +428,7 @@ function filterPembukuan($id_dokter) {
             return;
         }
         
-        // Use ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ) for Supabase
+        // Use ISO 8601 format
         $startDateTime = $startDate . 'T00:00:00Z';
         $endDateTime = $endDate . 'T23:59:59Z';
         
@@ -366,14 +438,14 @@ function filterPembukuan($id_dokter) {
         $pemasukanQuery = "id_dokter=eq.$id_dokter&created_at=gte.$startDateTime&created_at=lte.$endDateTime&select=*&order=created_at.desc";
         $pemasukan = supabase('GET', 'pemasukan', $pemasukanQuery);
         
-        // Get filtered pengeluaran
+        // ✅ Get filtered pengeluaran - SELECT 'total' FIELD
         $pengeluaranQuery = "id_dokter=eq.$id_dokter&tanggal=gte.$startDate&tanggal=lte.$endDate&select=*,pengeluaran_detail(*)&order=tanggal.desc";
         $pengeluaran = supabase('GET', 'pengeluaran', $pengeluaranQuery);
         
         // Group by date
         $groupedByDate = [];
         
-        // Process pemasukan - group by date
+        // Process pemasukan
         if (!isset($pemasukan['error']) && is_array($pemasukan)) {
             foreach ($pemasukan as $item) {
                 $tanggal = $item['created_at'] ? date('Y-m-d', strtotime($item['created_at'])) : date('Y-m-d');
@@ -391,7 +463,7 @@ function filterPembukuan($id_dokter) {
             }
         }
         
-        // Process pengeluaran - group by date
+        // ✅ Process pengeluaran - PRIORITIZE 'total' FIELD
         if (!isset($pengeluaran['error']) && is_array($pengeluaran)) {
             foreach ($pengeluaran as $item) {
                 $tanggal = $item['tanggal'] ?? date('Y-m-d');
@@ -405,12 +477,20 @@ function filterPembukuan($id_dokter) {
                     ];
                 }
                 
-                // Calculate total from detail
-                $total = 0;
-                if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
-                    foreach ($item['pengeluaran_detail'] as $detail) {
-                        $total += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
+                // ✅ CRITICAL: Check if 'total' field exists first (for BPJS patients)
+                if (isset($item['total']) && $item['total'] !== null && $item['total'] > 0) {
+                    // Use 'total' field directly (BPJS patients)
+                    $total = floatval($item['total']);
+                    error_log("💰 Using pengeluaran.total: Rp $total (id_pengeluaran: {$item['id_pengeluaran']})");
+                } else {
+                    // Fallback: Calculate from detail (old records)
+                    $total = 0;
+                    if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
+                        foreach ($item['pengeluaran_detail'] as $detail) {
+                            $total += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
+                        }
                     }
+                    error_log("📊 Calculated from detail: Rp $total (id_pengeluaran: {$item['id_pengeluaran']})");
                 }
                 
                 $groupedByDate[$tanggal]['pengeluaran'] += $total;
@@ -431,6 +511,10 @@ function filterPembukuan($id_dokter) {
         }
         
         error_log("✅ Filter completed. Total days: " . count($dailySummary));
+        error_log("📊 SUMMARY:");
+        foreach ($dailySummary as $day) {
+            error_log("   {$day['tanggal']}: +Rp {$day['pemasukan']} -Rp {$day['pengeluaran']} = Rp {$day['saldo']}");
+        }
         
         echo json_encode([
             'success' => true,
@@ -517,38 +601,21 @@ function getDetailTransaksi($id_dokter) {
         }
         
         error_log("========================================");
-        error_log("🔍 DEBUG GET DETAIL TRANSAKSI");
+        error_log("🔍 DEBUG GET DETAIL TRANSAKSI - ENHANCED");
         error_log("========================================");
         error_log("📅 Tanggal: $tanggal");
         error_log("👨‍⚕️ Doctor ID: $id_dokter");
         
         $allDetails = [];
-        $debugInfo = [
-            'tanggal' => $tanggal,
-            'id_dokter' => $id_dokter,
-            'queries' => []
-        ];
         
         // ========================================
-        // 1. PEMASUKAN (UMUM patients)
+        // 1. PEMASUKAN (UMUM patients only)
         // ========================================
         $pemasukanQuery = "id_dokter=eq.$id_dokter&select=id_pemasukan,id_antrian,total,metode_pembayaran,jenis_pemasukan,deskripsi,created_at,antrian(id_antrian,no_antrian,jenis_pasien,id_pasien,pasien(nama,nik))&created_at=gte.{$tanggal}T00:00:00Z&created_at=lte.{$tanggal}T23:59:59Z&order=created_at.desc";
         
         error_log("💰 PEMASUKAN Query: $pemasukanQuery");
-        $debugInfo['queries']['pemasukan'] = $pemasukanQuery;
         
         $pemasukan = supabase('GET', 'pemasukan', $pemasukanQuery);
-        
-        error_log("💰 PEMASUKAN Raw Result: " . json_encode($pemasukan));
-        $debugInfo['pemasukan_result'] = $pemasukan;
-        
-        if (isset($pemasukan['error'])) {
-            error_log("❌ PEMASUKAN Error: " . json_encode($pemasukan['error']));
-        } elseif (!is_array($pemasukan)) {
-            error_log("❌ PEMASUKAN Result is not an array!");
-        } else {
-            error_log("✅ PEMASUKAN Found: " . count($pemasukan) . " records");
-        }
         
         if (!isset($pemasukan['error']) && is_array($pemasukan)) {
             foreach ($pemasukan as $item) {
@@ -581,88 +648,93 @@ function getDetailTransaksi($id_dokter) {
                     'metode_pembayaran' => $item['metode_pembayaran'] ?? '-',
                     'created_at' => $item['created_at'],
                     'has_patient' => $hasPatient,
-                    'is_bpjs_free' => false
+                    'is_bpjs_expense' => false
                 ];
             }
         }
         
         // ========================================
-        // 2. PENGELUARAN
+        // 2. PENGELUARAN (BOTH BPJS AND REGULAR)
+        // ✅ NOW USING pengeluaran.total FIELD
         // ========================================
-        $pengeluaranQuery = "id_dokter=eq.$id_dokter&tanggal=eq.$tanggal&select=id_pengeluaran,id_antrian,keterangan,tanggal,created_at,pengeluaran_detail(*),antrian(id_antrian,no_antrian,jenis_pasien,id_pasien,pasien(nama,nik))&order=created_at.desc";
-        
+        $pengeluaranQuery = "id_dokter=eq.$id_dokter&tanggal=eq.$tanggal&select=id_pengeluaran,id_antrian,keterangan,tanggal,total,created_at,pengeluaran_detail(*),antrian(id_antrian,no_antrian,jenis_pasien,id_pasien,pasien(nama,nik))&order=created_at.desc";
+
         error_log("💸 PENGELUARAN Query: $pengeluaranQuery");
-        $debugInfo['queries']['pengeluaran'] = $pengeluaranQuery;
-        
+
         $pengeluaran = supabase('GET', 'pengeluaran', $pengeluaranQuery);
-        
-        error_log("💸 PENGELUARAN Raw Result: " . json_encode($pengeluaran));
-        
+
         if (!isset($pengeluaran['error']) && is_array($pengeluaran)) {
             foreach ($pengeluaran as $item) {
                 error_log("📋 Processing pengeluaran ID: " . $item['id_pengeluaran']);
-                
-                // Calculate total from detail
-                $total = 0;
-                if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
-                    foreach ($item['pengeluaran_detail'] as $detail) {
-                        $total += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
-                    }
-                }
                 
                 // Check patient info
                 $id_antrian = $item['id_antrian'] ?? null;
                 $hasPatient = false;
                 $patientName = null;
                 $jenisPasien = null;
+                $realIdAntrian = $id_antrian;
                 
                 if ($id_antrian && !empty($id_antrian)) {
                     $hasPatient = true;
                     
                     if (isset($item['antrian'])) {
                         $jenisPasien = $item['antrian']['jenis_pasien'] ?? null;
+                        $realIdAntrian = $item['antrian']['id_antrian'] ?? $id_antrian;
+                        
                         if (isset($item['antrian']['pasien']['nama'])) {
                             $patientName = $item['antrian']['pasien']['nama'];
                         }
                     }
                 }
                 
-                // Determine if BPJS free
-                $isBPJSFree = ($hasPatient && $jenisPasien === 'BPJS' && $total == 0);
+                error_log("   Patient Info: hasPatient=" . ($hasPatient ? 'true' : 'false') . ", jenisPasien=$jenisPasien, name=$patientName");
+                
+                // ✅ PRIORITIZE 'total' FIELD (BPJS patients)
+                $total = 0;
+                $isBPJSExpense = false;
+                $detailText = '';
+                
+                if (isset($item['total']) && $item['total'] !== null && $item['total'] > 0) {
+                    // ✅ Use 'total' field (BPJS patient record)
+                    $total = floatval($item['total']);
+                    $isBPJSExpense = true;
+                    $detailText = "Biaya obat + jasa dokter untuk pasien BPJS";
+                    error_log("   💰 Using pengeluaran.total: Rp $total (BPJS)");
+                } else {
+                    // Fallback: Calculate from detail (old records)
+                    if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
+                        foreach ($item['pengeluaran_detail'] as $detail) {
+                            $detailTotal = floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
+                            $total += $detailTotal;
+                        }
+                    }
+                    $detailText = $item['keterangan'] ?? 'Pengeluaran';
+                    error_log("   💸 Regular expense total: $total");
+                }
                 
                 // Build description
                 $deskripsi = $item['keterangan'] ?? 'Pengeluaran';
-                if ($hasPatient && $jenisPasien === 'BPJS') {
-                    $deskripsi = "BPJS - " . ($patientName ?? 'Pasien');
+                if ($isBPJSExpense && $patientName) {
+                    $deskripsi = "BPJS - " . $patientName . " (Biaya Klinik)";
                 }
                 
-                // Decide inclusion
-                $shouldInclude = false;
+                // ✅ Add to details
+                $allDetails[] = [
+                    'id' => $item['id_pengeluaran'],
+                    'id_antrian' => $realIdAntrian,
+                    'deskripsi' => $deskripsi,
+                    'detail' => $detailText,
+                    'patient_name' => $patientName,
+                    'jenis_pasien' => $jenisPasien,
+                    'total' => $total,
+                    'jenis' => 'Pengeluaran',
+                    'metode_pembayaran' => $isBPJSExpense ? 'BPJS (Gratis untuk Pasien)' : '-',
+                    'created_at' => $item['created_at'],
+                    'has_patient' => $hasPatient,
+                    'is_bpjs_expense' => $isBPJSExpense
+                ];
                 
-                if ($hasPatient && $jenisPasien === 'BPJS') {
-                    $shouldInclude = true;
-                } elseif ($hasPatient && $total > 0) {
-                    $shouldInclude = true;
-                } elseif (!$hasPatient && $total > 0) {
-                    $shouldInclude = true;
-                }
-                
-                if ($shouldInclude) {
-                    $allDetails[] = [
-                        'id' => $item['id_pengeluaran'],
-                        'id_antrian' => $id_antrian,
-                        'deskripsi' => $deskripsi,
-                        'detail' => $item['keterangan'] ?? '-',
-                        'patient_name' => $patientName,
-                        'jenis_pasien' => $jenisPasien,
-                        'total' => $total,
-                        'jenis' => 'Pengeluaran',
-                        'metode_pembayaran' => $jenisPasien === 'BPJS' ? 'BPJS (Gratis)' : '-',
-                        'created_at' => $item['created_at'],
-                        'has_patient' => $hasPatient,
-                        'is_bpjs_free' => $isBPJSFree
-                    ];
-                }
+                error_log("   ✅ Added - Total: Rp $total, is_bpjs_expense: " . ($isBPJSExpense ? 'YES' : 'NO'));
             }
         }
         
@@ -682,8 +754,8 @@ function getDetailTransaksi($id_dokter) {
             'tanggal' => $tanggal,
             'stats' => [
                 'total_transactions' => count($allDetails),
-                'bpjs_free_count' => count(array_filter($allDetails, function($item) {
-                    return $item['is_bpjs_free'] === true;
+                'bpjs_expense_count' => count(array_filter($allDetails, function($item) {
+                    return $item['is_bpjs_expense'] === true;
                 }))
             ]
         ], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
@@ -696,7 +768,6 @@ function getDetailTransaksi($id_dokter) {
         ]);
     }
 }
-
 /**
  * ⭐ FIXED - Get patient detail with comprehensive debugging
  * Now searches through ALL antrian with same encounter to find pemeriksaan

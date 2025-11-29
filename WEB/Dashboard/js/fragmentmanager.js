@@ -1,5 +1,5 @@
 // ========================================
-// FILE: fragmentmanager.js - Fragment Management System
+// FILE: fragmentmanager.js - Fragment Management System with Lazy Loading
 // ========================================
 
 console.log("🎯 Fragment Manager Loading...");
@@ -11,20 +11,36 @@ class FragmentManager {
         this.currentFragment = null;
         this.currentFragmentName = null;
         
-        // ✅ Register all fragments with their classes
-        this.fragments = {
-            'dashboard': DashboardFragment,
-            'pasien': PasienFragment,
-            'obat': ObatFragment,
-            'antrian': AntrianFragment,
-            'pemeriksaan': PemeriksaanFragment,
-            'pembukuan': PembukuanFragment,
-            'profile': ProfileFragment,
-            'asistendokter': AsistenDokterFragment
-        };
+        // ✅ Register fragment NAMES only (lazy loading - classes resolved at runtime)
+        this.fragmentNames = [
+            'dashboard',
+            'pasien',
+            'obat',
+            'antrian',
+            'pemeriksaan',
+            'pembukuan',
+            'profile',
+            'asistendokter'
+        ];
         
         console.log('✅ Fragment Manager initialized with container:', containerId);
-        console.log('📦 Registered fragments:', Object.keys(this.fragments));
+        console.log('📦 Registered fragments:', this.fragmentNames);
+    }
+
+    // ✅ Get fragment class by name (lazy loading)
+    getFragmentClass(fragmentName) {
+        const classMap = {
+            'dashboard': typeof DashboardFragment !== 'undefined' ? DashboardFragment : null,
+            'pasien': typeof PasienFragment !== 'undefined' ? PasienFragment : null,
+            'obat': typeof ObatFragment !== 'undefined' ? ObatFragment : null,
+            'antrian': typeof AntrianFragment !== 'undefined' ? AntrianFragment : null,
+            'pemeriksaan': typeof PemeriksaanFragment !== 'undefined' ? PemeriksaanFragment : null,
+            'pembukuan': typeof PembukuanFragment !== 'undefined' ? PembukuanFragment : null,
+            'profile': typeof ProfileFragment !== 'undefined' ? ProfileFragment : null,
+            'asistendokter': typeof AsistenDokterFragment !== 'undefined' ? AsistenDokterFragment : null
+        };
+        
+        return classMap[fragmentName] || null;
     }
 
     async loadFragment(fragmentName) {
@@ -40,12 +56,20 @@ class FragmentManager {
         fragmentName = fragmentName.toLowerCase().trim();
         
         // ✅ Check if fragment exists in registry
-        const FragmentClass = this.fragments[fragmentName];
+        if (!this.fragmentNames.includes(fragmentName)) {
+            console.error(`❌ Fragment "${fragmentName}" not found in registry`);
+            console.log('📋 Available fragments:', this.fragmentNames);
+            this.showError(`Fragment "${fragmentName}" tidak ditemukan`);
+            return;
+        }
+        
+        // ✅ Get fragment class (lazy loading)
+        const FragmentClass = this.getFragmentClass(fragmentName);
         
         if (!FragmentClass) {
-            console.error(`❌ Fragment "${fragmentName}" not found in registry`);
-            console.log('📋 Available fragments:', Object.keys(this.fragments));
-            this.showError(`Fragment "${fragmentName}" tidak ditemukan`);
+            console.error(`❌ Fragment class for "${fragmentName}" is not defined`);
+            console.log('💡 Make sure the fragment file is loaded and the class is defined');
+            this.showError(`Fragment "${fragmentName}" tidak dapat dimuat. Class tidak ditemukan.`);
             return;
         }
         
@@ -68,7 +92,11 @@ class FragmentManager {
             if (this.currentFragment) {
                 console.log('🗑️ Destroying previous fragment:', this.currentFragmentName);
                 if (typeof this.currentFragment.onDestroy === 'function') {
-                    this.currentFragment.onDestroy();
+                    try {
+                        this.currentFragment.onDestroy();
+                    } catch (e) {
+                        console.warn('⚠️ Error in onDestroy:', e);
+                    }
                 }
             }
             
@@ -92,8 +120,11 @@ class FragmentManager {
             
             // ✅ Check if container exists
             if (!this.container) {
-                console.error('❌ Container element not found:', this.containerId);
-                return;
+                this.container = document.getElementById(this.containerId);
+                if (!this.container) {
+                    console.error('❌ Container element not found:', this.containerId);
+                    return;
+                }
             }
             
             // ✅ Render fragment
@@ -146,14 +177,19 @@ class FragmentManager {
     showError(message) {
         if (this.container) {
             this.container.innerHTML = `
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div class="alert alert-danger d-flex align-items-center m-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-1 me-3"></i>
                     <div class="flex-grow-1">
-                        <h5 class="alert-heading">Error</h5>
-                        <p class="mb-2">${message}</p>
-                        <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">
-                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Halaman
-                        </button>
+                        <h5 class="alert-heading mb-2">Error</h5>
+                        <p class="mb-3">${message}</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh Halaman
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="window.fragmentManager.loadFragment('dashboard')">
+                                <i class="bi bi-house me-1"></i>Ke Dashboard
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -180,9 +216,35 @@ class FragmentManager {
             await this.loadFragment(this.currentFragmentName);
         }
     }
+    
+    // ✅ Helper method to check which fragments are available
+    getAvailableFragments() {
+        const available = [];
+        const unavailable = [];
+        
+        this.fragmentNames.forEach(name => {
+            if (this.getFragmentClass(name)) {
+                available.push(name);
+            } else {
+                unavailable.push(name);
+            }
+        });
+        
+        return { available, unavailable };
+    }
+    
+    // ✅ Debug method to check all fragments
+    debugFragments() {
+        console.log('\n========== FRAGMENT DEBUG ==========');
+        const { available, unavailable } = this.getAvailableFragments();
+        console.log('✅ Available fragments:', available);
+        console.log('❌ Unavailable fragments:', unavailable);
+        console.log('=====================================\n');
+        return { available, unavailable };
+    }
 }
 
 // ✅ Export to global scope
 window.FragmentManager = FragmentManager;
 
-console.log("✅ Fragment Manager class registered globally");
+console.log("✅ Fragment Manager class registered globally (with lazy loading)");

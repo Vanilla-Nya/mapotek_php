@@ -1,5 +1,520 @@
-console.log("🔥 ANTRIAN FRAGMENT - WITH SATUSEHAT AUTO-REGISTER & SKELETON LOADERS 🔥");
+console.log("🔥 ANTRIAN FRAGMENT - WITH CUSTOM ALERTS & LOADING STATES 🔥");
 
+// ========================================
+// CUSTOM ALERT SYSTEM
+// ========================================
+const CustomAlert = {
+  // Show alert modal
+  show({ 
+    type = 'info', // success, error, warning, info, confirm
+    title = '', 
+    message = '', 
+    confirmText = 'OK',
+    cancelText = 'Batal',
+    onConfirm = null,
+    onCancel = null,
+    showCancel = false,
+    autoClose = 0 // Auto close after ms (0 = disabled)
+  }) {
+    // Remove existing alert
+    this.hide();
+    
+    const icons = {
+      success: '<i class="bi bi-check-circle-fill"></i>',
+      error: '<i class="bi bi-x-circle-fill"></i>',
+      warning: '<i class="bi bi-exclamation-triangle-fill"></i>',
+      info: '<i class="bi bi-info-circle-fill"></i>',
+      confirm: '<i class="bi bi-question-circle-fill"></i>'
+    };
+    
+    const colors = {
+      success: { bg: '#10b981', light: '#d1fae5' },
+      error: { bg: '#ef4444', light: '#fee2e2' },
+      warning: { bg: '#f59e0b', light: '#fef3c7' },
+      info: { bg: '#0891b2', light: '#cffafe' },
+      confirm: { bg: '#6366f1', light: '#e0e7ff' }
+    };
+    
+    const color = colors[type] || colors.info;
+    
+    const alertHTML = `
+      <div id="customAlertOverlay" class="custom-alert-overlay">
+        <div class="custom-alert-container" style="animation: alertSlideIn 0.3s ease;">
+          <div class="custom-alert-icon" style="background: ${color.light}; color: ${color.bg};">
+            ${icons[type]}
+          </div>
+          <div class="custom-alert-content">
+            ${title ? `<h4 class="custom-alert-title">${title}</h4>` : ''}
+            <p class="custom-alert-message">${message}</p>
+          </div>
+          <div class="custom-alert-buttons">
+            ${showCancel ? `
+              <button class="custom-alert-btn btn-cancel" id="customAlertCancel">
+                ${cancelText}
+              </button>
+            ` : ''}
+            <button class="custom-alert-btn btn-confirm" id="customAlertConfirm" style="background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);">
+              ${confirmText}
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        .custom-alert-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 10000;
+          animation: alertFadeIn 0.2s ease;
+        }
+        
+        @keyframes alertFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes alertSlideIn {
+          from { 
+            transform: scale(0.9) translateY(-20px); 
+            opacity: 0; 
+          }
+          to { 
+            transform: scale(1) translateY(0); 
+            opacity: 1; 
+          }
+        }
+        
+        @keyframes alertSlideOut {
+          from { 
+            transform: scale(1) translateY(0); 
+            opacity: 1; 
+          }
+          to { 
+            transform: scale(0.9) translateY(-20px); 
+            opacity: 0; 
+          }
+        }
+        
+        .custom-alert-container {
+          background: white;
+          border-radius: 16px;
+          padding: 32px;
+          max-width: 420px;
+          width: 90%;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          text-align: center;
+        }
+        
+        .custom-alert-icon {
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          font-size: 36px;
+        }
+        
+        .custom-alert-title {
+          font-size: 20px;
+          font-weight: 700;
+          color: #1f2937;
+          margin: 0 0 8px 0;
+        }
+        
+        .custom-alert-message {
+          font-size: 15px;
+          color: #6b7280;
+          margin: 0;
+          line-height: 1.6;
+          white-space: pre-line;
+        }
+        
+        .custom-alert-buttons {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          margin-top: 24px;
+        }
+        
+        .custom-alert-btn {
+          padding: 12px 28px;
+          border-radius: 10px;
+          font-weight: 600;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+        
+        .custom-alert-btn.btn-confirm {
+          color: white;
+          box-shadow: 0 4px 14px rgba(6, 95, 70, 0.4);
+        }
+        
+        .custom-alert-btn.btn-confirm:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(6, 95, 70, 0.5);
+        }
+        
+        .custom-alert-btn.btn-cancel {
+          background: #f3f4f6;
+          color: #4b5563;
+        }
+        
+        .custom-alert-btn.btn-cancel:hover {
+          background: #e5e7eb;
+        }
+      </style>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+    
+    // Setup event listeners
+    const confirmBtn = document.getElementById('customAlertConfirm');
+    const cancelBtn = document.getElementById('customAlertCancel');
+    
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => {
+        this.hide();
+        if (onConfirm) onConfirm();
+      });
+    }
+    
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.hide();
+        if (onCancel) onCancel();
+      });
+    }
+    
+    // Auto close
+    if (autoClose > 0) {
+      setTimeout(() => this.hide(), autoClose);
+    }
+    
+    // Return promise for async usage
+    return new Promise((resolve) => {
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => resolve(true), { once: true });
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => resolve(false), { once: true });
+      }
+    });
+  },
+  
+  hide() {
+    const overlay = document.getElementById('customAlertOverlay');
+    if (overlay) {
+      const container = overlay.querySelector('.custom-alert-container');
+      if (container) {
+        container.style.animation = 'alertSlideOut 0.2s ease';
+      }
+      overlay.style.animation = 'alertFadeIn 0.2s ease reverse';
+      setTimeout(() => overlay.remove(), 200);
+    }
+  },
+  
+  // Shorthand methods
+  success(message, title = 'Berhasil!') {
+    return this.show({ type: 'success', title, message });
+  },
+  
+  error(message, title = 'Error!') {
+    return this.show({ type: 'error', title, message });
+  },
+  
+  warning(message, title = 'Peringatan!') {
+    return this.show({ type: 'warning', title, message });
+  },
+  
+  info(message, title = 'Informasi') {
+    return this.show({ type: 'info', title, message });
+  },
+  
+  confirm(message, title = 'Konfirmasi') {
+    return new Promise((resolve) => {
+      this.show({
+        type: 'confirm',
+        title,
+        message,
+        showCancel: true,
+        confirmText: 'Ya, Lanjutkan',
+        cancelText: 'Batal',
+        onConfirm: () => resolve(true),
+        onCancel: () => resolve(false)
+      });
+    });
+  }
+};
+
+// ========================================
+// LOADING OVERLAY COMPONENT
+// ========================================
+const LoadingOverlay = {
+  show(message = "Memproses...", subMessage = "") {
+    this.hide();
+    
+    const overlayHTML = `
+      <div id="loadingOverlay" class="loading-overlay-fullscreen">
+        <div class="loading-content">
+          <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-pulse"></div>
+          </div>
+          <div class="loading-message">${message}</div>
+          ${subMessage ? `<div class="loading-sub-message">${subMessage}</div>` : ''}
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        .loading-overlay-fullscreen {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(4px);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          animation: loadingFadeIn 0.3s ease;
+        }
+        
+        @keyframes loadingFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes loadingFadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+        
+        .loading-content {
+          background: white;
+          padding: 40px 60px;
+          border-radius: 16px;
+          text-align: center;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: loadingScaleIn 0.3s ease;
+        }
+        
+        @keyframes loadingScaleIn {
+          from { transform: scale(0.8); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        
+        .loading-spinner-container {
+          position: relative;
+          width: 80px;
+          height: 80px;
+          margin: 0 auto 20px;
+        }
+        
+        .loading-spinner {
+          width: 80px;
+          height: 80px;
+          border: 4px solid #e0f2f1;
+          border-top: 4px solid #0891b2;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        .loading-pulse {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 40px;
+          height: 40px;
+          background: linear-gradient(135deg, #065f46, #0891b2);
+          border-radius: 50%;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+          50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        .loading-message {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 8px;
+        }
+        
+        .loading-sub-message {
+          font-size: 14px;
+          color: #6b7280;
+          margin-bottom: 16px;
+        }
+        
+        .loading-dots {
+          display: flex;
+          justify-content: center;
+          gap: 6px;
+        }
+        
+        .loading-dots span {
+          width: 8px;
+          height: 8px;
+          background: linear-gradient(135deg, #065f46, #0891b2);
+          border-radius: 50%;
+          animation: bounce 1.4s ease-in-out infinite;
+        }
+        
+        .loading-dots span:nth-child(1) { animation-delay: 0s; }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-12px); }
+        }
+      </style>
+    `;
+    
+    document.body.insertAdjacentHTML("beforeend", overlayHTML);
+  },
+  
+  hide() {
+    const overlay = document.getElementById("loadingOverlay");
+    if (overlay) {
+      overlay.style.animation = "loadingFadeOut 0.2s ease";
+      setTimeout(() => overlay.remove(), 200);
+    }
+  },
+  
+  updateMessage(message, subMessage = "") {
+    const msgEl = document.querySelector(".loading-message");
+    const subMsgEl = document.querySelector(".loading-sub-message");
+    if (msgEl) msgEl.textContent = message;
+    if (subMsgEl) {
+      if (subMessage) {
+        subMsgEl.textContent = subMessage;
+        subMsgEl.style.display = "block";
+      } else {
+        subMsgEl.style.display = "none";
+      }
+    }
+  }
+};
+
+// ========================================
+// TOAST NOTIFICATION SYSTEM
+// ========================================
+const Toast = {
+  show(message, type = 'info', duration = 3000) {
+    // Remove existing toast
+    const existing = document.getElementById('toastNotification');
+    if (existing) existing.remove();
+    
+    const colors = {
+      success: { bg: 'linear-gradient(135deg, #065f46, #10b981)', icon: 'bi-check-circle-fill' },
+      error: { bg: 'linear-gradient(135deg, #dc2626, #ef4444)', icon: 'bi-x-circle-fill' },
+      warning: { bg: 'linear-gradient(135deg, #d97706, #f59e0b)', icon: 'bi-exclamation-triangle-fill' },
+      info: { bg: 'linear-gradient(135deg, #065f46, #0891b2)', icon: 'bi-info-circle-fill' }
+    };
+    
+    const color = colors[type] || colors.info;
+    
+    const toastHTML = `
+      <div id="toastNotification" class="toast-notification" style="background: ${color.bg};">
+        <i class="bi ${color.icon}"></i>
+        <span>${message}</span>
+      </div>
+      
+      <style>
+        .toast-notification {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 16px 24px;
+          border-radius: 12px;
+          color: white;
+          font-weight: 500;
+          font-size: 14px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+          z-index: 10001;
+          animation: toastSlideIn 0.4s ease;
+        }
+        
+        .toast-notification i {
+          font-size: 20px;
+        }
+        
+        @keyframes toastSlideIn {
+          from { 
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to { 
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes toastSlideOut {
+          from { 
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to { 
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+      </style>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', toastHTML);
+    
+    // Auto remove
+    setTimeout(() => {
+      const toast = document.getElementById('toastNotification');
+      if (toast) {
+        toast.style.animation = 'toastSlideOut 0.4s ease';
+        setTimeout(() => toast.remove(), 400);
+      }
+    }, duration);
+  },
+  
+  success(message) { this.show(message, 'success'); },
+  error(message) { this.show(message, 'error'); },
+  warning(message) { this.show(message, 'warning'); },
+  info(message) { this.show(message, 'info'); }
+};
+
+// ========================================
+// ANTRIAN FRAGMENT CLASS
+// ========================================
 class AntrianFragment {
   constructor() {
     this.title = "Antrian";
@@ -13,6 +528,7 @@ class AntrianFragment {
     this.selectedPatientId = null;
     this.satusehatChecked = false;
     this.currentQueueData = null;
+    this.isProcessing = false;
     
     // Payment properties
     this.currentPaymentQueue = null;
@@ -349,7 +865,7 @@ class AntrianFragment {
       <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-xl">
           <div class="modal-content">
-            <div class="modal-header bg-gradient-primary text-white">
+            <div class="modal-header bg-gradient-teal text-white">
               <h5 class="modal-title">
                 <i class="bi bi-cash-coin me-2"></i>Form Pembayaran
               </h5>
@@ -463,7 +979,7 @@ class AntrianFragment {
                         </h6>
                         <div class="text-center">
                           <div class="bg-white p-4 rounded d-inline-block shadow-sm mb-3" style="border: 3px solid #10b981;">
-                            <img id="qrisPaymentImage" src="" alt="QRIS Code" style="max-width: 280px; max-height: 280px; display: none;">
+                            <img id="qrisPaymentImage" src="" alt="QRIS Code" style="max-width: 280px; max-height: 200px; display: none;">
                             <div id="qrisLoadingSpinner" class="text-center py-5">
                               <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
                                 <span class="visually-hidden">Loading...</span>
@@ -487,7 +1003,7 @@ class AntrianFragment {
                       </div>
 
                       <!-- BPJS Placeholder -->
-                      <div id="bpjsPlaceholder" style="display: none;" class="d-flex flex-column align-items-center justify-content-center h-100 text-center text-primary">
+                      <div id="bpjsPlaceholder" style="display: none;" class="d-flex flex-column align-items-center justify-content-center h-1 text-center text-primary">
                         <i class="bi bi-shield-check" style="font-size: 4rem;"></i>
                         <p class="mt-3">Pasien BPJS tidak memerlukan<br>input pembayaran</p>
                       </div>
@@ -613,8 +1129,8 @@ class AntrianFragment {
       #actionQueueModal .form-control:focus,
       #addQueueModal .form-select:focus,
       #actionQueueModal .form-select:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+        border-color: #0891b2;
+        box-shadow: 0 0 0 0.25rem rgba(8, 145, 178, 0.25);
       }
 
       .btn-custom-teal { 
@@ -624,23 +1140,28 @@ class AntrianFragment {
         border-radius: 0.375rem;
         padding: 0.5rem 1rem;
         font-weight: 500;
+        transition: all 0.2s;
       }
       .btn-custom-teal:hover { 
-        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); 
-        color: white; 
+        background: linear-gradient(135deg, #064e3b 0%, #0e7490 100%); 
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3);
       }
       
       .btn-action { 
-        background-color: #6366f1; 
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); 
         color: white; 
         border: none; 
         padding: 6px 24px; 
         border-radius: 20px; 
-        font-size: 0.85rem; 
+        font-size: 0.85rem;
+        transition: all 0.2s;
       }
       .btn-action:hover { 
-        background-color: #4f46e5; 
-        color: white; 
+        background: linear-gradient(135deg, #064e3b 0%, #0e7490 100%); 
+        color: white;
+        transform: translateY(-1px);
       }
       
       .badge-status { 
@@ -659,12 +1180,12 @@ class AntrianFragment {
       .table tbody td { padding: 1rem; vertical-align: middle; }
       
       .badge-satusehat { padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; }
-      .satusehat-registered { background-color: #28a745; color: white; }
+      .satusehat-registered { background-color: #10b981; color: white; }
       .satusehat-not-registered { background-color: #6c757d; color: white; }
       
       .badge-jenis { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
-      .jenis-bpjs { background-color: #6366f1; color: white; }
-      .jenis-umum { background-color: #198754; color: white; }
+      .jenis-bpjs { background: linear-gradient(135deg, #065f46 0%, #0891b2 100%); color: white; }
+      .jenis-umum { background-color: #10b981; color: white; }
       
       .form-check-custom .form-check-input { width: 20px; height: 20px; margin-top: 2px; }
       .form-check-custom .form-check-label { font-size: 1.1rem; cursor: pointer; }
@@ -703,14 +1224,18 @@ class AntrianFragment {
       }
 
       /* Payment Modal Styles */
+      .bg-gradient-teal {
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
+      }
+      
       .patient-type-btn.active {
         background-color: var(--bs-primary);
         color: white;
         border-color: var(--bs-primary);
       }
       .patient-type-btn.active[data-type="BPJS"] {
-        background-color: #6366f1;
-        border-color: #6366f1;
+        background: linear-gradient(135deg, #065f46 0%, #0891b2 100%);
+        border-color: #065f46;
       }
       .patient-type-btn.active[data-type="UMUM"] {
         background-color: #10b981;
@@ -720,9 +1245,6 @@ class AntrianFragment {
         background-color: #10b981;
         color: white;
         border-color: #10b981;
-      }
-      .bg-gradient-primary {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
       }
     </style>
     `;
@@ -828,7 +1350,7 @@ class AntrianFragment {
   }
 
   async onInit() {
-    console.log("🎬 Antrian Fragment Initialized with SATUSEHAT Auto-Register & Skeleton Loaders");
+    console.log("🎬 Antrian Fragment Initialized with Custom Alerts & Loading States");
     window.currentFragment = this;
 
     await this.loadCurrentDoctor();
@@ -874,7 +1396,7 @@ class AntrianFragment {
 
       if (!userEmail) {
         console.error("❌ No user email found in session");
-        alert("Error: Anda belum login. Silakan login terlebih dahulu.");
+        CustomAlert.error("Anda belum login. Silakan login terlebih dahulu.", "Sesi Tidak Valid");
         return;
       }
 
@@ -957,16 +1479,14 @@ class AntrianFragment {
 
       // ✅ If neither found, show error
       console.error("❌ No doctor or assistant found with email:", userEmail);
-      alert(
-        `⚠️ DATA TIDAK DITEMUKAN\n\n` +
-        `Email yang dicari: ${userEmail}\n\n` +
-        `Pastikan email Anda sesuai dengan data di database.\n` +
-        `Coba login ulang atau hubungi administrator.`
+      CustomAlert.warning(
+        `Email yang dicari: ${userEmail}\n\nPastikan email Anda sesuai dengan data di database.\nCoba login ulang atau hubungi administrator.`,
+        "Data Tidak Ditemukan"
       );
 
     } catch (error) {
       console.error("❌ Error loading doctor:", error);
-      alert("Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
   }
 
@@ -975,7 +1495,7 @@ class AntrianFragment {
     if (addBtn) {
       addBtn.addEventListener("click", async () => {
         if (!this.currentDoctorId) {
-          alert("Error: Doctor ID tidak ditemukan. Silakan refresh halaman.");
+          CustomAlert.error("Doctor ID tidak ditemukan. Silakan refresh halaman.", "Error");
           return;
         }
 
@@ -1097,17 +1617,13 @@ class AntrianFragment {
         }
       } else {
         console.error("❌ SATUSEHAT Check Failed:", result.error);
-        alert(
-          "Peringatan: Gagal memeriksa SATUSEHAT. Antrian tetap dapat dibuat."
-        );
+        Toast.warning("Gagal memeriksa SATUSEHAT. Antrian tetap dapat dibuat.");
         this.satusehatChecked = true;
       }
     } catch (error) {
       console.error("❌ Error checking SATUSEHAT:", error);
       document.getElementById("satusehatCheckStatus").style.display = "none";
-      alert(
-        "Peringatan: Error memeriksa SATUSEHAT. Antrian tetap dapat dibuat."
-      );
+      Toast.warning("Error memeriksa SATUSEHAT. Antrian tetap dapat dibuat.");
       this.satusehatChecked = true;
     }
   }
@@ -1124,7 +1640,7 @@ class AntrianFragment {
       }
     } catch (error) {
       console.error("❌ Error generating number:", error);
-      alert("Error generating queue number: " + error.message);
+      CustomAlert.error("Gagal generate nomor antrian: " + error.message, "Error");
     }
   }
 
@@ -1132,9 +1648,11 @@ class AntrianFragment {
     const keyword = document.getElementById("patientSearch").value.trim();
 
     if (keyword.length < 3) {
-      alert("Mohon ketik minimal 3 karakter untuk pencarian");
+      CustomAlert.warning("Ketik minimal 3 karakter untuk pencarian", "Pencarian");
       return;
     }
+
+    LoadingOverlay.show("Mencari Pasien", "Mohon tunggu...");
 
     try {
       const url = `${
@@ -1143,15 +1661,19 @@ class AntrianFragment {
       const response = await fetch(url);
       const data = await response.json();
 
+      LoadingOverlay.hide();
+
       if (Array.isArray(data) && data.length > 0) {
         this.patients = data;
         this.populatePatientSelect();
+        Toast.success(`Ditemukan ${data.length} pasien`);
       } else {
-        alert("Tidak ada pasien ditemukan dengan keyword: " + keyword);
+        CustomAlert.info(`Tidak ada pasien ditemukan dengan keyword: "${keyword}"`, "Hasil Pencarian");
       }
     } catch (error) {
+      LoadingOverlay.hide();
       console.error("❌ Error searching patients:", error);
-      alert("Error: " + error.message);
+      CustomAlert.error(error.message, "Error Pencarian");
     }
   }
 
@@ -1200,7 +1722,7 @@ class AntrianFragment {
       const queue = this.queues.find((q) => q.id_antrian === queueId);
 
       if (!queue) {
-        alert("Error: Data antrian tidak ditemukan");
+        CustomAlert.error("Data antrian tidak ditemukan", "Error");
         return;
       }
 
@@ -1270,13 +1792,13 @@ class AntrianFragment {
       window.modalHelper.showBootstrapModal("actionQueueModal");
     } catch (error) {
       console.error("❌ Error showing action modal:", error);
-      alert("Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
   }
 
   async registerToSatusehat() {
     if (!this.currentQueueData) {
-      alert("Error: Data antrian tidak ditemukan");
+      CustomAlert.error("Data antrian tidak ditemukan", "Error");
       return;
     }
 
@@ -1312,29 +1834,29 @@ class AntrianFragment {
 
         await this.loadQueues();
 
-        alert(
-          "✓ Pasien berhasil didaftarkan ke SATUSEHAT!\n\nSATUSEHAT ID: " +
-            result.id_satusehat
+        CustomAlert.success(
+          `SATUSEHAT ID: ${result.id_satusehat}`,
+          "Pasien Berhasil Didaftarkan ke SATUSEHAT"
         );
       } else {
         document.getElementById("satusehatNotRegistered").style.display =
           "block";
-        alert(
-          "✗ Gagal mendaftarkan ke SATUSEHAT:\n" +
-            (result.message || result.error || "Unknown error")
+        CustomAlert.error(
+          result.message || result.error || "Unknown error",
+          "Gagal Mendaftarkan ke SATUSEHAT"
         );
       }
     } catch (error) {
       console.error("❌ Error registering to SATUSEHAT:", error);
       document.getElementById("satusehatProcessing").style.display = "none";
       document.getElementById("satusehatNotRegistered").style.display = "block";
-      alert("✗ Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
   }
 
   async terimaQueue() {
     if (!this.currentQueueData) {
-      alert("Error: Data antrian tidak ditemukan");
+      CustomAlert.error("Data antrian tidak ditemukan", "Error");
       return;
     }
 
@@ -1343,16 +1865,14 @@ class AntrianFragment {
     );
 
     if (!selectedJenis) {
-      alert("Mohon pilih jenis pasien (BPJS atau UMUM)!");
+      CustomAlert.warning("Mohon pilih jenis pasien (BPJS atau UMUM)!", "Pilih Jenis Pasien");
       return;
     }
 
     if (!this.currentQueueData.id_satusehat) {
-      const autoRegister = confirm(
-        `Pasien belum terdaftar di SATUSEHAT.\n\n` +
-          `Apakah Anda ingin sistem otomatis mendaftarkan pasien ke SATUSEHAT sebelum menerima antrian?\n\n` +
-          `- Klik OK: Daftar otomatis & terima antrian\n` +
-          `- Klik Cancel: Kembali (gunakan tombol "Daftar SATUSEHAT" terlebih dahulu)`
+      const autoRegister = await CustomAlert.confirm(
+        `Pasien belum terdaftar di SATUSEHAT.\n\nApakah Anda ingin sistem otomatis mendaftarkan pasien ke SATUSEHAT sebelum menerima antrian?`,
+        "Daftar SATUSEHAT Otomatis?"
       );
 
       if (autoRegister) {
@@ -1392,12 +1912,13 @@ class AntrianFragment {
               "✅ Auto-registration successful:",
               registerResult.id_satusehat
             );
+            Toast.success("Pasien berhasil didaftarkan ke SATUSEHAT");
           } else {
             document.getElementById("satusehatNotRegistered").style.display =
               "block";
-            alert(
-              "✗ Gagal mendaftarkan ke SATUSEHAT:\n" +
-                (registerResult.message || registerResult.error)
+            CustomAlert.error(
+              registerResult.message || registerResult.error,
+              "Gagal Mendaftarkan ke SATUSEHAT"
             );
             return;
           }
@@ -1406,7 +1927,7 @@ class AntrianFragment {
           document.getElementById("satusehatProcessing").style.display = "none";
           document.getElementById("satusehatNotRegistered").style.display =
             "block";
-          alert("✗ Error auto-register: " + error.message);
+          CustomAlert.error(error.message, "Error Auto-Register");
           return;
         }
       } else {
@@ -1414,11 +1935,17 @@ class AntrianFragment {
       }
     }
 
-    const confirmMsg = `Terima antrian pasien ${this.currentQueueData.nama}?\n\nJenis: ${selectedJenis.value}`;
-    if (!confirm(confirmMsg)) return;
+    const confirmAccept = await CustomAlert.confirm(
+      `Terima antrian pasien ${this.currentQueueData.nama}?\n\nJenis: ${selectedJenis.value}`,
+      "Terima Antrian?"
+    );
+
+    if (!confirmAccept) return;
 
     console.log("✅ Accepting queue:", this.currentQueueData.id_antrian);
     console.log("   Jenis Pasien:", selectedJenis.value);
+
+    LoadingOverlay.show("Menerima Antrian", "Memperbarui status...");
 
     try {
       const modal = bootstrap.Modal.getInstance(
@@ -1439,18 +1966,21 @@ class AntrianFragment {
 
       const result = await response.json();
 
+      LoadingOverlay.hide();
+
       if (result.success) {
         await this.loadQueues();
-        alert("✓ Antrian berhasil diterima!");
+        CustomAlert.success("Antrian berhasil diterima!", "Berhasil");
       } else {
-        alert(
-          "✗ Gagal menerima antrian: " +
-            (result.message || result.error || "Unknown error")
+        CustomAlert.error(
+          result.message || result.error || "Unknown error",
+          "Gagal Menerima Antrian"
         );
       }
     } catch (error) {
+      LoadingOverlay.hide();
       console.error("❌ Error accepting queue:", error);
-      alert("✗ Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
 
     this.currentQueueData = null;
@@ -1458,17 +1988,23 @@ class AntrianFragment {
 
   async tolakQueue() {
     if (!this.currentQueueData) {
-      alert("Error: Data antrian tidak ditemukan");
+      CustomAlert.error("Data antrian tidak ditemukan", "Error");
       return;
     }
 
-    const confirmMsg = `Tolak antrian pasien ${this.currentQueueData.nama}?\n\nAntrian akan dibatalkan.`;
-    if (!confirm(confirmMsg)) return;
+    const confirmReject = await CustomAlert.confirm(
+      `Tolak antrian pasien ${this.currentQueueData.nama}?\n\nAntrian akan dibatalkan.`,
+      "Tolak Antrian?"
+    );
+
+    if (!confirmReject) return;
 
     console.log(
       "🗑️ Rejecting/Deleting queue:",
       this.currentQueueData.id_antrian
     );
+
+    LoadingOverlay.show("Menolak Antrian", "Memperbarui status...");
 
     try {
       const modal = bootstrap.Modal.getInstance(
@@ -1486,17 +2022,21 @@ class AntrianFragment {
 
       const result = await response.json();
 
+      LoadingOverlay.hide();
+
       if (result.success) {
         await this.loadQueues();
-        alert("✓ Antrian berhasil ditolak/dibatalkan!");
+        CustomAlert.success("Antrian berhasil ditolak/dibatalkan!", "Berhasil");
       } else {
-        alert(
-          "✗ Gagal menolak antrian: " + (result.message || "Unknown error")
+        CustomAlert.error(
+          result.message || "Unknown error",
+          "Gagal Menolak Antrian"
         );
       }
     } catch (error) {
+      LoadingOverlay.hide();
       console.error("❌ Error rejecting queue:", error);
-      alert("✗ Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
 
     this.currentQueueData = null;
@@ -1544,14 +2084,14 @@ class AntrianFragment {
       }
     } catch (error) {
       console.error("❌ Error loading queues:", error);
-      alert("Error loading queues: " + error.message);
+      CustomAlert.error("Gagal memuat data antrian: " + error.message, "Error");
     }
   }
 
   async applyFilters() {
     if (!this.currentDoctorId) {
       console.error("❌ No doctor ID");
-      alert("Error: Doctor ID tidak ditemukan");
+      CustomAlert.error("Doctor ID tidak ditemukan", "Error");
       return;
     }
 
@@ -1591,16 +2131,18 @@ class AntrianFragment {
           ).length;
           countBadge.textContent = `${visibleCount} Pasien`;
         }
+        
+        Toast.success(`Filter diterapkan: ${data.length} hasil`);
       }
     } catch (error) {
       console.error("❌ Error filtering:", error);
-      alert("Error filtering queues: " + error.message);
+      CustomAlert.error("Gagal memfilter data: " + error.message, "Error Filter");
     }
   }
 
   async saveQueue() {
     if (!this.currentDoctorId) {
-      alert("Error: Doctor ID tidak ditemukan");
+      CustomAlert.error("Doctor ID tidak ditemukan", "Error");
       return;
     }
 
@@ -1614,17 +2156,17 @@ class AntrianFragment {
     );
 
     if (!date || !time || !number || !patientId) {
-      alert("Mohon lengkapi semua field dan pilih pasien!");
+      CustomAlert.warning("Mohon lengkapi semua field dan pilih pasien!", "Data Tidak Lengkap");
       return;
     }
 
     if (!jenisPasienRadio) {
-      alert("Mohon pilih jenis pasien (BPJS atau UMUM)!");
+      CustomAlert.warning("Mohon pilih jenis pasien (BPJS atau UMUM)!", "Pilih Jenis Pasien");
       return;
     }
 
     if (!this.satusehatChecked) {
-      alert("Mohon tunggu, sedang memeriksa SATUSEHAT...");
+      Toast.info("Sedang memeriksa SATUSEHAT...");
       return;
     }
 
@@ -1639,6 +2181,8 @@ class AntrianFragment {
 
     console.log("📤 Creating queue with BPJS/UMUM:", newQueue);
 
+    LoadingOverlay.show("Menyimpan Antrian", "Mohon tunggu...");
+
     try {
       const response = await fetch(`${this.apiUrl}?action=create`, {
         method: "POST",
@@ -1647,6 +2191,8 @@ class AntrianFragment {
       });
 
       const result = await response.json();
+
+      LoadingOverlay.hide();
 
       if (result.success) {
         const modal = bootstrap.Modal.getInstance(
@@ -1663,16 +2209,17 @@ class AntrianFragment {
         this.satusehatChecked = false;
 
         await this.loadQueues();
-        alert("✓ Antrian berhasil ditambahkan!");
+        CustomAlert.success(`Antrian ${number} berhasil ditambahkan!`, "Berhasil");
       } else {
-        alert(
-          "✗ Gagal menambahkan antrian: " +
-            (result.error || result.message || "Unknown error")
+        CustomAlert.error(
+          result.error || result.message || "Unknown error",
+          "Gagal Menambahkan Antrian"
         );
       }
     } catch (error) {
+      LoadingOverlay.hide();
       console.error("❌ Error saving queue:", error);
-      alert("✗ Error: " + error.message);
+      CustomAlert.error(error.message, "Error");
     }
   }
 
@@ -1704,7 +2251,7 @@ class AntrianFragment {
     const queue = this.queues.find((q) => q.id_antrian === queueId);
 
     if (!queue) {
-      alert("Error: Data antrian tidak ditemukan");
+      CustomAlert.error("Data antrian tidak ditemukan", "Error");
       return;
     }
 
@@ -1874,6 +2421,20 @@ class AntrianFragment {
       
       // Auto-set payment amount to exact total
       document.getElementById('paymentAmount').value = this.paymentData.grandTotal;
+      
+      // Enable process button for QRIS
+      const processBtn = document.getElementById('processPaymentBtn');
+      if (processBtn) {
+        processBtn.disabled = false;
+        processBtn.classList.remove('disabled');
+      }
+      
+      // Enable preview button
+      const previewBtn = document.getElementById('previewBillBtn');
+      if (previewBtn) {
+        previewBtn.disabled = false;
+        previewBtn.classList.remove('disabled');
+      }
     } else {
       // Show cash input, hide QRIS display
       document.getElementById('paymentInputContainer').style.display = 'block';
@@ -1883,6 +2444,19 @@ class AntrianFragment {
       document.getElementById('paymentAmount').disabled = false;
       document.getElementById('paymentAmount').value = '';
       document.getElementById('paymentChange').textContent = 'Rp 0';
+      
+      // Enable buttons for cash
+      const processBtn = document.getElementById('processPaymentBtn');
+      if (processBtn) {
+        processBtn.disabled = false;
+        processBtn.classList.remove('disabled');
+      }
+      
+      const previewBtn = document.getElementById('previewBillBtn');
+      if (previewBtn) {
+        previewBtn.disabled = false;
+        previewBtn.classList.remove('disabled');
+      }
     }
   }
 
@@ -1925,69 +2499,84 @@ class AntrianFragment {
   }
 
   setupPaymentEventListeners() {
-    // Patient type buttons
-    document.querySelectorAll('.patient-type-btn').forEach(btn => {
-      btn.removeEventListener('click', btn._clickHandler);
-      btn._clickHandler = () => this.updatePatientType(btn.dataset.type);
-      btn.addEventListener('click', btn._clickHandler);
-    });
-
-    // Payment method buttons
+    console.log('🔧 Setting up payment event listeners...');
+    
+    // Payment method buttons - clone to remove old listeners
     document.querySelectorAll('.payment-method-btn').forEach(btn => {
-      btn.removeEventListener('click', btn._clickHandler);
-      btn._clickHandler = () => this.updatePaymentMethod(btn.dataset.method);
-      btn.addEventListener('click', btn._clickHandler);
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('💳 Payment method clicked:', newBtn.dataset.method);
+        this.updatePaymentMethod(newBtn.dataset.method);
+      });
     });
-
-    // Payment amount input
-    const amountInput = document.getElementById('paymentAmount');
-    if (amountInput) {
-      amountInput.removeEventListener('input', amountInput._inputHandler);
-      amountInput._inputHandler = () => this.calculateChange();
-      amountInput.addEventListener('input', amountInput._inputHandler);
-    }
 
     // Process payment button
     const processBtn = document.getElementById('processPaymentBtn');
     if (processBtn) {
-      processBtn.removeEventListener('click', processBtn._clickHandler);
-      processBtn._clickHandler = () => this.handlePayment();
-      processBtn.addEventListener('click', processBtn._clickHandler);
+      const newProcessBtn = processBtn.cloneNode(true);
+      processBtn.parentNode.replaceChild(newProcessBtn, processBtn);
+      
+      newProcessBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        console.log('💰 Bayar clicked');
+        await this.handlePayment();
+      });
     }
 
     // Preview bill button
     const previewBtn = document.getElementById('previewBillBtn');
     if (previewBtn) {
-      previewBtn.removeEventListener('click', previewBtn._clickHandler);
-      previewBtn._clickHandler = () => this.printBill();
-      previewBtn.addEventListener('click', previewBtn._clickHandler);
+      const newPreviewBtn = previewBtn.cloneNode(true);
+      previewBtn.parentNode.replaceChild(newPreviewBtn, previewBtn);
+      
+      newPreviewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('🖨️ Preview clicked');
+        this.printBill();
+      });
     }
+    
+    console.log('✅ Event listeners setup complete');
   }
 
   async handlePayment() {
+    // Prevent double click
+    if (this.isProcessing) return;
+    
     // Validation for UMUM payment
     if (this.paymentData.patientType === 'UMUM') {
       if (this.paymentMethod === 'cash') {
         const paid = parseFloat(document.getElementById('paymentAmount').value) || 0;
         if (paid < this.paymentData.grandTotal) {
-          alert('⚠️ Jumlah uang masih kurang!');
+          CustomAlert.warning("Jumlah uang masih kurang!", "Pembayaran Tidak Cukup");
           return;
         }
       } else if (this.paymentMethod === 'qris') {
         // For QRIS, check if QRIS image is available
         const qrisImage = document.getElementById('qrisPaymentImage');
         if (!qrisImage.src || qrisImage.style.display === 'none') {
-          alert('⚠️ QRIS tidak tersedia!\n\nSilakan upload QRIS di halaman Profil terlebih dahulu atau gunakan metode Cash.');
+          CustomAlert.warning(
+            "QRIS belum tersedia!\n\nSilakan upload QRIS di halaman Profil terlebih dahulu atau gunakan metode Cash.",
+            "QRIS Tidak Tersedia"
+          );
           return;
         }
         
         // Confirm QRIS payment
-        if (!confirm('✅ Konfirmasi pembayaran QRIS?\n\nPastikan pasien sudah melakukan pembayaran via scan QRIS.')) {
-          return;
-        }
+        const confirmQris = await CustomAlert.confirm(
+          "Pastikan pasien sudah melakukan pembayaran via scan QRIS.",
+          "Konfirmasi Pembayaran QRIS"
+        );
+        if (!confirmQris) return;
       }
     }
 
+    this.isProcessing = true;
+    
     // Show success animation
     document.getElementById('paymentSuccessOverlay').style.display = 'flex';
 
@@ -2006,32 +2595,47 @@ class AntrianFragment {
 
       const result = await response.json();
 
-      setTimeout(() => {
+      setTimeout(async () => {
         document.getElementById('paymentSuccessOverlay').style.display = 'none';
+        this.isProcessing = false;
         
         if (result.success) {
           const paymentMethodText = this.paymentMethod === 'qris' ? 'QRIS' : 
                                     this.paymentMethod === 'cash' ? 'Cash' : 'BPJS';
           
-          alert(`✅ Pembayaran berhasil (${paymentMethodText})!\n\nStatus antrian diperbarui ke "Selesai".`);
+          // Close modal first
+          const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+          modal.hide();
+          
+          // Show success alert
+          await CustomAlert.success(
+            `Pembayaran berhasil (${paymentMethodText})!\n\nStatus antrian diperbarui ke "Selesai".`,
+            "Pembayaran Berhasil"
+          );
           
           // Ask to print bill
-          if (confirm('🖨️ Cetak tagihan?')) {
+          const wantPrint = await CustomAlert.confirm(
+            "Apakah Anda ingin mencetak tagihan?",
+            "Cetak Tagihan?"
+          );
+          
+          if (wantPrint) {
             this.printBill();
           }
           
-          // Close modal and refresh
-          const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
-          modal.hide();
           this.loadQueues();
         } else {
-          alert('❌ Gagal memproses pembayaran: ' + (result.message || result.error || 'Unknown error'));
+          CustomAlert.error(
+            result.message || result.error || 'Unknown error',
+            "Gagal Memproses Pembayaran"
+          );
         }
       }, 1500);
     } catch (error) {
       document.getElementById('paymentSuccessOverlay').style.display = 'none';
+      this.isProcessing = false;
       console.error('❌ Error processing payment:', error);
-      alert('❌ Error: ' + error.message);
+      CustomAlert.error(error.message, "Error");
     }
   }
 
@@ -2172,4 +2776,9 @@ class AntrianFragment {
   }
 }
 
-console.log("✅ AntrianFragment with SATUSEHAT Auto-Register, Payment System & Skeleton Loaders loaded successfully");
+// Make components globally available
+window.CustomAlert = CustomAlert;
+window.LoadingOverlay = LoadingOverlay;
+window.Toast = Toast;
+
+console.log("✅ AntrianFragment with Custom Alerts, Loading States & Toast Notifications loaded successfully");

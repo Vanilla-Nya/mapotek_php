@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.applyRoleBasedUI();
             console.log('✅ Role-based UI applied successfully');
         } else {
-            console.error('❌ applyRoleBasedUI not available!');
+            console.warn('⚠️ applyRoleBasedUI not available, skipping role-based UI');
         }
     }, 500);
     

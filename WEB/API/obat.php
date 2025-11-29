@@ -350,9 +350,6 @@ try {
                 }
                 break;
 
-            // ═══════════════════════════════════════════════════════════════
-            // 📊 GET BATCH USAGE (Pemeriksaan Obat per Batch)
-            // ═══════════════════════════════════════════════════════════════
             case 'getBatchUsage':
             case 'get_batch_usage':
                 $batch_id = $_GET['batch_id'] ?? $_GET['id_detail_obat'] ?? null;
@@ -360,27 +357,68 @@ try {
                 if (!$batch_id) {
                     throw new Exception('ID batch tidak ditemukan');
                 }
+
+                // ✅ SANITIZE
+                $batch_id = trim($batch_id);
+                $batch_id = trim($batch_id, '"\'');
                 
-                error_log("📊 Getting usage for batch ID: $batch_id");
+                error_log("═══════════════════════════════════════════════");
+                error_log("📊 GET BATCH USAGE");
+                error_log("═══════════════════════════════════════════════");
+                error_log("Batch ID: '$batch_id'");
+                error_log("Length: " . strlen($batch_id));
+                
+                // ✅ VALIDATE UUID
+                if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $batch_id)) {
+                    error_log("❌ Invalid UUID format");
+                    
+                    echo json_encode([
+                        'success' => false,
+                        'data' => [],
+                        'error' => 'Format ID batch tidak valid',
+                        'message' => 'Format ID batch tidak valid'
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                
+                error_log("✅ UUID validated");
                 
                 try {
-                    // OPTION 1: If pemeriksaan_obat HAS id_detail_obat column
-                    $query = "pemeriksaan_obat?id_detail_obat=eq.$batch_id&order=created_at.desc";
-                    $select = 'select=id_pemeriksaan_obat,jumlah,signa,created_at';
+                    // ✅ STEP 1: Check if batch exists (FIXED)
+                    error_log("🔍 STEP 1: Checking if detail_obat exists");
                     
-                    error_log("📤 Query: $query");
-                    error_log("📤 Select: $select");
+                    $batchCheck = supabase('GET', 'detail_obat', "id_detail_obat=eq.$batch_id&select=id_detail_obat,id_obat");
                     
-                    $result = supabase('GET', $query, $select);
+                    error_log("Batch check result: " . json_encode($batchCheck));
                     
-                    // CRITICAL: Ensure result is ALWAYS an array
+                    if (isset($batchCheck['error'])) {
+                        throw new Exception("Batch check failed: " . json_encode($batchCheck['error']));
+                    }
+                    
+                    if (empty($batchCheck) || !is_array($batchCheck)) {
+                        throw new Exception("Batch not found: $batch_id");
+                    }
+                    
+                    error_log("✅ Batch exists");
+                    
+                    // ✅ STEP 2: Query pemeriksaan_obat (FIXED)
+                    error_log("🔍 STEP 2: Querying pemeriksaan_obat");
+                    
+                    $result = supabase('GET', 'pemeriksaan_obat', "id_detail_obat=eq.$batch_id&select=id_pemeriksaan_obat,jumlah,signa,created_at&order=created_at.desc");
+                    
+                    error_log("Result: " . json_encode($result));
+                    
+                    if (isset($result['error'])) {
+                        $errorMsg = is_string($result['error']) ? $result['error'] : json_encode($result['error']);
+                        throw new Exception("Supabase error: $errorMsg");
+                    }
+                    
                     if (!is_array($result)) {
-                        error_log("⚠️ Result is not array, forcing empty array");
+                        error_log("⚠️ Result is not array");
                         $result = [];
                     }
                     
                     error_log("✅ Found " . count($result) . " usage records");
-                    error_log("📦 Raw result: " . json_encode($result));
                     
                     echo json_encode([
                         'success' => true,
@@ -390,15 +428,14 @@ try {
                     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                     
                 } catch (Exception $e) {
-                    error_log("❌ Error in getBatchUsage: " . $e->getMessage());
+                    error_log("❌ Exception: " . $e->getMessage());
                     
-                    // Return empty array on error instead of throwing
                     echo json_encode([
-                        'success' => true,
+                        'success' => false,
                         'data' => [],
-                        'total' => 0,
-                        'message' => 'Belum ada penggunaan obat: ' . $e->getMessage()
-                    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                        'error' => $e->getMessage(),
+                        'message' => 'Gagal memuat penggunaan: ' . $e->getMessage()
+                    ], JSON_UNESCAPED_UNICODE);
                 }
                 break;
 

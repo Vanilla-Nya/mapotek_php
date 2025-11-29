@@ -178,13 +178,14 @@ function getMedicineAlerts($id_dokter) {
         $expiryDate = date('Y-m-d', strtotime('+30 days'));
         $today = date('Y-m-d');
         
+        // ✅ Join with obat table to filter by doctor
         $expiring = supabase('GET', 'detail_obat', 
-            "tanggal_expired=gte.$today&tanggal_expired=lte.$expiryDate&status_batch=eq.aktif&select=id_detail_obat"
+            "obat.id_dokter=eq.$id_dokter&tanggal_expired=gte.$today&tanggal_expired=lte.$expiryDate&status_batch=eq.aktif&select=id_detail_obat,obat!inner(id_dokter)"
         );
         
-        // Get low stock medicines (stock < 10)
+        // ✅ Join with obat table to filter by doctor
         $lowStock = supabase('GET', 'detail_obat', 
-            "stock=lt.10&status_batch=eq.aktif&select=id_detail_obat"
+            "obat.id_dokter=eq.$id_dokter&stock=lt.10&status_batch=eq.aktif&select=id_detail_obat,obat!inner(id_dokter)"
         );
         
         $expiringCount = is_array($expiring) && !isset($expiring['error']) ? count($expiring) : 0;

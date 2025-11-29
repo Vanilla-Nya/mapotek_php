@@ -1406,69 +1406,116 @@ function resumePemeriksaan() {
     }
 }
 
-function processDrugStock($idObat, $jumlah, $signa, $idPemeriksaan, $harga = 0) {
+function processDrugStock($idObat, $jumlah, $signa, $idPemeriksaan, $harga = 0, $idDetailObat = null) {
     try {
-        error_log("💊 Processing drug stock: ID=$idObat, Qty=$jumlah, Submitted Price=$harga");
+        error_log("💊 Processing drug stock: ID=$idObat, Qty=$jumlah, Batch ID=$idDetailObat");
         
-        // ✅ Get oldest active batch (FIFO)
-        $stockParams = "select=*&id_obat=eq.$idObat&stock=gt.0&status_batch=eq.aktif&is_deleted=eq.0&order=created_at.asc";
-        $stockResult = supabase('GET', 'detail_obat', $stockParams);
-        
-        if (empty($stockResult) || isset($stockResult['error'])) {
-            error_log("❌ No stock batches found for obat ID: $idObat");
-            return [
-                'success' => false,
-                'error' => 'Stock not found or insufficient'
-            ];
-        }
-        
-        // ✅ Calculate actual price using FIFO (weighted average of batches used)
-        $actualPrice = 0;
-        $remainingQty = $jumlah;
-        $totalCost = 0;
-        
-        foreach ($stockResult as $batch) {
-            if ($remainingQty <= 0) break;
+        // ✅ If frontend provided specific batch ID, use it
+        if ($idDetailObat) {
+            error_log("🎯 Using specific batch from frontend: $idDetailObat");
             
+            // Get the specific batch
+            $stockParams = "select=*&id_detail_obat=eq.$idDetailObat&status_batch=eq.aktif&is_deleted=eq.0&limit=1";
+            $stockResult = supabase('GET', 'detail_obat', $stockParams);
+            
+            if (empty($stockResult) || isset($stockResult['error'])) {
+                error_log("❌ Specified batch not found: $idDetailObat");
+                return [
+                    'success' => false,
+                    'error' => 'Specified batch not found or inactive'
+                ];
+            }
+            
+            $batch = $stockResult[0];
             $batchStock = intval($batch['stock']);
             $batchPrice = floatval($batch['harga_jual']);
-            $qtyFromBatch = min($batchStock, $remainingQty);
             
-            $totalCost += ($qtyFromBatch * $batchPrice);
-            $remainingQty -= $qtyFromBatch;
+            error_log("📦 Batch details: Stock=$batchStock, Price=Rp " . number_format($batchPrice, 0, ',', '.'));
+            
+            // Check if batch has enough stock
+            if ($batchStock < $jumlah) {
+                error_log("❌ Insufficient stock in specified batch. Available: $batchStock, Requested: $jumlah");
+                return [
+                    'success' => false,
+                    'error' => "Insufficient stock in batch. Available: $batchStock, Requested: $jumlah"
+                ];
+            }
+            
+            $actualPrice = $batchPrice;
+            $totalCost = $actualPrice * $jumlah;
+            
+        } else {
+            // ✅ No batch specified - do FIFO automatically (backward compatibility)
+            error_log("🔄 No batch specified, using FIFO");
+            
+            $stockParams = "select=*&id_obat=eq.$idObat&stock=gt.0&status_batch=eq.aktif&is_deleted=eq.0&order=created_at.asc";
+            $stockResult = supabase('GET', 'detail_obat', $stockParams);
+            
+            if (empty($stockResult) || isset($stockResult['error'])) {
+                error_log("❌ No stock batches found for obat ID: $idObat");
+                return [
+                    'success' => false,
+                    'error' => 'Stock not found or insufficient'
+                ];
+            }
+            
+            // Calculate actual price using FIFO (weighted average)
+            $actualPrice = 0;
+            $remainingQty = $jumlah;
+            $totalCost = 0;
+            
+            foreach ($stockResult as $batch) {
+                if ($remainingQty <= 0) break;
+                
+                $batchStock = intval($batch['stock']);
+                $batchPrice = floatval($batch['harga_jual']);
+                $qtyFromBatch = min($batchStock, $remainingQty);
+                
+                $totalCost += ($qtyFromBatch * $batchPrice);
+                $remainingQty -= $qtyFromBatch;
+            }
+            
+            if ($jumlah > 0) {
+                $actualPrice = $totalCost / $jumlah;
+            }
+            
+            error_log("💰 Calculated FIFO price: Rp " . number_format($actualPrice, 0, ',', '.'));
+            
+            // Use first batch for id_detail_obat (for backward compatibility)
+            $idDetailObat = $stockResult[0]['id_detail_obat'];
+            
+            // Calculate total available stock
+            $availableStock = 0;
+            foreach ($stockResult as $batch) {
+                $availableStock += intval($batch['stock']);
+            }
+            
+            error_log("📦 Available stock: $availableStock, Requested: $jumlah");
+            
+            if ($availableStock < $jumlah) {
+                return [
+                    'success' => false,
+                    'error' => "Insufficient stock. Available: $availableStock, Requested: $jumlah"
+                ];
+            }
         }
         
-        // Calculate weighted average price
-        if ($jumlah > 0) {
-            $actualPrice = $totalCost / $jumlah;
-        }
-        
-        error_log("💰 Calculated FIFO price: Rp " . number_format($actualPrice, 0, ',', '.'));
-        
-        // Calculate total available stock
-        $availableStock = 0;
-        foreach ($stockResult as $batch) {
-            $availableStock += intval($batch['stock']);
-        }
-        
-        error_log("📦 Available stock: $availableStock, Requested: $jumlah");
-        
-        if ($availableStock < $jumlah) {
-            return [
-                'success' => false,
-                'error' => "Insufficient stock. Available: $availableStock, Requested: $jumlah"
-            ];
-        }
-        
-        // ✅ Record in pemeriksaan_obat table WITH FIFO PRICE
+        // ✅ Record in pemeriksaan_obat table WITH id_detail_obat
         $pemeriksaanObatData = [
             'id_pemeriksaan' => $idPemeriksaan,
             'id_obat' => $idObat,
+            'id_detail_obat' => $idDetailObat,  // ✅ CRITICAL: Track which batch was used
             'jumlah' => $jumlah,
             'signa' => $signa,
-            'harga' => $actualPrice,  // ⚠️ Use calculated FIFO price
+            'harga' => $actualPrice,
             'created_at' => date('Y-m-d H:i:s')
         ];
+        
+        error_log("📝 Recording in pemeriksaan_obat with batch tracking:");
+        error_log("   id_obat: $idObat");
+        error_log("   id_detail_obat: $idDetailObat ← BATCH TRACKED");
+        error_log("   jumlah: $jumlah");
+        error_log("   harga: Rp " . number_format($actualPrice, 0, ',', '.'));
         
         $insertResult = supabase('POST', 'pemeriksaan_obat', '', $pemeriksaanObatData);
         
@@ -1481,52 +1528,91 @@ function processDrugStock($idObat, $jumlah, $signa, $idPemeriksaan, $harga = 0) 
             ];
         }
         
-        error_log("✅ Recorded in pemeriksaan_obat with FIFO price: Rp " . number_format($actualPrice, 0, ',', '.'));
+        error_log("✅ Recorded in pemeriksaan_obat with batch ID: $idDetailObat");
         
-        // ✅ FIFO: Deduct stock from oldest batches first
-        $remainingToDeduct = $jumlah;
-        $deductions = [];
-        
-        foreach ($stockResult as $batch) {
-            if ($remainingToDeduct <= 0) break;
-            
+        // ✅ Deduct stock from the batch(es)
+        if ($idDetailObat) {
+            // Specific batch - deduct from this batch only
+            $batch = $stockResult[0];
             $batchStock = intval($batch['stock']);
-            $deductFromBatch = min($batchStock, $remainingToDeduct);
-            $newStock = $batchStock - $deductFromBatch;
+            $newStock = $batchStock - $jumlah;
             
-            error_log("📦 Batch {$batch['id_detail_obat']}: Stock=$batchStock, Deducting=$deductFromBatch, New=$newStock, Price=Rp" . number_format($batch['harga_jual'], 0, ',', '.'));
+            error_log("📦 Deducting from batch $idDetailObat: $batchStock → $newStock");
             
             $updateData = ['stock' => $newStock];
             
             if ($newStock <= 0) {
                 $updateData['status_batch'] = 'habis';
+                error_log("   ⚠️ Batch now empty, marking as 'habis'");
             }
             
-            $updateParams = "id_detail_obat=eq." . $batch['id_detail_obat'];
+            $updateParams = "id_detail_obat=eq.$idDetailObat";
             $updateResult = supabase('PATCH', 'detail_obat', $updateParams, $updateData);
             
             if (isset($updateResult['error'])) {
                 error_log("⚠️ Failed to update batch stock: " . json_encode($updateResult['error']));
-            } else {
-                $deductions[] = [
-                    'batch_id' => $batch['id_detail_obat'],
-                    'deducted' => $deductFromBatch,
-                    'remaining' => $newStock,
-                    'price' => floatval($batch['harga_jual'])
+                return [
+                    'success' => false,
+                    'error' => 'Failed to update batch stock'
                 ];
-                $remainingToDeduct -= $deductFromBatch;
-                error_log("✅ Updated batch {$batch['id_detail_obat']} stock to $newStock");
+            }
+            
+            $deductions = [[
+                'batch_id' => $idDetailObat,
+                'deducted' => $jumlah,
+                'remaining' => $newStock,
+                'price' => $actualPrice
+            ]];
+            
+            error_log("✅ Stock deducted successfully from batch $idDetailObat");
+            
+        } else {
+            // FIFO - deduct from multiple batches
+            $remainingToDeduct = $jumlah;
+            $deductions = [];
+            
+            foreach ($stockResult as $batch) {
+                if ($remainingToDeduct <= 0) break;
+                
+                $batchStock = intval($batch['stock']);
+                $deductFromBatch = min($batchStock, $remainingToDeduct);
+                $newStock = $batchStock - $deductFromBatch;
+                
+                error_log("📦 Batch {$batch['id_detail_obat']}: Deducting $deductFromBatch (Stock: $batchStock → $newStock)");
+                
+                $updateData = ['stock' => $newStock];
+                
+                if ($newStock <= 0) {
+                    $updateData['status_batch'] = 'habis';
+                }
+                
+                $updateParams = "id_detail_obat=eq." . $batch['id_detail_obat'];
+                $updateResult = supabase('PATCH', 'detail_obat', $updateParams, $updateData);
+                
+                if (isset($updateResult['error'])) {
+                    error_log("⚠️ Failed to update batch stock: " . json_encode($updateResult['error']));
+                } else {
+                    $deductions[] = [
+                        'batch_id' => $batch['id_detail_obat'],
+                        'deducted' => $deductFromBatch,
+                        'remaining' => $newStock,
+                        'price' => floatval($batch['harga_jual'])
+                    ];
+                    $remainingToDeduct -= $deductFromBatch;
+                    error_log("✅ Updated batch {$batch['id_detail_obat']} stock to $newStock");
+                }
             }
         }
         
-        error_log("✅ Successfully processed medicine with " . count($deductions) . " batch deductions");
+        error_log("✅ Successfully processed medicine with " . count($deductions) . " batch deduction(s)");
         error_log("💰 Total cost: Rp " . number_format($totalCost, 0, ',', '.') . " | Avg price: Rp " . number_format($actualPrice, 0, ',', '.'));
         
         return [
             'success' => true,
             'deductions' => $deductions,
             'actual_price' => $actualPrice,
-            'total_cost' => $totalCost
+            'total_cost' => $totalCost,
+            'batch_used' => $idDetailObat  // ✅ Return which batch was used
         ];
         
     } catch (Exception $e) {
@@ -1794,12 +1880,22 @@ function finishPemeriksaan() {
             $obatSuccess = [];
             
             foreach ($input['obat'] as $obat) {
+
+                $idDetailObat = $obat['id_detail_obat'] ?? null;
+        
+                if ($idDetailObat) {
+                    error_log("   🎯 Medicine '{$obat['nama']}' has specific batch: $idDetailObat");
+                } else {
+                    error_log("   ⚠️ Medicine '{$obat['nama']}' has no batch ID, will use FIFO");
+                }
+
                 $stockResult = processDrugStock(
                     $obat['id_obat'],
                     $obat['jumlah'],
                     $obat['signa'],
                     $idPemeriksaan,
-                    $obat['harga'] ?? 0
+                    $obat['harga'] ?? 0,
+                    $idDetailObat
                 );
                 
                 if (!$stockResult['success']) {
@@ -2350,13 +2446,19 @@ function processPayment() {
             error_log("✅ PEMASUKAN recorded: ID $recordId (Linked to antrian: $queueId)");
             
         } else {
-            error_log("🏥 BPJS Patient - Recording as PENGELUARAN (Doctor's service cost)");
+            // ========================================
+            // 🔥 BPJS PATIENT - RECORD AS PENGELUARAN WITH TOTAL
+            // ========================================
+            error_log("🏥 BPJS Patient - Recording as PENGELUARAN (Clinic's expense)");
+            error_log("💰 Total Bill (Medicine + Service): Rp " . number_format($totalBill, 0, ',', '.'));
             
+            // ✅ NOW INCLUDING 'total' FIELD
             $pengeluaranData = [
                 'id_antrian' => $queueId,
                 'id_dokter' => $idDokter,
                 'tanggal' => date('Y-m-d'),
-                'keterangan' => "Jasa Dokter BPJS - Antrian: " . $currentBlock['no_antrian'],
+                'total' => $totalBill,  // ✅ CRITICAL: Store total cost
+                'keterangan' => "Biaya Obat + Jasa BPJS - Antrian: " . $currentBlock['no_antrian'],
                 'created_at' => date('Y-m-d\TH:i:s\Z'),
                 'updated_at' => date('Y-m-d\TH:i:s\Z')
             ];
@@ -2364,7 +2466,7 @@ function processPayment() {
             $pengeluaranData['prev_hash'] = null;
             $pengeluaranData['curent_hash'] = generateHash($pengeluaranData);
             
-            error_log("📝 Inserting to PENGELUARAN: " . json_encode($pengeluaranData, JSON_PRETTY_PRINT));
+            error_log("📝 Inserting to PENGELUARAN with TOTAL: " . json_encode($pengeluaranData, JSON_PRETTY_PRINT));
             
             $pengeluaranResult = supabase('POST', 'pengeluaran', '', $pengeluaranData);
             
@@ -2379,29 +2481,10 @@ function processPayment() {
             }
             
             $recordId = $pengeluaranResult[0]['id_pengeluaran'] ?? null;
-            error_log("✅ PENGELUARAN recorded: ID $recordId (Linked to antrian: $queueId)");
+            error_log("✅ PENGELUARAN recorded: ID $recordId (Total: Rp $totalBill)");
             
-            if ($recordId) {
-                $detailData = [
-                    'id_pengeluaran' => $recordId,
-                    'jumlah' => 1,
-                    'harga' => $totalBill,
-                    'created_at' => date('Y-m-d\TH:i:s\Z')
-                ];
-                
-                $detailData['prev_hash'] = null;
-                $detailData['curent_hash'] = generateHash($detailData);
-                
-                error_log("📝 Inserting PENGELUARAN_DETAIL for BPJS: " . json_encode($detailData, JSON_PRETTY_PRINT));
-                
-                $detailResult = supabase('POST', 'pengeluaran_detail', '', $detailData);
-                
-                if (isset($detailResult['error'])) {
-                    error_log("❌ Failed to insert pengeluaran_detail: " . json_encode($detailResult['error']));
-                } else {
-                    error_log("✅ PENGELUARAN_DETAIL recorded for BPJS");
-                }
-            }
+            // ✅ NO NEED for pengeluaran_detail since we're using 'total' column directly
+            // The 'total' column replaces the need to calculate from detail
             
             $amountPaid = 0;
             $change = 0;
@@ -2452,14 +2535,14 @@ function processPayment() {
             error_log("   - Amount Paid: Rp " . number_format($amountPaid, 0, ',', '.'));
             error_log("   - Change: Rp " . number_format($change, 0, ',', '.'));
         } else {
-            error_log("   - Status: BPJS (Doctor service cost recorded)");
+            error_log("   - Status: BPJS (Clinic cost recorded in pengeluaran.total)");
         }
         
         echo json_encode([
             'success' => true,
             'message' => $patientType === 'UMUM' 
                 ? 'Pembayaran berhasil diproses dan tercatat sebagai pemasukan'
-                : 'Pembayaran BPJS tercatat sebagai pengeluaran (jasa dokter)',
+                : 'Pembayaran BPJS tercatat sebagai pengeluaran klinik (total: Rp ' . number_format($totalBill, 0, ',', '.') . ')',
             'record_id' => $recordId,
             'record_type' => $patientType === 'UMUM' ? 'pemasukan' : 'pengeluaran',
             'queue_number' => $currentBlock['no_antrian'],

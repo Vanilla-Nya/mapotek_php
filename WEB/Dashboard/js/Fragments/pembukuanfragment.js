@@ -11,6 +11,13 @@ class PembukuanFragment {
 
     render() {
         return `
+
+        <!-- ✅ PDF & Excel Libraries -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="../fragments/pembukuan_pdf.js"></script>
+        
         <div id="content-wrapper" class="d-flex flex-column">
             <div id="content">
                 <div class="container-fluid">
@@ -1409,9 +1416,8 @@ async function pembukuanShowDetail(tanggal) {
 
 function pembukuanDisplayDetail(data) {
     console.log('====================================');
-    console.log('🎨 DISPLAYING DETAIL DATA (Enhanced for BPJS)');
+    console.log('🎨 DISPLAYING DETAIL DATA - ENHANCED VERSION');
     console.log('====================================');
-    console.log('📦 Raw data received:', data);
     
     const detailBody = document.getElementById('detailBody');
     if (!detailBody) {
@@ -1436,36 +1442,77 @@ function pembukuanDisplayDetail(data) {
         return;
     }
     
-    console.log('✅ Processing', data.length, 'transactions');
-    
     let html = '';
     let totalKeseluruhan = 0;
     
     data.forEach((item, index) => {
         const total = parseFloat(item.total || 0);
-        totalKeseluruhan += (item.jenis === 'Pemasukan' ? total : -total);
         
-        const badgeClass = item.jenis === 'Pemasukan' ? 'bg-success' : 'bg-danger';
-        let totalClass = item.jenis === 'Pemasukan' ? 'text-success' : 'text-danger';
+        console.log(`📋 Item ${index + 1}:`, {
+            jenis: item.jenis,
+            jenis_pasien: item.jenis_pasien,
+            is_bpjs_free: item.is_bpjs_free,
+            total: total,
+            deskripsi: item.deskripsi
+        });
+        
+        // ✅ CALCULATION LOGIC:
+        // - Pemasukan (UMUM): ADD to total (positive, green)
+        // - Pengeluaran (Regular): SUBTRACT from total (negative, red)
+        // - Pengeluaran (BPJS Medicine): SUBTRACT medicine cost (negative, red with BPJS badge)
         
         let displayTotal = total;
-        let displayText = pembukuanFormatRupiah(total);
+        let totalClass = '';
+        let displayText = '';
         
-        if (item.is_bpjs_free === true) {
-            displayText = '<span class="badge bg-info">GRATIS (BPJS)</span>';
-            totalClass = 'text-info';
+        if (item.jenis === 'Pemasukan') {
+            // ✅ Income - ADD to total, display as positive green
+            totalKeseluruhan += total;
+            displayText = pembukuanFormatRupiah(total);
+            totalClass = 'text-success fw-bold';
+            
+            console.log(`   ➕ Adding Pemasukan: +${total}`);
+            
+        } else if (item.jenis === 'Pengeluaran') {
+            // ✅ Expense - SUBTRACT from total
+            totalKeseluruhan -= total;
+            
+            console.log(`   ➖ Subtracting Pengeluaran: -${total}`);
+            
+            if (item.is_bpjs_free === true || item.jenis_pasien === 'BPJS') {
+                // ✅ BPJS expense - show medicine cost with BPJS badge
+                if (total > 0) {
+                    displayText = `
+                        <div>
+                            <span class="badge bg-warning text-dark mb-1">BPJS</span>
+                            <br>
+                            <strong class="text-danger">-${pembukuanFormatRupiah(total)}</strong>
+                            <br><small class="text-muted">Biaya obat dari klinik</small>
+                        </div>
+                    `;
+                } else {
+                    displayText = `
+                        <div>
+                            <span class="badge bg-warning text-dark mb-1">BPJS</span>
+                            <br>
+                            <strong class="text-muted">Rp 0</strong>
+                            <br><small class="text-muted">Tidak ada biaya obat</small>
+                        </div>
+                    `;
+                }
+                totalClass = 'text-danger';
+            } else {
+                // ✅ Regular expense
+                displayText = '-' + pembukuanFormatRupiah(total);
+                totalClass = 'text-danger fw-bold';
+            }
         }
         
-        let aksiButton = '<span class="text-muted">-</span>';
+        // ✅ Determine badge color
+        const badgeClass = item.jenis === 'Pemasukan' ? 'bg-success' : 'bg-danger';
         
-        console.log(`Item ${index + 1}:`, {
-            id: item.id,
-            id_antrian: item.id_antrian,
-            has_patient: item.has_patient,
-            is_bpjs_free: item.is_bpjs_free,
-            jenis: item.jenis,
-            total: total
-        });
+        // ✅ Action button
+        let aksiButton = '<span class="text-muted">-</span>';
         
         if (item.id_antrian && item.id_antrian !== null && item.id_antrian !== 'null') {
             aksiButton = `
@@ -1475,14 +1522,12 @@ function pembukuanDisplayDetail(data) {
                     <i class="fas fa-eye me-1"></i>Detail
                 </button>
             `;
-            console.log(`  ✅ Showing button for id_antrian: ${item.id_antrian}`);
-        } else {
-            console.log(`  ❌ No button - id_antrian: ${item.id_antrian}`);
         }
         
+        // ✅ Display description with BPJS icon if applicable
         let displayDeskripsi = item.deskripsi || '-';
-        if (item.is_bpjs_free === true) {
-            displayDeskripsi = '<i class="fas fa-shield-alt me-1"></i>' + displayDeskripsi;
+        if (item.jenis_pasien === 'BPJS') {
+            displayDeskripsi = '<i class="fas fa-shield-alt me-1 text-warning"></i>' + displayDeskripsi;
         }
         
         html += `
@@ -1494,7 +1539,7 @@ function pembukuanDisplayDetail(data) {
                     <span class="badge ${badgeClass}">${item.jenis}</span>
                 </td>
                 <td>${item.metode_pembayaran || '-'}</td>
-                <td class="text-end fw-semibold ${totalClass}">
+                <td class="text-end ${totalClass}">
                     ${displayText}
                 </td>
                 <td class="text-center">
@@ -1506,6 +1551,12 @@ function pembukuanDisplayDetail(data) {
     
     detailBody.innerHTML = html;
     
+    console.log('====================================');
+    console.log('📊 CALCULATION SUMMARY:');
+    console.log('   Final Balance:', totalKeseluruhan);
+    console.log('====================================');
+    
+    // ✅ Update footer with correct total
     const detailTotalFooter = document.getElementById('detailTotalFooter');
     if (detailTotalFooter) {
         detailTotalFooter.textContent = pembukuanFormatRupiah(totalKeseluruhan);
@@ -1513,13 +1564,21 @@ function pembukuanDisplayDetail(data) {
             (totalKeseluruhan >= 0 ? 'text-success' : 'text-danger');
     }
     
-    console.log('====================================');
     console.log('✅ DETAIL DISPLAY COMPLETE');
-    console.log('   Items shown:', data.length);
-    console.log('   Total:', totalKeseluruhan);
-    console.log('   BPJS free transactions included: Yes');
-    console.log('====================================');
 }
+
+// Helper function (make sure this exists in your code)
+function pembukuanFormatRupiah(angka) {
+    const number = parseFloat(angka);
+    if (isNaN(number)) return 'Rp 0';
+    
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(number);
+}
+
 
 async function pembukuanShowPatientDetail(idAntrian) {
     console.log('👨‍⚕️ Showing patient detail for antrian:', idAntrian);
@@ -1882,8 +1941,643 @@ function pembukuanFormatDate(dateString) {
     }
 }
 
-function pembukuanCetakPDF() {
-    alert('Fitur cetak PDF akan segera tersedia');
+async function pembukuanCetakPDF() {
+    try {
+        console.log('📄 Starting PDF generation...');
+        
+        // ✅ CHECK if jsPDF is loaded, if not, wait or reload
+        if (typeof window.jspdf === 'undefined') {
+            console.warn('⚠️ jsPDF not loaded yet, attempting to reload...');
+            
+            // Try to reload the script
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = () => {
+                    console.log('✅ jsPDF loaded successfully');
+                    resolve();
+                };
+                script.onerror = () => {
+                    reject(new Error('Failed to load jsPDF library'));
+                };
+                document.head.appendChild(script);
+            });
+            
+            // Also load autoTable if needed
+            if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF.API.autoTable) {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+                    script.onload = () => {
+                        console.log('✅ jsPDF autoTable loaded successfully');
+                        resolve();
+                    };
+                    script.onerror = () => {
+                        reject(new Error('Failed to load jsPDF autoTable'));
+                    };
+                    document.head.appendChild(script);
+                });
+            }
+        }
+        
+        // Show loading indicator
+        showTemporaryMessage('Generating PDF...', 'info');
+        
+        // Get filtered data
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+        const dokterId = localStorage.getItem('id_dokter');
+        
+        if (!dokterId) {
+            alert('Doctor ID not found. Please login again.');
+            return;
+        }
+        
+        // Fetch data from API
+        const url = window.PEMBUKUAN_API_URL + 
+            '?action=filter_pembukuan&start_date=' + startDate + 
+            '&end_date=' + endDate + 
+            '&dokter_id=' + dokterId;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success || !result.data || result.data.length === 0) {
+            alert('Tidak ada data untuk dicetak pada periode yang dipilih');
+            return;
+        }
+        
+        // Get doctor info
+        const doctorInfo = await getDoctorInfo(dokterId);
+        
+        // Generate PDF
+        await generatePembukuanPDF(result.data, startDate, endDate, doctorInfo);
+        
+        showTemporaryMessage('PDF berhasil dibuat!', 'success');
+        
+    } catch (error) {
+        console.error('❌ Error generating PDF:', error);
+        alert('Gagal membuat PDF: ' + error.message);
+    }
+}
+
+async function getDoctorInfo(dokterId) {
+    try {
+        console.log('========================================');
+        console.log('🔍 GET DOCTOR INFO FUNCTION');
+        console.log('========================================');
+        console.log('   Doctor ID:', dokterId);
+        
+        const url = `../API/pembukuan_api.php?action=get_doctor_info&dokter_id=${dokterId}`;
+        console.log('   URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('   Response Status:', response.status);
+        console.log('   Response OK:', response.ok);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const text = await response.text();
+        console.log('   Raw Response (first 500 chars):', text.substring(0, 500));
+        
+        const result = JSON.parse(text);
+        console.log('   Parsed Result:', result);
+        
+        if (result.success && result.data) {
+            console.log('========================================');
+            console.log('✅ DOCTOR INFO LOADED FROM DATABASE:');
+            console.log('========================================');
+            console.log('   nama_lengkap:', result.data.nama_lengkap);
+            console.log('   nama_faskes:', result.data.nama_faskes);
+            console.log('   no_str:', result.data.no_str);
+            console.log('   no_telp:', result.data.no_telp);
+            console.log('   alamat:', result.data.alamat);
+            console.log('   spesialisasi:', result.data.spesialisasi);
+            console.log('   avatar_url:', result.data.avatar_url);
+            console.log('========================================');
+            
+            return result.data;
+        } else {
+            console.warn('⚠️ API returned success: false or no data');
+            console.warn('   Message:', result.message);
+            throw new Error(result.message || 'No data returned');
+        }
+        
+    } catch (error) {
+        console.error('========================================');
+        console.error('❌ ERROR GETTING DOCTOR INFO');
+        console.error('========================================');
+        console.error('   Error:', error.message);
+        console.error('   Stack:', error.stack);
+        console.error('========================================');
+        console.error('⚠️ USING FALLBACK DATA');
+        console.error('========================================');
+        
+        // Return fallback data
+        return {
+            nama_lengkap: 'Klinik MAPOTEK',
+            nama_faskes: 'Praktik Umum',
+            no_str: '-',
+            alamat: 'Jl. Kesehatan No. 1',
+            no_telp: '(0123) 456-7890',
+            spesialisasi: 'Praktik Umum',
+            avatar_url: null
+        };
+    }
+}
+
+async function generatePembukuanPDF(data, startDate, endDate, doctorInfo) {
+    try {
+        console.log('====================================');
+        console.log('📄 GENERATING PDF WITH DOCTOR INFO:');
+        console.log('====================================');
+        console.log('👤 nama_lengkap:', doctorInfo.nama_lengkap);
+        console.log('🏥 nama_faskes:', doctorInfo.nama_faskes);
+        console.log('📞 no_telp:', doctorInfo.no_telp);
+        console.log('🏠 alamat:', doctorInfo.alamat);
+        console.log('🖼️ avatar_url:', doctorInfo.avatar_url);
+        console.log('====================================');
+        
+        // ✅ VERIFY jsPDF is available
+        if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+            throw new Error('jsPDF library not loaded. Please refresh the page.');
+        }
+        
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('landscape', 'mm', 'a4');
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        let currentY = margin;
+        
+        // ===================================
+        // KOP SURAT - LOGO LEFT + AVATAR RIGHT
+        // ===================================
+        
+        console.log('🖼️ Building header with logo and avatar...');
+        
+        // ========================================
+        // 1️⃣ LEFT SIDE: MAPOTEK LOGO
+        // ========================================
+        let mapotekLogoLoaded = false;
+        
+        try {
+            const logoPath = window.location.origin + '/mapotek_PHP/WEB/Dashboard/images/Logo_Mapotek.png';
+            console.log('   📌 Loading MAPOTEK logo from:', logoPath);
+            
+            await new Promise((resolve, reject) => {
+                const img = new Image();
+                
+                img.onload = () => {
+                    console.log('   ✅ MAPOTEK Logo loaded successfully');
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        const base64 = canvas.toDataURL('image/png');
+                        
+                        // ✅ Place logo on LEFT (at margin position)
+                        doc.addImage(base64, 'PNG', margin, currentY, 20, 20);
+                        mapotekLogoLoaded = true;
+                        console.log('   ✅ MAPOTEK Logo added to PDF (LEFT)');
+                        resolve();
+                    } catch (err) {
+                        console.error('   ❌ Canvas error:', err);
+                        reject(err);
+                    }
+                };
+                
+                img.onerror = (err) => {
+                    console.warn('   ⚠️ Could not load MAPOTEK logo');
+                    reject(err);
+                };
+                
+                img.src = logoPath;
+            });
+            
+        } catch (logoError) {
+            console.warn('   ⚠️ MAPOTEK logo failed, using fallback');
+            
+            // Fallback: Circle with 'M' initial
+            doc.setFillColor(6, 95, 70);
+            doc.circle(margin + 10, currentY + 10, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text('M', margin + 7.5, currentY + 12.5);
+            mapotekLogoLoaded = true;
+        }
+        
+        // ========================================
+        // 2️⃣ RIGHT SIDE: DOCTOR AVATAR
+        // ========================================
+        let doctorAvatarLoaded = false;
+        const avatarX = pageWidth - margin - 20; // 20mm from right edge
+        
+        if (doctorInfo.avatar_url && doctorInfo.avatar_url !== '') {
+            try {
+                console.log('   👤 Loading Doctor avatar from:', doctorInfo.avatar_url);
+                
+                await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        console.log('   ✅ Doctor avatar loaded successfully');
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            const base64 = canvas.toDataURL('image/jpeg');
+                            
+                            // ✅ Place avatar on RIGHT
+                            doc.addImage(base64, 'JPEG', avatarX, currentY, 20, 20);
+                            doctorAvatarLoaded = true;
+                            console.log('   ✅ Doctor avatar added to PDF (RIGHT)');
+                            resolve();
+                        } catch (err) {
+                            console.error('   ❌ Canvas error:', err);
+                            reject(err);
+                        }
+                    };
+                    
+                    img.onerror = (err) => {
+                        console.error('   ❌ Avatar load error:', err);
+                        reject(err);
+                    };
+                    
+                    img.src = doctorInfo.avatar_url;
+                });
+                
+            } catch (avatarError) {
+                console.warn('   ⚠️ Could not load doctor avatar');
+            }
+        }
+        
+        // Fallback for doctor avatar: Circle with initial
+        if (!doctorAvatarLoaded) {
+            console.log('   ℹ️ Using fallback circle for doctor');
+            doc.setFillColor(102, 126, 234);
+            doc.circle(avatarX + 10, currentY + 10, 10, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            const initial = (doctorInfo.nama_lengkap || 'D').charAt(0).toUpperCase();
+            doc.text(initial, avatarX + 7.5, currentY + 12.5);
+        }
+        
+        // ========================================
+        // 3️⃣ CENTER: CLINIC/DOCTOR INFO
+        // ========================================
+        
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        // Position text BETWEEN logo and avatar
+        doc.text(doctorInfo.nama_faskes || 'KLINIK', margin + 25, currentY + 8);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 100);
+        doc.text(doctorInfo.nama_lengkap || '-', margin + 25, currentY + 14);
+        
+        // ========================================
+        // 4️⃣ FAR RIGHT: CONTACT INFO (next to avatar)
+        // ========================================
+        
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        const contactX = avatarX - 75; // Position contact info to the left of avatar
+        
+        doc.text(`Telp: ${doctorInfo.no_telp || '-'}`, contactX, currentY + 6);
+        
+        const alamatText = doctorInfo.alamat || 'Alamat tidak tersedia';
+        const alamatLines = doc.splitTextToSize(alamatText, 65);
+        doc.text(alamatLines, contactX, currentY + 11);
+        
+        // Line separator
+        currentY += 25;
+        doc.setDrawColor(6, 95, 70);
+        doc.setLineWidth(0.8);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        
+        currentY += 2;
+        doc.setLineWidth(0.3);
+        doc.line(margin, currentY, pageWidth - margin, currentY);
+        
+        currentY += 10;
+        
+        // ===================================
+        // ✅ DOCUMENT TITLE
+        // ===================================
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        
+        const title = `LAPORAN PEMBUKUAN ${(doctorInfo.nama_faskes || doctorInfo.nama_lengkap || 'KLINIK').toUpperCase()}`;
+        doc.text(title, pageWidth / 2, currentY, { align: 'center' });
+        
+        currentY += 8;
+        
+        // Date Range
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
+        const dateRangeText = `Periode: ${pembukuanFormatDate(startDate)} s/d ${pembukuanFormatDate(endDate)}`;
+        doc.text(dateRangeText, pageWidth / 2, currentY, { align: 'center' });
+        
+        currentY += 10;
+        
+        // ... REST OF THE PDF CODE (summary, table, signature) stays the same ...
+        
+        // ===================================
+        // SUMMARY BOX
+        // ===================================
+        
+        let totalPemasukan = 0;
+        let totalPengeluaran = 0;
+        
+        data.forEach(item => {
+            totalPemasukan += parseFloat(item.pemasukan || 0);
+            totalPengeluaran += parseFloat(item.pengeluaran || 0);
+        });
+        
+        const totalProfit = totalPemasukan - totalPengeluaran;
+        
+        doc.setFillColor(248, 249, 252);
+        doc.roundedRect(margin, currentY, pageWidth - (2 * margin), 25, 2, 2, 'F');
+        
+        const summaryY = currentY + 8;
+        const colWidth = (pageWidth - (2 * margin)) / 3;
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont('helvetica', 'bold');
+        
+        doc.text('TOTAL PEMASUKAN', margin + 10, summaryY);
+        doc.setFontSize(12);
+        doc.setTextColor(28, 200, 138);
+        doc.text(pembukuanFormatRupiah(totalPemasukan), margin + 10, summaryY + 7);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('TOTAL PENGELUARAN', margin + colWidth + 10, summaryY);
+        doc.setFontSize(12);
+        doc.setTextColor(231, 74, 59);
+        doc.text(pembukuanFormatRupiah(totalPengeluaran), margin + colWidth + 10, summaryY + 7);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text('TOTAL PROFIT', margin + (2 * colWidth) + 10, summaryY);
+        doc.setFontSize(12);
+        doc.setTextColor(totalProfit >= 0 ? 28 : 231, totalProfit >= 0 ? 200 : 74, totalProfit >= 0 ? 138 : 59);
+        doc.text(pembukuanFormatRupiah(totalProfit), margin + (2 * colWidth) + 10, summaryY + 7);
+        
+        currentY += 32;
+        
+        // ... (TABLE AND REST OF PDF CODE - keep as is from document 4)
+        
+        const tableData = data.map((item, index) => {
+            return [
+                index + 1,
+                pembukuanFormatDate(item.tanggal),
+                pembukuanFormatRupiah(item.pemasukan),
+                pembukuanFormatRupiah(item.pengeluaran),
+                pembukuanFormatRupiah(item.saldo)
+            ];
+        });
+        
+        tableData.push([
+            { content: 'TOTAL', colSpan: 2, styles: { fontStyle: 'bold', halign: 'right' } },
+            { content: pembukuanFormatRupiah(totalPemasukan), styles: { fontStyle: 'bold', textColor: [28, 200, 138] } },
+            { content: pembukuanFormatRupiah(totalPengeluaran), styles: { fontStyle: 'bold', textColor: [231, 74, 59] } },
+            { content: pembukuanFormatRupiah(totalProfit), styles: { fontStyle: 'bold', textColor: totalProfit >= 0 ? [28, 200, 138] : [231, 74, 59] } }
+        ]);
+        
+        doc.autoTable({
+            startY: currentY,
+            head: [['No', 'Tanggal', 'Total Pemasukan', 'Total Pengeluaran', 'Saldo']],
+            body: tableData,
+            theme: 'grid',
+            headStyles: {
+                fillColor: [6, 95, 70],
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 9,
+                textColor: [50, 50, 50]
+            },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 15 },
+                1: { halign: 'left', cellWidth: 40 },
+                2: { halign: 'right' },
+                3: { halign: 'right' },
+                4: { halign: 'right' }
+            },
+            alternateRowStyles: {
+                fillColor: [248, 249, 252]
+            },
+            margin: { left: margin, right: margin },
+            tableWidth: 'auto',
+            didDrawPage: function(data) {
+                const footerY = pageHeight - 15;
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.setFont('helvetica', 'normal');
+                
+                const now = new Date();
+                const generatedDate = now.toLocaleDateString('id-ID', { 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                doc.text(`Dicetak: ${generatedDate}`, margin, footerY);
+                
+                const pageText = `Halaman ${doc.internal.getCurrentPageInfo().pageNumber}`;
+                doc.text(pageText, pageWidth - margin, footerY, { align: 'right' });
+                
+                doc.text('MAPOTEK - Medical Practice Management System', pageWidth / 2, footerY, { align: 'center' });
+            }
+        });
+        
+        // ===================================
+        // SIGNATURE SECTION
+        // ===================================
+        
+        const finalY = doc.lastAutoTable.finalY + 20;
+        
+        if (finalY < pageHeight - 60) {
+            const signatureY = finalY;
+            const signatureX = pageWidth - margin - 60;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'normal');
+            
+            const now = new Date();
+            const currentDate = now.toLocaleDateString('id-ID', { 
+                day: '2-digit', 
+                month: 'long', 
+                year: 'numeric'
+            });
+            
+            doc.text(`Jember, ${currentDate}`, signatureX, signatureY);
+            doc.text('Penanggung Jawab', signatureX, signatureY + 6);
+            
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.1);
+            doc.line(signatureX, signatureY + 30, signatureX + 50, signatureY + 30);
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text(doctorInfo.nama_lengkap || 'Nama Dokter', signatureX, signatureY + 36);
+        }
+        
+       // ===================================
+        // SAVE PDF - SIMPLE VERSION
+        // ===================================
+
+        // ✅ Clean doctor name
+        const doctorName = (doctorInfo.nama_lengkap || doctorInfo.nama_faskes || 'Dokter')
+            .replace(/[^a-zA-Z0-9\s]/g, '')
+            .replace(/\s+/g, '_')
+            .toUpperCase();
+
+        // ✅ Build filename
+        const fileName = `MAPOTEK_Pembukuan_${doctorName}_${startDate}_${endDate}.pdf`;
+
+        console.log('💾 Saving PDF as:', fileName);
+
+        // ✅ Save with jsPDF (this should work)
+        doc.save(fileName);
+
+        console.log('✅ PDF save command executed');
+        console.log('📁 Check your browser Downloads folder');
+        
+    } catch (error) {
+        console.error('❌ Error in generatePembukuanPDF:', error);
+        throw error;
+    }
+}
+
+async function pembukuanExportToExcel() {
+    try {
+        console.log('📊 Starting Excel export...');
+        
+        showTemporaryMessage('Generating Excel...', 'info');
+        
+        const startDate = document.getElementById('startDate')?.value;
+        const endDate = document.getElementById('endDate')?.value;
+        const dokterId = localStorage.getItem('id_dokter');
+        
+        if (!dokterId) {
+            alert('Doctor ID not found. Please login again.');
+            return;
+        }
+        
+        // Fetch data
+        const url = window.PEMBUKUAN_API_URL + 
+            '?action=filter_pembukuan&start_date=' + startDate + 
+            '&end_date=' + endDate + 
+            '&dokter_id=' + dokterId;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success || !result.data || result.data.length === 0) {
+            alert('Tidak ada data untuk diekspor pada periode yang dipilih');
+            return;
+        }
+        
+        // Get doctor info
+        const doctorInfo = await getDoctorInfo(dokterId);
+        
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Prepare data
+        let totalPemasukan = 0;
+        let totalPengeluaran = 0;
+        
+        const excelData = result.data.map((item, index) => {
+            totalPemasukan += parseFloat(item.pemasukan || 0);
+            totalPengeluaran += parseFloat(item.pengeluaran || 0);
+            
+            return {
+                'No': index + 1,
+                'Tanggal': pembukuanFormatDate(item.tanggal),
+                'Total Pemasukan': parseFloat(item.pemasukan || 0),
+                'Total Pengeluaran': parseFloat(item.pengeluaran || 0),
+                'Saldo': parseFloat(item.saldo || 0)
+            };
+        });
+        
+        // Add totals
+        excelData.push({
+            'No': '',
+            'Tanggal': 'TOTAL',
+            'Total Pemasukan': totalPemasukan,
+            'Total Pengeluaran': totalPengeluaran,
+            'Saldo': totalPemasukan - totalPengeluaran
+        });
+        
+        // Create worksheet
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 5 },  // No
+            { wch: 15 }, // Tanggal
+            { wch: 20 }, // Pemasukan
+            { wch: 20 }, // Pengeluaran
+            { wch: 20 }  // Saldo
+        ];
+        
+        // Add worksheet to workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Pembukuan');
+        
+        // Generate file
+        const fileName = `Pembukuan_${startDate}_${endDate}_${new Date().getTime()}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+        showTemporaryMessage('Excel berhasil dibuat!', 'success');
+        console.log('✅ Excel generated successfully:', fileName);
+        
+    } catch (error) {
+        console.error('❌ Error generating Excel:', error);
+        alert('Gagal membuat Excel: ' + error.message);
+    }
 }
 
 function pembukuanExportToExcel() {
