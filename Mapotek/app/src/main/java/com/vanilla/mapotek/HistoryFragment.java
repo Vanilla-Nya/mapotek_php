@@ -84,8 +84,9 @@ public class HistoryFragment extends Fragment {
     private void loadPatientHistory() {
         showLoading();
 
+        // CHANGED: Load all antrian records for this patient, not just "Selesai"
         String selectColumns = "*,dokter(nama_lengkap)";
-        String filterParams = "id_pasien=eq." + patientId + "&status_antrian=eq.Selesai&order=created_at.desc";
+        String filterParams = "id_pasien=eq." + patientId + "&order=created_at.desc";
 
         Log.d(TAG, "Loading history with filters: " + filterParams);
 
@@ -97,32 +98,79 @@ public class HistoryFragment extends Fragment {
                             JSONArray antrianArray = new JSONArray(response);
                             Log.d(TAG, "Total antrian received: " + antrianArray.length());
 
-                            // Filter for completed visits with encounter ID
-                            JSONArray filteredArray = new JSONArray();
-                            Map<String, JSONObject> uniqueEncounters = new HashMap<>();
+                            // Group by encounter ID and find completed visits
+                            Map<String, List<JSONObject>> encounterGroups = new HashMap<>();
 
                             for (int i = 0; i < antrianArray.length(); i++) {
                                 JSONObject antrian = antrianArray.getJSONObject(i);
                                 String encounterId = antrian.optString("id_encounter_satusehat", "");
 
                                 if (!encounterId.isEmpty() && !encounterId.equals("null")) {
-                                    // Keep only the latest record per encounter
-                                    if (!uniqueEncounters.containsKey(encounterId)) {
-                                        uniqueEncounters.put(encounterId, antrian);
+                                    if (!encounterGroups.containsKey(encounterId)) {
+                                        encounterGroups.put(encounterId, new ArrayList<>());
                                     }
+                                    encounterGroups.get(encounterId).add(antrian);
                                 }
                             }
 
-                            Log.d(TAG, "Unique encounters found: " + uniqueEncounters.size());
+                            Log.d(TAG, "Unique encounters found: " + encounterGroups.size());
 
-                            if (uniqueEncounters.isEmpty()) {
+                            if (encounterGroups.isEmpty()) {
                                 showEmptyState();
                                 return;
                             }
 
-                            // Convert map to list
-                            List<JSONObject> encounterList = new ArrayList<>(uniqueEncounters.values());
-                            processEncounters(encounterList);
+                            // Process each encounter group
+                            List<JSONObject> completedVisits = new ArrayList<>();
+
+                            for (Map.Entry<String, List<JSONObject>> entry : encounterGroups.entrySet()) {
+                                List<JSONObject> records = entry.getValue();
+
+                                // Check if any record has "Selesai" status
+                                boolean hasSelesai = false;
+                                JSONObject selesaiRecord = null;
+                                JSONObject pemeriksaanRecord = null;
+
+                                for (JSONObject record : records) {
+                                    String status = record.optString("status_antrian", "");
+
+                                    if (status.equals("Selesai")) {
+                                        hasSelesai = true;
+                                        selesaiRecord = record;
+                                    }
+
+                                    // Look for the record with pemeriksaan (usually "Sedang Diperiksa")
+                                    if (status.equals("Sedang Diperiksa")) {
+                                        pemeriksaanRecord = record;
+                                    }
+                                }
+
+                                // Only include completed visits
+                                if (hasSelesai) {
+                                    // Use the "Sedang Diperiksa" record for pemeriksaan data
+                                    // but keep "Selesai" metadata for display
+                                    JSONObject visitToProcess = pemeriksaanRecord != null ? pemeriksaanRecord : selesaiRecord;
+
+                                    // Merge: Use pemeriksaan record's ID, but Selesai record's display info
+                                    if (pemeriksaanRecord != null && selesaiRecord != null) {
+                                        // Copy display fields from selesai record
+                                        visitToProcess.put("display_tanggal", selesaiRecord.optString("tanggal_antrian"));
+                                        visitToProcess.put("display_jam", selesaiRecord.optString("jam_antrian"));
+                                        visitToProcess.put("display_status", "Selesai");
+                                    }
+
+                                    completedVisits.add(visitToProcess);
+                                }
+                            }
+
+                            Log.d(TAG, "Completed visits to process: " + completedVisits.size());
+
+                            if (completedVisits.isEmpty()) {
+                                showEmptyState();
+                                return;
+                            }
+
+                            processEncounters(completedVisits);
 
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing antrian data", e);
@@ -373,8 +421,11 @@ public class HistoryFragment extends Fragment {
             TextView tvTime = card.findViewById(R.id.tvHistoryTime);
             TextView tvDoctor = card.findViewById(R.id.tvHistoryDoctor);
 
-            String tanggal = item.antrian.optString("tanggal_antrian", "-");
-            String jam = item.antrian.optString("jam_antrian", "-");
+            // Use display fields if available, otherwise use original
+            String tanggal = item.antrian.optString("display_tanggal",
+                    item.antrian.optString("tanggal_antrian", "-"));
+            String jam = item.antrian.optString("display_jam",
+                    item.antrian.optString("jam_antrian", "-"));
 
             tvDate.setText(formatDate(tanggal));
             tvTime.setText(jam);

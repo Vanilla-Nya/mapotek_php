@@ -51,7 +51,7 @@ public class ProfileFragment extends Fragment {
     // UI Components
     private ImageView ivProfilePhoto, ivCameraOverlay, ivBlurredBackground;
     private TextView tvProfileName, tvNIK, tvNamaLengkap, tvTanggalLahir, tvAlamat;
-    private MaterialButton btnEditProfile, btnChangePassword, btnLogout;
+    private MaterialButton btnEditProfile, btnLogout;
 
     // Data & Auth
     private SharedPreferences sharedPreferences;
@@ -92,7 +92,6 @@ public class ProfileFragment extends Fragment {
         tvAlamat = view.findViewById(R.id.tvAlamat);
 
         btnEditProfile = view.findViewById(R.id.btnEditProfile);
-        btnChangePassword = view.findViewById(R.id.btnChangePassword);
         btnLogout = view.findViewById(R.id.btnLogout);
     }
 
@@ -111,7 +110,6 @@ public class ProfileFragment extends Fragment {
         ivCameraOverlay.setOnClickListener(v -> changeProfilePhoto());
         ivProfilePhoto.setOnClickListener(v -> changeProfilePhoto());
         btnEditProfile.setOnClickListener(v -> editProfile());
-        btnChangePassword.setOnClickListener(v -> changePassword());
         btnLogout.setOnClickListener(v -> showLogoutConfirmation());
     }
 
@@ -695,16 +693,19 @@ public class ProfileFragment extends Fragment {
      * Opens edit profile screen (TODO: Implement)
      */
     private void editProfile() {
-        Toast.makeText(requireContext(), "Fitur edit profil akan segera hadir", Toast.LENGTH_SHORT).show();
-        // TODO: Implement edit profile activity
-    }
+        EditProfileBottomSheet bottomSheet = EditProfileBottomSheet.newInstance(
+                new EditProfileBottomSheet.OnProfileUpdatedListener() {
+                    @Override
+                    public void onProfileUpdated() {
+                        // This gets called when user saves changes
+                        // Refresh the profile to show updated data
+                        Log.d(TAG, "Profile was updated, refreshing data...");
+                        fetchUserProfileFromSupabase();
+                    }
+                }
+        );
 
-    /**
-     * Opens change password screen (TODO: Implement)
-     */
-    private void changePassword() {
-        Toast.makeText(requireContext(), "Fitur ganti password akan segera hadir", Toast.LENGTH_SHORT).show();
-        // TODO: Implement change password activity
+        bottomSheet.show(getParentFragmentManager(), "EditProfileBottomSheet");
     }
 
     /**

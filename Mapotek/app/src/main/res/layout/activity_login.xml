@@ -6,13 +6,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:padding="24dp"
     android:background="@color/background_color">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/main"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="24dp"
         tools:context=".loginactivity">
 
         <!-- Logo dan Title -->
@@ -20,7 +20,7 @@
             android:id="@+id/imgLogo"
             android:layout_width="120dp"
             android:layout_height="120dp"
-            android:src="@mipmap/ic_launcher"
+            android:src="@mipmap/ic_logo"
             android:contentDescription="Logo"
             android:layout_marginTop="40dp"
             app:layout_constraintTop_toTopOf="parent"
@@ -59,8 +59,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
             app:cardCornerRadius="20dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/white"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/surface_color"
             app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
@@ -88,7 +88,9 @@
                         android:id="@+id/etEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress" />
+                        android:inputType="textEmailAddress"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Password Field -->
@@ -110,7 +112,9 @@
                         android:id="@+id/etPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPassword" />
+                        android:inputType="textPassword"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_hint" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Remember Me Checkbox -->
@@ -176,7 +180,7 @@
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_marginTop="24dp"
-            android:background="@color/light_gray"
+            android:background="@color/border_color"
             app:layout_constraintTop_toBottomOf="@id/btnLogin"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -204,7 +208,7 @@
             android:textStyle="bold"
             android:textColor="@color/primary_color"
             android:layout_marginTop="24dp"
-            android:backgroundTint="@color/white"
+            android:backgroundTint="@color/surface_color"
             app:strokeColor="@color/primary_color"
             app:strokeWidth="2dp"
             app:cornerRadius="28dp"

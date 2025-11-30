@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:clipToPadding="false">
+    android:clipToPadding="false"
+    android:background="@color/background_color">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -89,7 +90,7 @@
             android:layout_height="wrap_content"
             android:text="Lihat Lebih Banyak"
             android:textColor="@color/primary_color"
-            android:backgroundTint="@color/white"
+            android:backgroundTint="@color/surface_color"
             app:strokeColor="@color/primary_color"
             app:strokeWidth="2dp"
             app:cornerRadius="12dp"

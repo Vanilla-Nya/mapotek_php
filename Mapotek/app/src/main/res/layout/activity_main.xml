@@ -15,21 +15,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- QR Scanner FAB -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabScanQR"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="56dp"
-        android:src="@drawable/ic_qr_code_scanner"
-        android:contentDescription="Scan QR"
-        app:backgroundTint="@color/primary_color"
-        app:tint="@color/white"
-        app:borderWidth="0dp"
-        app:elevation="8dp"
-        app:fabSize="normal" />
-
     <!-- Bottom Navigation -->
     <FrameLayout
         android:id="@+id/bottomNavContainer"
@@ -172,5 +157,22 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </FrameLayout>
+
+    <!-- QR Scanner FAB - Positioned AFTER bottom nav to appear on top -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScanQR"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="74dp"
+        android:src="@drawable/ic_qr_code_scanner"
+        android:contentDescription="Scan QR"
+        app:layout_anchor="@id/bottomNavContainer"
+        app:layout_anchorGravity="top|center"
+        app:backgroundTint="@color/primary_color"
+        app:tint="@color/white"
+        app:borderWidth="0dp"
+        app:elevation="16dp"
+        app:fabSize="normal" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

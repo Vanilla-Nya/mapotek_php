@@ -56,8 +56,6 @@ public class FindDoctorFragment extends Fragment {
         initializeViews(view);
         loadDoctorsFromSupabase();
         setupSearchFunctionality();
-        setupFilterChips();
-        setupClickListeners();
     }
 
     private void initializeViews(View view) {
@@ -174,13 +172,6 @@ public class FindDoctorFragment extends Fragment {
         });
     }
 
-    private void setupFilterChips() {
-        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            // Show all doctors since we don't have categories
-            displayDoctors(doctorList);
-        });
-    }
-
     private void filterDoctors(String searchQuery) {
         filteredDoctorList.clear();
 
@@ -282,10 +273,6 @@ public class FindDoctorFragment extends Fragment {
         doctorContainer.addView(noResults);
     }
 
-    private void setupClickListeners() {
-        btnQueue.setOnClickListener(v -> openQueueManagement());
-    }
-
     private void bookAppointment(Doctor doctor) {
         if (doctor.isAvailable()) {
             Log.d(TAG, "Booking appointment with doctor: " + doctor.getName() + " (ID: " + doctor.getId() + ")");
@@ -309,12 +296,6 @@ public class FindDoctorFragment extends Fragment {
     private void showDoctorDetails(Doctor doctor) {
         // You can create a detail fragment later
         Toast.makeText(requireContext(), "Detail dokter: " + doctor.getName(),
-                Toast.LENGTH_SHORT).show();
-    }
-
-    private void openQueueManagement() {
-        // Navigate to queue management screen
-        Toast.makeText(requireContext(), "Fitur manajemen antrian - Akan segera hadir",
                 Toast.LENGTH_SHORT).show();
     }
 

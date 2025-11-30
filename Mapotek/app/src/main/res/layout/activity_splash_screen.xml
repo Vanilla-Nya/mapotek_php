@@ -9,11 +9,11 @@
     <!-- Large Logo with fade animation -->
     <ImageView
         android:id="@+id/splashLogo"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:src="@mipmap/ic_launcher"
+        android:layout_width="165dp"
+        android:layout_height="165dp"
+        android:src="@mipmap/ic_logo"
         android:contentDescription="App Logo"
-        android:scaleType="centerInside" />
+        android:scaleType="fitCenter" />
 
     <!-- App Name -->
     <TextView
