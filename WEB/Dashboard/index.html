@@ -21,11 +21,10 @@
     <!-- ⭐ NEW: Pasien Form Styles -->
     <link rel="stylesheet" href="css/pasien-styles.css">
     
-    <!-- ========================================== -->
-    <!-- TOP BAR PROFILE CARD STYLES 🎨 -->
-    <!-- ========================================== -->
     <style>
-        /* Top Bar */
+        /* ========================================
+           TOP BAR STYLES 
+           ======================================== */
         .top-bar {
             background: white;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -58,7 +57,7 @@
             left: -15px;
             right: -15px;
             bottom: -15px;
-            background-image: var(--topbar-bg-image, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            background-image: var(--topbar-bg-image, linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%));
             background-size: cover;
             background-position: center;
             filter: blur(10px) brightness(0.9) saturate(1.2);
@@ -94,7 +93,7 @@
             border: 2px solid white;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -139,25 +138,384 @@
             white-space: nowrap;
         }
 
-        /* Sidebar logo */
-        .sidebar-logo {
-            max-width: 150px;
-            transition: all 0.3s ease;
+        /* ========================================
+           ENHANCED SIDEBAR DESIGN
+           ======================================== */
+        
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            max-height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: linear-gradient(180deg, #77d2d0 0%, #5ab8b6 100%);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 8px 0 30px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
         }
 
-        .sidebar.collapsed .sidebar-logo {
-            opacity: 0;
-            height: 0;
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        /* ========================================
+           ENHANCED SIDEBAR HEADER WITH LOGO
+           ======================================== */
+        
+        .sidebar-header {
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            min-height: 180px;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative background pattern */
+        .sidebar-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, -20px); }
+        }
+
+        /* Logo Container */
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Logo Image Styling */
+        .sidebar-logo-img {
+            width: 120px;
+            height: auto;
+            max-height: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+            transition: all 0.4s ease;
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-logo-img:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Mapotek Text Styling */
+        .sidebar-brand-text {
+            font-size: 26px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 1px;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s ease;
+            white-space: nowrap;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
             margin: 0;
         }
 
-        .sidebar.collapsed .sidebar-header {
-            padding: 10px;
-            min-height: 50px;
+        .sidebar-brand-text::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: white;
+            border-radius: 2px;
+            transition: width 0.3s ease;
         }
 
-        /* Mobile responsive */
+        .logo-container:hover .sidebar-brand-text::after {
+            width: 80%;
+        }
+
+        .sidebar-tagline {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.4s ease;
+            margin: 0;
+        }
+
+        /* Collapsed State */
+        .sidebar.collapsed .sidebar-header {
+            padding: 20px 10px;
+            min-height: 100px;
+        }
+
+        .sidebar.collapsed .logo-container {
+            gap: 0;
+        }
+
+        .sidebar.collapsed .sidebar-logo-img {
+            width: 55px;
+            height: auto;
+            max-height: 55px;
+            padding: 10px;
+        }
+
+        .sidebar.collapsed .sidebar-brand-text,
+        .sidebar.collapsed .sidebar-tagline {
+            opacity: 0;
+            font-size: 0;
+            margin: 0;
+            height: 0;
+        }
+
+        /* ========================================
+           NAVIGATION STYLES
+           ======================================== */
+        
+        .sidebar-nav {
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+        }
+
+        /* Scrollbar Styling */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            position: relative;
+            margin: 4px 12px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Open state */
+        .sidebar:not(.collapsed) .nav-item {
+            padding: 14px 20px;
+        }
+
+        .sidebar:not(.collapsed) .nav-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: rgba(255, 255, 255, 0.2);
+            transition: width 0.3s ease;
+        }
+
+        .sidebar:not(.collapsed) .nav-item:hover::before {
+            width: 100%;
+        }
+
+        .sidebar:not(.collapsed) .nav-item:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .sidebar:not(.collapsed) .nav-item.active {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar:not(.collapsed) .nav-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: white;
+            border-radius: 2px 0 0 2px;
+        }
+
+        /* Collapsed state */
+        .sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0;
+            margin: 10px auto;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar.collapsed .nav-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.08);
+        }
+
+        .sidebar.collapsed .nav-item.active {
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-item i {
+            min-width: 30px;
+            font-size: 22px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sidebar.collapsed .nav-item i {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .nav-text {
+            transition: opacity 0.3s ease, width 0.3s ease;
+            margin-left: 15px;
+            font-weight: 500;
+            font-size: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+            margin: 0;
+            display: none;
+        }
+
+        /* ========================================
+           FOOTER STYLES
+           ======================================== */
+        
+        .sidebar-footer {
+            margin-top: auto;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px 0;
+            background: rgba(255, 255, 255, 0.05);
+            flex-shrink: 0;
+        }
+
+        /* ========================================
+           TOGGLE BUTTON
+           ======================================== */
+        
+        .sidebar-toggle {
+            position: absolute;
+            right: -16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            z-index: 1001;
+            border: 3px solid #fff !important;
+            background: linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover {
+            background: linear-gradient(135deg, #5ab8b6 0%, #4aa09e 100%) !important;
+            transform: translateY(-50%) scale(1.12);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .sidebar-toggle i {
+            transition: transform 0.3s ease;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .sidebar.collapsed .sidebar-toggle i::before {
+            content: "\f285";
+        }
+
+        /* ========================================
+           MAIN CONTENT ADJUSTMENT
+           ======================================== */
+        
+        .main-content {
+            margin-left: 280px;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
+        }
+
+        .sidebar.collapsed ~ .main-content {
+            margin-left: 80px;
+        }
+
+        /* ========================================
+           MOBILE RESPONSIVE
+           ======================================== */
+        
         @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                border-radius: 0;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+            
+            .sidebar-toggle {
+                display: none;
+            }
+
             .top-bar-user-info {
                 display: none;
             }
@@ -167,65 +525,94 @@
                 padding: 8px;
             }
         }
+
+        /* ========================================
+           DRAWER OVERLAY
+           ======================================== */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 999;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
 </head>
 <body>
     <!-- Drawer Overlay for Mobile -->
     <div class="drawer-overlay" id="drawerOverlay"></div>
 
-    <!-- Sidebar (NO NAME CARD - Just Logo) -->
+    <!-- Enhanced Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <!-- Logo Header -->
-        <div class="sidebar-header text-center py-4 border-bottom border-white border-opacity-10">
-            <img src="../LandingPage/booksaw-1.0.0/images/mapotekTxt.png" alt="Mapotek" class="sidebar-logo">
+        <!-- Enhanced Header with Logo -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <!-- Logo Image -->
+                <img src="../Dashboard/images/Logo_Mapotek(Tanpa_Tulisan(Remove_BG)).png" 
+                     alt="Mapotek Logo" 
+                     class="sidebar-logo-img">
+                <!-- Brand Text -->
+                <h1 class="sidebar-brand-text">MAPOTEK</h1>
+                <p class="sidebar-tagline">Healthcare System</p>
+            </div>
         </div>
         
         <!-- Navigation -->
-        <nav class="sidebar-nav flex-grow-1 py-3">
-            <a href="#dashboard" class="nav-item active d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="dashboard">
-                <i class="bi bi-house-door fs-4"></i>
-                <span class="nav-text ms-3">Dashboard</span>
+        <nav class="sidebar-nav flex-grow-1">
+            <a href="#dashboard" class="nav-item active d-flex align-items-center text-white text-decoration-none" data-fragment="dashboard">
+                <i class="bi bi-house-door"></i>
+                <span class="nav-text">Dashboard</span>
             </a>
-            <a href="#pasien" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="pasien">
-                <i class="bi bi-people fs-4"></i>
-                <span class="nav-text ms-3">Pasien</span>
+            <a href="#pasien" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pasien">
+                <i class="bi bi-people"></i>
+                <span class="nav-text">Pasien</span>
             </a>
-            <a href="#obat" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="obat">
-                <i class="bi bi-capsule fs-4"></i>
-                <span class="nav-text ms-3">Obat</span>
+            <a href="#obat" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="obat">
+                <i class="bi bi-capsule"></i>
+                <span class="nav-text">Obat</span>
             </a>
-            <a href="#antrian" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="antrian">
-                <i class="bi bi-clock-history fs-4"></i>
-                <span class="nav-text ms-3">Antrian</span>
+            <a href="#antrian" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="antrian">
+                <i class="bi bi-clock-history"></i>
+                <span class="nav-text">Antrian</span>
             </a>
-            <a href="#pemeriksaan" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="pemeriksaan">
-                <i class="bi bi-heart-pulse fs-4"></i>
-                <span class="nav-text ms-3">Pemeriksaan</span>
+            <a href="#pemeriksaan" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pemeriksaan">
+                <i class="bi bi-heart-pulse"></i>
+                <span class="nav-text">Pemeriksaan</span>
             </a>
-            <a href="#pembukuan" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="pembukuan">
-                <i class="bi bi-journal-text fs-4"></i>
-                <span class="nav-text ms-3">Pembukuan</span>
+            <a href="#pembukuan" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pembukuan">
+                <i class="bi bi-journal-text"></i>
+                <span class="nav-text">Pembukuan</span>
             </a>
-            <a href="#asistendokter" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="asistendokter">
-                <i class="bi bi-person-badge fs-4"></i>
-                <span class="nav-text ms-3">Asisten Dokter</span>
+            <a href="#asistendokter" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="asistendokter">
+                <i class="bi bi-person-badge"></i>
+                <span class="nav-text">Asisten Dokter</span>
             </a>
         </nav>
 
         <!-- Footer -->
-        <div class="sidebar-footer border-top border-white border-opacity-10 py-3">
-            <a href="#profile" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3" data-fragment="profile">
-                <i class="bi bi-person-circle fs-4"></i>
-                <span class="nav-text ms-3">Profile</span>
+        <div class="sidebar-footer">
+            <a href="#profile" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="profile">
+                <i class="bi bi-person-circle"></i>
+                <span class="nav-text">Profile</span>
             </a>
-            <a href="#" id="btnLogoutSidebar" class="nav-item d-flex align-items-center text-white text-decoration-none px-4 py-3">
-                <i class="bi bi-box-arrow-right fs-4"></i>
-                <span class="nav-text ms-3">Logout</span>
+            <a href="#" id="btnLogoutSidebar" class="nav-item d-flex align-items-center text-white text-decoration-none">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="nav-text">Logout</span>
             </a>
         </div>
         
         <!-- Toggle Button -->
-        <button class="sidebar-toggle btn btn-light rounded-circle shadow position-absolute" id="sidebarToggle">
+        <button class="sidebar-toggle btn rounded-circle shadow position-absolute" id="sidebarToggle">
             <i class="bi bi-chevron-left"></i>
         </button>
     </aside>
@@ -260,15 +647,10 @@
         </div>
     </main>
 
-    <!-- ========================================== -->
-    <!-- ⭐⭐⭐ MODAL ROOT CONTAINER - NEW! ⭐⭐⭐ -->
-    <!-- ========================================== -->
+    <!-- Modal Root Container -->
     <div id="modal-root"></div>
 
-    <!-- ========================================== -->
-    <!-- SCRIPTS - CORRECT ORDER! ⚡ -->
-    <!-- ========================================== -->
-
+    <!-- Scripts -->
     <!-- 1. Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
 

@@ -1,0 +1,2203 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800;900&family=Source+Sans+3:wght@300;400;500;600;700;800&display=swap");
+:root {
+  /* Palet Warna Utama */
+  --color-tosca-primary: #4ecdc4; /* Tosca Lebih Vibrant */
+  --color-tosca-hover: #45b8b0; /* Tosca Hover/Darker */
+  --color-tosca-dark: #1a4d4a; /* Warna Teks Primer (Dark Tosca) */
+  --color-tosca-medium: #2d5a57; /* Warna Teks Sekunder/Paragraf (Medium Dark Tosca) */
+
+  /* Warna Netral & Latar Belakang */
+  --color-off-white: #e8f6f5; /* Awal Gradien Page 3 */
+  --color-text-light: #f0f8f8; /* Teks Subtitle */
+  --color-white: #ffffff;
+  --color-border-light: #d1eeec;
+  --color-shadow-light: rgba(0, 0, 0, 0.1);
+
+  /* Warna Accent Baru */
+  --color-accent-blue: #5bc0de;
+  --color-accent-mint: #48d1cc;
+  --color-accent-cyan: #20c997;
+  --color-accent-coral: #ff6b6b;
+  --color-accent-gold: #ffd93d;
+
+  /* background */
+  --color-bg-1: #1e5f5c;
+  --color-bg-2: #0f4c4a;
+  --color-bg-3: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-2));
+
+  /* Font Families untuk Medical Theme */
+  --font-primary: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-secondary: "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  font-family: var(--font-secondary);
+}
+
+body {
+  font-family: var(--font-secondary);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--color-tosca-medium);
+}
+
+/* Headings menggunakan Nunito Sans - Friendly & Professional */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--color-tosca-dark);
+}
+
+/* Text yang membutuhkan emphasis - gunakan font primary */
+.brand-logo,
+.navbar-brand,
+.pricing-plan-name,
+.phone-mockup-title {
+  font-family: var(--font-primary);
+}
+
+/* Body text & paragraphs - gunakan font secondary untuk readability */
+p,
+li,
+span,
+a,
+label,
+input,
+button {
+  font-family: var(--font-secondary);
+}
+
+.fw-light {
+  font-weight: 300;
+}
+.fw-normal {
+  font-weight: 400;
+}
+.fw-medium {
+  font-weight: 500;
+}
+.fw-semibold {
+  font-weight: 600;
+}
+.fw-bold {
+  font-weight: 700;
+}
+.fw-extrabold {
+  font-weight: 800;
+}
+.fw-black {
+  font-weight: 900;
+}
+
+/* ======================================================= */
+/* === UPDATED SPECIFIC ELEMENTS === */
+/* ======================================================= */
+
+/* Navbar Brand - Medical Professional Look */
+.navbar-brand {
+  font-family: var(--font-primary);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--color-tosca-primary);
+}
+
+/* Hero Title - Trustworthy & Bold */
+.hero-box .hero-content-left h2 {
+  font-family: var(--font-primary);
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-tosca-dark);
+}
+
+/* Hero Description - Clean & Readable */
+.hero-box .hero-content-left .lead {
+  font-family: var(--font-secondary);
+  font-size: 1.15rem;
+  line-height: 1.7;
+  font-weight: 400;
+  color: var(--color-tosca-medium);
+}
+
+/* Section Headers - Professional Medical */
+.page-two-inner h2,
+.features-header h2,
+.video-title,
+.pricing-header h2,
+.phone-mockup-title {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Feature Content - Clear Communication */
+.feature-content h3 {
+  font-family: var(--font-primary);
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--color-tosca-dark);
+}
+
+.feature-content p {
+  font-family: var(--font-secondary);
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.8;
+  color: var(--color-tosca-medium);
+}
+
+/* Problem Boxes - Easy to Read */
+.problem-content {
+  font-family: var(--font-secondary);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--color-tosca-dark);
+}
+
+/* Pricing - Professional & Clear */
+.pricing-plan-name {
+  font-family: var(--font-primary);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0em;
+}
+
+.price-amount {
+  font-family: var(--font-primary);
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Modal Forms - Clean Professional */
+.form-header h2 {
+  font-family: var(--font-primary);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.brand-logo {
+  font-family: var(--font-primary);
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+/* Buttons - Clear & Actionable */
+button,
+.btn-primary,
+.btn-download {
+  font-family: var(--font-secondary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Navigation Links - Professional */
+.nav-center a {
+  font-family: var(--font-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+/* ======================================================= */
+/* === FONT SMOOTHING (Better rendering) === */
+/* ======================================================= */
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ======================================================= */
+/* === NAVBAR STYLING === */
+/* ======================================================= */
+
+.nav-wrapper {
+  max-width: 1200px;
+  margin: auto;
+  padding-inline: 17px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Navbar default = transparan, floating */
+#navbar {
+  background: transparent;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease,
+    transform 0.3s ease;
+  z-index: 1000;
+  transform: translateY(32px);
+  margin: 0 32px;
+  width: calc(100% - 64px);
+  border-radius: 15px;
+}
+
+/* Logo (Navbar Brand) - Pindah ke KANAN */
+.navbar-brand {
+  order: 3;
+  margin-left: 0;
+  margin-right: auto;
+  color: var(--color-tosca-primary);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px var(--color-shadow-light);
+}
+
+/* Nav center = tepat di tengah */
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  order: 2;
+}
+
+.nav-center a {
+  position: relative;
+  text-decoration: none;
+  padding: 5px 0;
+  color: var(--color-tosca-dark);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  transition: color 0.3s ease;
+}
+
+.nav-center a:hover {
+  color: var(--color-tosca-hover);
+}
+
+.nav-center a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 2px;
+  width: 0;
+  height: 2px;
+  background: var(--color-tosca-primary);
+  transition: width 0.35s ease;
+}
+
+.nav-center a:hover::after {
+  width: 100%;
+}
+
+/* Nav kanan (Login/Signup) - Pindah ke KIRI */
+.nav-right {
+  display: flex;
+  align-items: center;
+  order: 2;
+}
+
+.nav-right .nav-link {
+  color: var(--color-tosca-dark);
+}
+
+/* Saat discroll - Efek Mengambang (Floating) */
+#navbar.scrolled {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 15px rgba(17, 3, 3, 0.1);
+  transform: translateY(10px);
+  margin: 0 32px;
+  width: calc(100% - 64px);
+  border-radius: 15px;
+}
+
+/* Memastikan warna teks tetap tosca gelap saat di-scroll */
+#navbar.scrolled .nav-center a,
+#navbar.scrolled .nav-right .nav-link,
+#navbar.scrolled .navbar-brand {
+  color: var(--color-tosca-dark);
+}
+
+/* Tombol */
+.nav-item .btn-primary {
+  background-color: var(--color-tosca-primary) !important;
+  border-color: var(--color-tosca-primary) !important;
+  color: var(--color-white) !important;
+  border-radius: 100px;
+}
+
+.nav-item .btn-primary:hover {
+  background-color: var(--color-tosca-hover) !important;
+  border-color: var(--color-tosca-hover) !important;
+}
+
+/* Hidden navbar state */
+#navbar.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Pastikan hidden override scrolled state */
+#navbar.scrolled.hidden {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ======================================================= */
+/* === HERO SECTION (PAGE 1) === */
+/* ======================================================= */
+.hero-section {
+  padding-inline: 32px;
+  padding-top: 32px;
+  padding-bottom: 40px;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg-2) 0%,
+    var(--color-bg-2) 85%,
+    var(--color-bg-1) 100%
+  );
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Hero box */
+.hero-box {
+  height: 90vh;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto; /* TAMBAHAN INI */
+  border-radius: 30px;
+  background-image: linear-gradient(
+    to right,
+    var(--color-tosca-primary) 10%,
+    var(--color-white) 45%
+  );
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  padding: 60px 0px 0px 60px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  gap: 30px;
+}
+
+.hero-box .hero-content-left h2 {
+  color: var(--color-tosca-dark);
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.hero-box .hero-content-left .lead {
+  color: var(--color-tosca-medium);
+  font-size: 1.15rem;
+  line-height: 1.7;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+
+/* ======================================================= */
+/* === RESPONSIVE - NAVBAR & HERO === */
+/* ======================================================= */
+
+@media (max-width: 992px) {
+  .hero-box {
+    flex-direction: column;
+    height: auto;
+    padding: 40px;
+  }
+
+  .hero-content-left h2 {
+    font-size: 2.5rem;
+  }
+}
+/* ======================================================= */
+/* === PAGE TWO (STICKY PROBLEMS) === */
+/* ======================================================= */
+
+.page-two {
+  position: relative;
+  height: 430vh;
+  background: linear-gradient(
+    to bottom,
+    var(--color-bg-1) 0%,
+    var(--color-bg-2) 100%
+  );
+  padding: 25px 0;
+}
+
+.page-two-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.page-two-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: auto;
+  padding-inline: 32px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.page-two-inner.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-two-inner h2 {
+  color: var(--color-white);
+  margin-bottom: 30px !important;
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Problems container styles */
+.problems-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+}
+
+.problems-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+/* Problem box */
+.problem-box {
+  background: var(--color-white);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 17px;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(50px) scale(0.95);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
+  border: 1px solid rgba(119, 210, 208, 0.1);
+}
+
+.problem-box.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.problem-box:hover {
+  box-shadow: 0 12px 32px rgba(119, 210, 208, 0.15);
+  transform: translateY(-4px) scale(1);
+}
+
+.problem-content {
+  font-size: 1.05rem;
+  text-align: center;
+  width: 100%;
+  line-height: 1.6;
+  color: var(--color-tosca-dark);
+  font-weight: 500;
+}
+
+/* Optional: Tambahkan delay berbeda untuk efek cascade */
+.problems-row:nth-child(1) .problem-box:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.problems-row:nth-child(2) .problem-box:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.problems-row:nth-child(3) .problem-box:nth-child(2) {
+  transition-delay: 0.1s;
+}
+.problems-row:nth-child(4) .problem-box:nth-child(2) {
+  transition-delay: 0.1s;
+}
+
+/* ======================================================= */
+/* === RESPONSIVE - PAGE TWO === */
+/* ======================================================= */
+
+@media (max-width: 992px) {
+  .problems-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .problem-box {
+    width: 90% !important;
+    margin: 10px 0 !important;
+  }
+
+  .page-two-inner {
+    padding-inline: 16px;
+  }
+}
+/* ======================================================= */
+/* === PAGE THREE - FITUR (LINEAR SCROLL DENGAN ZIGZAG) === */
+/* ======================================================= */
+
+.features-everest {
+  position: relative;
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-bg-2) 77%,
+    var(--color-off-white) 100%
+  );
+  padding: 0;
+}
+
+.features-header {
+  padding: 120px 32px 60px;
+  text-align: center;
+}
+
+.features-header h2 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 15px;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.features-header p {
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 300;
+}
+
+/* Container untuk semua feature items */
+.features-scroll-container {
+  position: relative;
+  height: 600vh;
+}
+
+/* Sticky wrapper */
+.features-sticky-wrapper {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 32px;
+  padding-top: 102px;
+}
+
+/* Feature item individual - BOX SOLUSI BERLATAR PUTIH/NETRAL */
+.feature-item {
+  position: absolute;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  opacity: 0;
+  transform: translateY(100px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+
+  /* Styling Box Solusi */
+  background: var(--color-white);
+  border-radius: 28px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  padding: 70px;
+  border: 1px solid rgba(119, 210, 208, 0.08);
+}
+
+/* Item aktif/past dikembalikan ke logika awal */
+.feature-item.active {
+  opacity: 1;
+  transform: translateY(0);
+  z-index: 10;
+}
+
+.feature-item.past {
+  opacity: 0;
+  transform: translateY(-100px);
+}
+
+/* Content side - Styling standar */
+.feature-content {
+  padding: 0;
+}
+
+.feature-content h3 {
+  color: var(--color-tosca-dark);
+  margin-bottom: 20px;
+  line-height: 1.3;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.feature-content p {
+  color: var(--color-tosca-medium);
+  line-height: 1.8;
+  font-size: 1.05rem;
+  font-weight: 400;
+}
+
+/* Visual side - Container untuk gambar */
+.feature-visual {
+  background: none;
+  box-shadow: none;
+  min-height: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 💻 Kontrol Ukuran Gambar Desktop (Lebih dari 992px) */
+.feature-visual .feature-image {
+  max-width: 100%;
+  max-height: 100%;
+  height: auto;
+  width: 65%;
+  object-fit: contain;
+}
+
+/* ======================================================= */
+/* === ZIGZAG LAYOUT LOGIC === */
+/* ======================================================= */
+
+/* Default (Index genap: 0, 2, 4) - Content Kiri, Visual Kanan */
+.feature-item[data-index="0"] .feature-content,
+.feature-item[data-index="2"] .feature-content,
+.feature-item[data-index="4"] .feature-content {
+  order: 1;
+  text-align: left;
+}
+
+.feature-item[data-index="0"] .feature-visual,
+.feature-item[data-index="2"] .feature-visual,
+.feature-item[data-index="4"] .feature-visual {
+  order: 2;
+}
+
+/* Zigzag (Index ganjil: 1, 3, 5) - Content Kanan, Visual Kiri */
+.feature-item[data-index="1"],
+.feature-item[data-index="3"],
+.feature-item[data-index="5"] {
+  grid-template-columns: 1fr 1fr;
+}
+
+.feature-item[data-index="1"] .feature-content,
+.feature-item[data-index="3"] .feature-content,
+.feature-item[data-index="5"] .feature-content {
+  order: 2;
+  text-align: right;
+}
+
+.feature-item[data-index="1"] .feature-visual,
+.feature-item[data-index="3"] .feature-visual,
+.feature-item[data-index="5"] .feature-visual {
+  order: 1;
+}
+
+/* ======================================================= */
+/* === RESPONSIVE - PAGE THREE === */
+/* ======================================================= */
+
+@media (max-width: 992px) {
+  .features-scroll-container {
+    height: 400vh;
+  }
+
+  .feature-item {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    height: auto;
+    min-height: 60vh;
+    padding: 30px;
+  }
+
+  /* Di Mobile, hapus logika order/zigzag */
+  .feature-item .feature-content,
+  .feature-item .feature-visual {
+    order: initial !important;
+    text-align: left !important;
+  }
+
+  .feature-item .feature-icon {
+    margin-left: 0 !important;
+  }
+
+  .feature-visual {
+    display: block;
+    text-align: center;
+    min-height: 200px;
+  }
+
+  /* 📱 Kontrol Ukuran Gambar Mobile */
+  .feature-visual .feature-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: 40%;
+    margin: 0 auto;
+  }
+
+  .features-header h2 {
+    font-size: 32px;
+  }
+
+  .feature-content h3 {
+    font-size: 24px;
+  }
+
+  .feature-content p {
+    font-size: 16px;
+  }
+}
+/* ======================================================= */
+/* === PAGE FOUR - VIDEO SECTION === */
+/* ======================================================= */
+
+.video-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-off-white);
+  padding: 0px 32px;
+  min-height: auto;
+}
+
+/* Judul di atas video */
+.video-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 70px;
+  color: var(--color-tosca-dark);
+  text-align: center;
+  max-width: 800px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Bingkai video */
+.video-frame {
+  width: 100%;
+  max-width: 950px;
+  border: 5px solid var(--color-white);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  transition: transform 0.9s ease, box-shadow 0.9s ease;
+  background-color: var(--color-white);
+}
+
+/* Biar video pas di dalam bingkai */
+.video-frame video {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* state ketika video di-zoom */
+.video-frame.enlarged {
+  transform: scale(1.15);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+}
+/* ======================================================= */
+/* === PAGE FIVE - PRICING SECTION === */
+/* ======================================================= */
+
+.pricing-section {
+  background: linear-gradient(
+    to bottom,
+    var(--color-off-white),
+    var(--color-white)
+  );
+  padding: 100px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.pricing-header h2 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--color-tosca-dark);
+  margin-bottom: 15px;
+  letter-spacing: -0.03em;
+}
+
+.pricing-header p {
+  font-size: 1.15rem;
+  color: var(--color-tosca-medium);
+  font-weight: 300;
+}
+
+/* Pricing Card - Single Large Card */
+.pricing-card-wrapper {
+  max-width: 900px;
+  width: 100%;
+}
+
+.pricing-card {
+  background: var(--color-white);
+  border-radius: 35px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease;
+  position: relative;
+  border: 1px solid rgba(119, 210, 208, 0.05);
+}
+
+.pricing-card:hover {
+  transform: translateY(-12px);
+  box-shadow: 0 30px 80px rgba(119, 210, 208, 0.25);
+}
+
+/* Card Header dengan Gradient */
+.pricing-card-header {
+  background: linear-gradient(
+    135deg,
+    var(--color-tosca-primary),
+    var(--color-tosca-hover)
+  );
+  padding: 15px 35px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative circles */
+.pricing-card-header::before,
+.pricing-card-header::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pricing-card-header::before {
+  width: 200px;
+  height: 200px;
+  top: -100px;
+  right: -50px;
+}
+
+.pricing-card-header::after {
+  width: 150px;
+  height: 150px;
+  bottom: -75px;
+  left: -30px;
+}
+
+.pricing-icon {
+  width: 100px;
+  height: 100px;
+  background: var(--color-white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-icon img {
+  max-width: 70%;
+  max-height: 70%;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.pricing-plan-name {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-white);
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: -0.01em;
+}
+
+.pricing-duration {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  position: relative;
+  z-index: 1;
+  font-weight: 300;
+}
+
+/* Card Body */
+.pricing-card-body {
+  padding: 30px 60px;
+}
+
+.pricing-price {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.price-amount {
+  font-size: 4.5rem;
+  font-weight: 800;
+  color: var(--color-tosca-dark);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.price-currency {
+  font-size: 2.2rem;
+  vertical-align: super;
+  font-weight: 600;
+}
+
+.price-period {
+  font-size: 1.1rem;
+  color: var(--color-tosca-medium);
+  margin-top: 10px;
+  font-weight: 400;
+}
+
+/* Features List */
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 40px;
+}
+
+.pricing-features li {
+  padding: 18px 0;
+  font-size: 1.05rem;
+  color: var(--color-tosca-medium);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-light);
+  font-weight: 400;
+}
+
+.pricing-features li:last-child {
+  border-bottom: none;
+}
+
+.pricing-features i {
+  font-size: 24px;
+  color: var(--color-tosca-primary);
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+/* CTA Button */
+.pricing-cta {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.pricing-btn {
+  display: inline-block;
+  background: linear-gradient(
+    135deg,
+    var(--color-tosca-primary),
+    var(--color-tosca-hover)
+  );
+  color: var(--color-white);
+  font-size: 20px;
+  font-weight: 600;
+  padding: 18px 60px;
+  border-radius: 50px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(119, 210, 208, 0.4);
+}
+
+.pricing-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 40px rgba(119, 210, 208, 0.5);
+  color: var(--color-white);
+}
+
+.pricing-detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--color-tosca-primary);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px 30px;
+  border: 2px solid var(--color-tosca-primary);
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-secondary);
+}
+
+.pricing-detail-btn:hover {
+  background: var(--color-tosca-primary);
+  color: var(--color-white);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(119, 210, 208, 0.3);
+}
+
+.pricing-detail-btn i {
+  font-size: 18px;
+}
+
+/* ======================================================= */
+/* === MODAL DETAIL PEMBELIAN === */
+/* ======================================================= */
+
+#purchaseDetailModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#purchaseDetailModal.show-modal {
+  opacity: 1;
+}
+
+.purchase-modal-container {
+  max-width: 600px;
+  width: 90%;
+  background: var(--color-white);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+#purchaseDetailModal.show-modal .purchase-modal-container {
+  transform: scale(1);
+}
+
+.purchase-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background: var(--color-white);
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.purchase-close:hover {
+  background: #f0f0f0;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.purchase-modal-content {
+  padding: 40px;
+}
+
+.purchase-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--color-border-light);
+}
+
+.purchase-header i {
+  font-size: 36px;
+  color: var(--color-tosca-primary);
+}
+
+.purchase-header h3 {
+  font-family: var(--font-primary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-tosca-dark);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.purchase-body {
+  padding: 10px 0;
+}
+
+.purchase-info {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-tosca-medium);
+  margin-bottom: 25px;
+  text-align: justify;
+}
+
+.purchase-info strong {
+  color: var(--color-tosca-dark);
+  font-weight: 600;
+}
+
+.purchase-steps {
+  background: var(--color-off-white);
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border-left: 4px solid var(--color-tosca-primary);
+}
+
+.purchase-steps h4 {
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-tosca-dark);
+  margin-bottom: 15px;
+}
+
+.purchase-steps ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.purchase-steps li {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--color-tosca-medium);
+  margin-bottom: 10px;
+}
+
+.purchase-steps li strong {
+  color: var(--color-tosca-dark);
+  font-weight: 600;
+}
+
+.purchase-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(119, 210, 208, 0.1);
+  padding: 15px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(119, 210, 208, 0.3);
+}
+
+.purchase-note i {
+  font-size: 24px;
+  color: var(--color-tosca-primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.purchase-note p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-tosca-dark);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ======================================================= */
+/* === RESPONSIVE === */
+/* ======================================================= */
+
+@media (max-width: 768px) {
+  .pricing-detail-btn {
+    font-size: 14px;
+    padding: 10px 25px;
+  }
+}
+
+@media (max-width: 576px) {
+  .purchase-modal-container {
+    width: 95%;
+  }
+  
+  .purchase-modal-content {
+    padding: 30px 20px;
+  }
+  
+  .purchase-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .purchase-header h3 {
+    font-size: 20px;
+  }
+  
+  .purchase-steps {
+    padding: 20px 15px;
+  }
+  
+  .purchase-info {
+    font-size: 14px;
+  }
+  
+  .purchase-steps li {
+    font-size: 14px;
+  }
+}
+
+/* ======================================================= */
+/* === PAGE SIX - PHONE MOCKUP SECTION === */
+/* ======================================================= */
+
+.phone-mockup-section {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-bg-1), var(--color-bg-2));
+  padding: 120px 32px;
+  overflow: hidden;
+}
+
+.phone-mockup-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.phone-mockup-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.phone-mockup-text {
+  color: var(--color-white);
+}
+
+.phone-mockup-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  background: rgba(119, 210, 208, 0.2);
+  border: 2px solid rgba(119, 210, 208, 0.5);
+  border-radius: 50px;
+  margin-bottom: 30px;
+}
+
+.phone-mockup-badge span {
+  color: var(--color-tosca-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.phone-mockup-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 25px;
+  letter-spacing: -0.03em;
+}
+
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    var(--color-tosca-primary),
+    var(--color-accent-cyan)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 900;
+}
+
+.phone-mockup-description {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.phone-mockup-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.btn-download {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.01em;
+}
+
+.btn-google {
+  background: var(--color-tosca-primary);
+  color: var(--color-white);
+}
+
+.btn-google:hover {
+  background: var(--color-tosca-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(119, 210, 208, 0.4);
+}
+
+/* Phone Device */
+.phone-mockup-device {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.phone-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(119, 210, 208, 0.3), transparent);
+  filter: blur(60px);
+}
+
+.phone-frame {
+  position: relative;
+  width: 320px;
+  height: 650px;
+  background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+  border-radius: 45px;
+  padding: 12px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  border: 4px solid #3a3a3a;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #1a1a1a, #0a0a0a);
+  border-radius: 38px;
+  overflow: hidden;
+}
+
+.phone-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.status-brand {
+  color: var(--color-tosca-primary);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.status-time {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+}
+
+.phone-features-list {
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.phone-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.phone-feature-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.phone-feature-item.active {
+  background: linear-gradient(
+    135deg,
+    rgba(119, 210, 208, 0.3),
+    rgba(91, 192, 190, 0.2)
+  );
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(119, 210, 208, 0.3);
+}
+
+.feature-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  background: rgba(119, 210, 208, 0.15);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.phone-feature-item.active .feature-icon-wrapper {
+  background: rgba(119, 210, 208, 0.3);
+}
+
+.feature-icon {
+  font-size: 28px;
+}
+
+.feature-info h4 {
+  color: var(--color-white);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.feature-info p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin: 0;
+  font-weight: 300;
+}
+
+.phone-feature-item.active .feature-info p {
+  color: var(--color-tosca-primary);
+}
+
+.phone-home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+/* Decorative Elements */
+.decorative-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(119, 210, 208, 0.15), transparent);
+  pointer-events: none;
+}
+
+.circle-1 {
+  width: 400px;
+  height: 400px;
+  top: -100px;
+  right: -100px;
+}
+
+.circle-2 {
+  width: 500px;
+  height: 500px;
+  bottom: -150px;
+  left: -150px;
+}
+
+/* ======================================================= */
+/* === RESPONSIVE - PHONE MOCKUP === */
+/* ======================================================= */
+
+@media (max-width: 992px) {
+  .phone-mockup-section {
+    padding: 80px 20px;
+  }
+
+  .phone-mockup-content {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .phone-mockup-text {
+    text-align: center;
+  }
+
+  .phone-mockup-title {
+    font-size: 36px;
+  }
+
+  .phone-mockup-buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .phone-frame {
+    width: 280px;
+    height: 580px;
+  }
+
+  .phone-features-list {
+    padding: 15px 10px;
+    gap: 10px;
+  }
+
+  .phone-feature-item {
+    padding: 15px;
+  }
+
+  .feature-icon-wrapper {
+    width: 45px;
+    height: 45px;
+  }
+
+  .feature-icon {
+    font-size: 24px;
+  }
+
+  .feature-info h4 {
+    font-size: 14px;
+  }
+
+  .feature-info p {
+    font-size: 12px;
+  }
+}
+/* ======================================================= */
+/* === LOGIN/REGISTER MODAL STYLING === */
+/* ======================================================= */
+
+/* --- 1. OVERLAY (Pembungkus Modal) --- */
+#authModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#authModalOverlay.show-modal {
+  opacity: 1;
+}
+
+/* --- 2. CONTAINER UTAMA (Login/Register Box) --- */
+.auth-container {
+  display: flex;
+  max-width: 950px;
+  width: 90%;
+  height: 600px;
+  background: var(--color-white);
+  border-radius: 20px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+  position: relative;
+}
+
+#authModalOverlay.show-modal .auth-container {
+  transform: scale(1);
+}
+/* --- Tombol Tutup (CLOSE BUTTON) --- */
+.auth-container .close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  background: var(--color-white);
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.auth-container .close:hover {
+  background: #f0f0f0;
+  color: #000;
+  transform: scale(1.1);
+}
+/* --- 3. SISI KIRI (Brand Side - Background Tosca Gelap) --- */
+.auth-side {
+  width: 50%;
+  padding: 40px;
+}
+
+.auth-brand {
+  background: var(--color-bg-2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.brand-content {
+  color: var(--color-white);
+}
+
+.brand-icon {
+  font-size: 60px;
+  margin-bottom: 10px;
+  color: var(--color-tosca-primary);
+}
+
+.brand-logo {
+  font-size: 38px;
+  font-weight: 800;
+  margin-bottom: 15px;
+  font-family: "Poppins", sans-serif;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.brand-tagline {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 300;
+}
+
+/* --- 4. SISI KANAN (Form Side - Background Putih) --- */
+.auth-form-side {
+  position: relative;
+  width: 50%;
+  background: var(--color-white);
+  overflow-y: auto;
+  padding: 30px 40px;
+}
+
+/* Form Umum */
+.auth-form {
+  width: 100%;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  padding-bottom: 30px;
+}
+
+.auth-form.form-hidden {
+  position: absolute;
+  top: 30px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(20px);
+  pointer-events: none;
+}
+
+.auth-form-side:has(#loginForm:not(.form-hidden)) {
+  overflow-y: hidden;
+}
+
+.auth-form-side:has(#registerForm:not(.form-hidden)) {
+  overflow-y: auto;
+}
+
+/* Header Form */
+.form-header {
+  margin-bottom: 30px;
+}
+
+.form-header h2 {
+  color: var(--color-tosca-dark);
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-family: "Poppins", sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.form-header p {
+  color: var(--color-tosca-medium);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+/* Group Input */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--color-tosca-dark);
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  color: var(--color-tosca-dark);
+}
+
+.form-control:focus {
+  border-color: var(--color-tosca-primary);
+  box-shadow: 0 0 0 3px rgba(119, 210, 208, 0.3);
+  outline: none;
+}
+
+/* Password Toggle */
+.password-input-wrapper {
+  position: relative;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-tosca-medium);
+  font-size: 18px;
+  padding: 5px;
+}
+
+/* Row (untuk NIK/Nama, dll) */
+.auth-form-side .form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.auth-form-side .form-row .form-group {
+  flex: 1;
+}
+
+/* Tombol Submit */
+.auth-form-side .btn-primary {
+  display: block;
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(
+    135deg,
+    var(--color-tosca-primary),
+    var(--color-tosca-hover)
+  );
+  color: var(--color-white);
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(119, 210, 208, 0.4);
+}
+
+.auth-form-side .btn-primary:hover {
+  box-shadow: 0 8px 20px rgba(119, 210, 208, 0.5);
+  transform: translateY(-2px);
+}
+
+.auth-form-side .form-control {
+  width: 100%;
+  padding: 12px 15px;
+}
+
+/* Footer Form (Link Daftar/Masuk) */
+.form-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--color-tosca-medium);
+}
+
+.form-footer a {
+  color: var(--color-tosca-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Alert (Pesan Error/Success) */
+.alert {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.alert.show {
+  display: block;
+  opacity: 1;
+}
+
+.alert-error {
+  background-color: #fce7e7;
+  color: #cc0000;
+  border: 1px solid #f9c7c7;
+}
+
+.alert-success {
+  background-color: #e6faf9;
+  color: #1e5f5c;
+  border: 1px solid #c8f5f3;
+}
+
+/* Loading Spinner (untuk tombol submit) */
+.loading-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-white);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- 5. RESPONSIVE MODAL --- */
+@media (max-width: 992px) {
+  .auth-container {
+    flex-direction: column;
+    height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .auth-side {
+    width: 100%;
+    padding: 30px;
+  }
+
+  .auth-brand {
+    display: none;
+  }
+
+  .auth-form-side {
+    width: 100%;
+    padding: 30px 20px;
+  }
+
+  .auth-form.form-hidden {
+    top: 0;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+/* ======================================================= */
+/* === PAGE SEVEN - FOOTER SECTION === */
+.footer-section {
+  position: relative;
+  background: var(--color-off-white);
+  color: var(--font-secondary); /* <<< WARNA TEKS UTAMA */
+  padding-top: 80px;
+  overflow: hidden;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Footer Main Grid */
+.footer-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 50px;
+  padding-bottom: 50px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* sebelumnya putih */
+}
+
+/* Footer Brand Column */
+.footer-brand-col {
+  max-width: 350px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.footer-logo-icon {
+  font-size: 36px;
+  color: var(--font-primary); /* <<< */
+}
+
+.footer-logo h3 {
+  font-family: var(--font-primary);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--font-primary); /* <<< */
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-tosca-primary);
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.footer-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--font-primary); /* <<< */
+  margin-bottom: 25px;
+}
+
+/* Social Media Links */
+.footer-social {
+  display: flex;
+  gap: 12px;
+}
+
+.social-link {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1); /* diganti dari putih */
+  border-radius: 50%;
+  color: var(--font-primary); /* <<< */
+  font-size: 18px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.social-link:hover {
+  background: var(--color-tosca-primary);
+  color: var(--color-white);
+  transform: translateY(-3px);
+}
+
+/* Footer Columns */
+.footer-column-title {
+  font-family: var(--font-primary);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--font-primary); /* <<< */
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-links li {
+  margin-bottom: 12px;
+}
+
+.footer-links a {
+  color: var(--font-primary); /* <<< */
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.footer-links a:hover {
+  color: var(--color-tosca-primary);
+  padding-left: 5px;
+}
+
+/* Contact Info */
+.footer-contact {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-contact li {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--font-primary); /* <<< */
+}
+
+.footer-contact i {
+  color: var(--color-tosca-primary);
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  padding: 30px 0;
+}
+
+.footer-bottom-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.copyright {
+  font-size: 14px;
+  color: var(--font-primary); /* <<< */
+  margin: 0;
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.footer-bottom-links a {
+  color: var(--font-primary); /* <<< */
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-bottom-links a:hover {
+  color: var(--color-tosca-primary);
+}
+
+.footer-bottom-links .separator {
+  color: var(--font-primary); /* <<< */
+}
+
+/* Decorative Wave */
+.footer-wave {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.footer-wave svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 80px;
+}
+
+.footer-wave path {
+  fill: var(--color-bg-2); /* wave tetap seperti sebelumnya */
+}
+
+/* ======================================================= */
+/* === RESPONSIVE FOOTER === */
+/* ======================================================= */
+
+@media (max-width: 992px) {
+  .footer-main {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-brand-col {
+    grid-column: 1 / -1;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .footer-section {
+    padding-top: 60px;
+  }
+
+  .footer-main {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .footer-bottom-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-logo h3 {
+    font-size: 24px;
+  }
+
+  .footer-column-title {
+    font-size: 16px;
+  }
+}

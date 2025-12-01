@@ -4,8 +4,90 @@
 
 console.log("🔐 Auth script loaded (Enhanced for Asisten)");
 
-// Wait for DOM to be fully loaded
+// ========================================
+// DETERMINE USER ROLE (DOCTOR OR ASISTEN)
+// ========================================
+async function determineUserRole(user) {
+  console.log("🔍 Determining user role for:", user.id);
+  console.log("📧 User email:", user.email);
+  
+  try {
+    // First, check if user is a doctor (by UUID)
+    const { data: dokterData, error: dokterError } = await supabaseClient
+      .from('dokter')
+      .select('*')
+      .eq('id_dokter', user.id)
+      .single();
+    
+    if (dokterData && !dokterError) {
+      console.log("👨‍⚕️ User is a DOCTOR");
+      localStorage.setItem("user_role", "dokter");
+      localStorage.setItem("user_type", "dokter");
+      localStorage.setItem("id_dokter", dokterData.id_dokter);
+      localStorage.setItem("dokter_data", JSON.stringify(dokterData));
+      return "dokter";
+    }
+    
+    console.log("❌ Not a doctor, checking asisten...");
+    
+    // Check asisten_dokter by UUID
+    const { data: asistenData, error: asistenError } = await supabaseClient
+      .from('asisten_dokter')
+      .select('*')
+      .eq('id_asisten_dokter', user.id)
+      .single();
+    
+    console.log("🔍 Asisten query result:", asistenData);
+    console.log("🔍 Asisten query error:", asistenError);
+    
+    if (asistenData && !asistenError) {
+      console.log("👔 User is an ASISTEN DOKTER:", asistenData);
+      localStorage.setItem("user_role", "asisten_dokter");
+      localStorage.setItem("user_type", "asisten_dokter");
+      localStorage.setItem("id_asisten_dokter", asistenData.id_asisten_dokter);
+      localStorage.setItem("id_dokter", asistenData.id_dokter);
+      localStorage.setItem("asisten_data", JSON.stringify(asistenData));
+      return "asisten_dokter";
+    }
+    
+    // No match found
+    console.error("❌ User not found in dokter or asisten_dokter tables!");
+    alert(
+      `⚠️ Akun Tidak Terdaftar!\n\n` +
+      `Email: ${user.email}\n` +
+      `User ID: ${user.id}\n\n` +
+      `Akun ini belum terdaftar sebagai Dokter atau Asisten.\n` +
+      `Silakan hubungi administrator.`
+    );
+    
+    return "unknown";
+    
+  } catch (error) {
+    console.error("❌ Error determining user role:", error);
+    alert(`Error: ${error.message}`);
+    return "unknown";
+  }
+}
+
+// Helper function to show alerts
+function showAlert(alertElement, message, type) {
+  if (!alertElement) return;
+  
+  alertElement.className = `alert alert-${type}`;
+  alertElement.textContent = message;
+  alertElement.style.display = "block";
+  
+  setTimeout(() => {
+    alertElement.style.display = "none";
+  }, 5000);
+}
+
+// ========================================
+// WAIT FOR DOM TO BE FULLY LOADED (ONLY ONCE!)
+// ========================================
 document.addEventListener("DOMContentLoaded", function () {
+  console.log("📄 DOM loaded, initializing auth...");
+
   // ========================================
   // CHECK IF USER IS ALREADY LOGGED IN
   // ========================================
@@ -32,265 +114,190 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // ========================================
-  // DETERMINE USER ROLE (DOCTOR OR ASISTEN)
-  // ========================================
-  async function determineUserRole(user) {
-    console.log("🔍 Determining user role for:", user.id);
-    console.log("📧 User email:", user.email);
-    
-    try {
-      // First, check if user is a doctor (by UUID)
-      const { data: dokterData, error: dokterError } = await supabaseClient
-        .from('dokter')
-        .select('*')
-        .eq('id_dokter', user.id)
-        .single();
-      
-      if (dokterData && !dokterError) {
-        console.log("👨‍⚕️ User is a DOCTOR");
-        localStorage.setItem("user_role", "dokter");
-        localStorage.setItem("user_type", "dokter");
-        localStorage.setItem("id_dokter", dokterData.id_dokter);
-        localStorage.setItem("dokter_data", JSON.stringify(dokterData));
-        return "dokter";
-      }
-      
-      console.log("❌ Not a doctor, checking asisten...");
-      
-      // Check asisten_dokter by UUID
-      const { data: asistenData, error: asistenError } = await supabaseClient
-        .from('asisten_dokter')
-        .select('*')
-        .eq('id_asisten_dokter', user.id)
-        .single();
-      
-      console.log("🔍 Asisten query result:", asistenData);
-      console.log("🔍 Asisten query error:", asistenError);
-      
-      if (asistenData && !asistenError) {
-        console.log("👔 User is an ASISTEN DOKTER:", asistenData);
-        localStorage.setItem("user_role", "asisten_dokter");
-        localStorage.setItem("user_type", "asisten_dokter");
-        localStorage.setItem("id_asisten_dokter", asistenData.id_asisten_dokter);
-        localStorage.setItem("id_dokter", asistenData.id_dokter); // Parent dokter ID
-        localStorage.setItem("asisten_data", JSON.stringify(asistenData));
-        return "asisten_dokter";
-      }
-      
-      // No match found
-      console.error("❌ User not found in dokter or asisten_dokter tables!");
-      alert(
-        `⚠️ Akun Tidak Terdaftar!\n\n` +
-        `Email: ${user.email}\n` +
-        `User ID: ${user.id}\n\n` +
-        `Akun ini belum terdaftar sebagai Dokter atau Asisten.\n` +
-        `Silakan hubungi administrator.`
-      );
-      
-      return "unknown";
-      
-    } catch (error) {
-      console.error("❌ Error determining user role:", error);
-      alert(`Error: ${error.message}`);
-      return "unknown";
-    }
-  }
-
   // Check session on page load
   checkUserSession();
 
   // ========================================
-  // MODAL CONTROLS
+  // MODAL CONTROLS (NEW LANDING PAGE)
   // ========================================
-  const modal = document.getElementById("authModal");
-  const openLogin = document.getElementById("openLogin");
-  const openRegister = document.getElementById("openRegister");
-  const closeModal = document.querySelector(".close");
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  const toRegister = document.getElementById("toRegister");
-  const toLogin = document.getElementById("toLogin");
+  const modal = document.getElementById("authModalOverlay");
+  const openLoginBtns = document.querySelectorAll("#openLogin");
+  const openRegisterBtns = document.querySelectorAll("#openRegister");
+  const closeBtn = document.querySelector(".close");
+  const loginFormDiv = document.getElementById("loginForm");
+  const registerFormDiv = document.getElementById("registerForm");
+  const toRegisterLink = document.getElementById("toRegister");
+  const toLoginLink = document.getElementById("toLogin");
 
-  // Open login modal
-  if (openLogin) {
-    openLogin.addEventListener("click", (e) => {
+  if (!modal) {
+    console.warn("⚠️ Auth modal not found!");
+    return;
+  }
+
+  console.log("✅ Modal found, setting up controls...");
+
+  // OPEN LOGIN
+  openLoginBtns.forEach((btn) => {
+    btn.addEventListener("click", function(e) {
       e.preventDefault();
+      console.log("🔓 LOGIN clicked");
+      
       modal.style.display = "flex";
-      loginForm.style.display = "block";
-      registerForm.style.display = "none";
+      setTimeout(() => modal.classList.add("show-modal"), 10);
+      
+      loginFormDiv.style.display = "block";
+      registerFormDiv.style.display = "none";
     });
-  }
+  });
 
-  // Open register modal
-  if (openRegister) {
-    openRegister.addEventListener("click", (e) => {
+  // OPEN REGISTER
+  openRegisterBtns.forEach((btn) => {
+    btn.addEventListener("click", function(e) {
       e.preventDefault();
+      console.log("📝 REGISTER clicked");
+      
       modal.style.display = "flex";
-      loginForm.style.display = "none";
-      registerForm.style.display = "block";
+      setTimeout(() => modal.classList.add("show-modal"), 10);
+      
+      registerFormDiv.style.display = "block";
+      loginFormDiv.style.display = "none";
     });
-  }
+  });
 
-  // Switch to register
-  if (toRegister) {
-    toRegister.addEventListener("click", (e) => {
+  // SWITCH TO REGISTER
+  if (toRegisterLink) {
+    toRegisterLink.addEventListener("click", function(e) {
       e.preventDefault();
-      loginForm.style.display = "none";
-      registerForm.style.display = "block";
+      loginFormDiv.style.display = "none";
+      registerFormDiv.style.display = "block";
     });
   }
 
-  // Switch to login
-  if (toLogin) {
-    toLogin.addEventListener("click", (e) => {
+  // SWITCH TO LOGIN
+  if (toLoginLink) {
+    toLoginLink.addEventListener("click", function(e) {
       e.preventDefault();
-      registerForm.style.display = "none";
-      loginForm.style.display = "block";
+      registerFormDiv.style.display = "none";
+      loginFormDiv.style.display = "block";
     });
   }
 
-  // Close modal
-  if (closeModal) {
-    closeModal.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
+  // CLOSE MODAL
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => closeModal());
   }
 
-  // Close modal when clicking outside
-  window.addEventListener("click", (e) => {
+  modal.addEventListener("click", function(e) {
     if (e.target === modal) {
-      modal.style.display = "none";
+      closeModal();
     }
   });
 
-  // ========================================
-  // HANDLE LOGIN (ENHANCED FOR DOCTOR + ASISTEN)
-  // ========================================
-  const loginFormElement = loginForm ? loginForm.querySelector("form") : null;
-  if (loginFormElement) {
-    loginFormElement.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape" && modal.style.display === "flex") {
+      closeModal();
+    }
+  });
 
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Logging in...";
-
-      const formData = {
-        email: e.target.querySelector('input[type="email"]').value,
-        password: e.target.querySelector('input[type="password"]').value,
-      };
-
-      console.log("📤 Attempting login for:", formData.email);
-
-      try {
-        // Sign in with Supabase
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password
-        });
-        
-        if (error) {
-          throw error;
-        }
-        
-        const user = data.user;
-        const session = data.session;
-        
-        if (!user || !session) {
-          throw new Error("Tidak ada session atau user.");
-        }
-        
-        console.log("✅ Login successful!", user);
-        console.log("📋 Session:", session);
-        
-        // Store user info and token
-        localStorage.setItem("access_token", session.access_token);
-        localStorage.setItem("refresh_token", session.refresh_token);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("isLoggedIn", "true");
-        
-        // 🔍 DETERMINE IF USER IS DOCTOR OR ASISTEN
-        const userRole = await determineUserRole(user);
-        
-        // Final verification
-        const storedId = localStorage.getItem("id_dokter");
-        const storedRole = localStorage.getItem("user_role");
-        
-        console.log("🎯 FINAL CHECK:");
-        console.log("   - Role:", storedRole);
-        console.log("   - id_dokter:", storedId);
-        
-        if (!storedId) {
-          console.error("❌ CRITICAL: id_dokter NOT stored!");
-          alert("Warning: User ID not stored properly.");
-        }
-        
-        // Create personalized welcome message
-        let welcomeMessage = "Login berhasil!\n\n";
-        
-        if (userRole === "dokter") {
-          const dokterData = JSON.parse(localStorage.getItem("dokter_data") || "{}");
-          welcomeMessage += `Selamat datang, Dr. ${dokterData.nama_lengkap || user.email}!\n`;
-          welcomeMessage += `Role: Dokter`;
-        } else if (userRole === "asisten_dokter") {
-          const asistenData = JSON.parse(localStorage.getItem("asisten_data") || "{}");
-          welcomeMessage += `Selamat datang, ${asistenData.nama_lengkap || user.email}!\n`;
-          welcomeMessage += `Role: Asisten Dokter`;
-        } else {
-          welcomeMessage += `Selamat datang, ${user.email}!`;
-        }
-        
-        alert(welcomeMessage);
-        
-        // Close modal
-        modal.style.display = "none";
-        
-        // Wait a bit for session to be fully established
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Redirect based on role
-        if (userRole === "dokter") {
-          window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
-        } else if (userRole === "asisten_dokter") {
-          // You can redirect asisten to a different dashboard or the same one
-          window.location.href = "/mapotek_php/WEB/Dashboard/index.html";
-          // OR: window.location.href = "/mapotek_php/WEB/Dashboard/asisten.html";
-        } else {
-          // Unknown role - should not happen, but fallback
-          alert("Role tidak dikenali. Silakan hubungi administrator.");
-          await supabaseClient.auth.signOut();
-          localStorage.clear();
-        }
-        
-      } catch (error) {
-        console.error("❌ Login Error:", error);
-        
-        let errorMessage = "Login gagal: ";
-        
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage += "Email atau password salah!";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage += "Email belum dikonfirmasi!";
-        } else {
-          errorMessage += error.message;
-        }
-        
-        alert(errorMessage);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-      }
-    });
+  function closeModal() {
+    modal.classList.remove("show-modal");
+    setTimeout(() => {
+      modal.style.display = "none";
+    }, 300);
   }
 
   // ========================================
-  // DIRECT DOCTOR REGISTRATION (NO SATUSEHAT)
+  // LOGIN HANDLER
+  // ========================================
+  const loginForm = document.querySelector("#loginForm form");
+  
+  if (loginForm) {
+    console.log("✅ Login form found");
+    
+    loginForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      console.log("🔐 Login attempt started");
+
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const loginAlert = document.getElementById("loginAlert");
+
+      // Validate
+      if (!email || !password) {
+        showAlert(loginAlert, "Email dan password harus diisi!", "danger");
+        return;
+      }
+
+      // Show loading
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
+
+      try {
+        // Login via Supabase
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          console.error("❌ Login error:", error);
+          showAlert(loginAlert, `Login gagal: ${error.message}`, "danger");
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+          return;
+        }
+
+        if (data && data.user) {
+          console.log("✅ Login successful:", data.user);
+          
+          // Save to localStorage
+          localStorage.setItem("access_token", data.session.access_token);
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("isLoggedIn", "true");
+
+          // Determine role
+          const role = await determineUserRole(data.user);
+          
+          if (role === "unknown") {
+            showAlert(loginAlert, "Akun tidak terdaftar sebagai dokter atau asisten!", "danger");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            return;
+          }
+
+          // Success - redirect based on role
+          showAlert(loginAlert, "Login berhasil! Mengalihkan...", "success");
+          
+          setTimeout(() => {
+            if (role === "dokter") {
+              window.location.href = "../../Dashboard/index.html";
+            } else if (role === "asisten_dokter") {
+              window.location.href = "../../Dashboard/index.html";
+            }
+          }, 1000);
+        }
+
+      } catch (error) {
+        console.error("❌ Login error:", error);
+        showAlert(loginAlert, `Error: ${error.message}`, "danger");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    });
+  } else {
+    console.warn("⚠️ Login form not found!");
+  }
+
+  // ========================================
+  // REGISTRATION HANDLER
   // ========================================
   const dokterRegistrationForm = document.getElementById("dokterRegistrationForm");
   
   if (dokterRegistrationForm) {
+    console.log("✅ Registration form found");
+    
     // Auto-generate username from name input
     const namaInput = document.getElementById("dokterNama");
     const usernameInput = document.getElementById("dokterUsername");
@@ -346,7 +353,6 @@ document.addEventListener("DOMContentLoaded", function () {
       submitBtn.innerHTML =
         '<span class="spinner-border spinner-border-sm me-2"></span>Mendaftar...';
 
-      // Prepare data for registration (NO SATUSEHAT - DIRECT TO DATABASE)
       const registrationData = {
         action: "register_doctor_direct",
         data: {
@@ -377,91 +383,37 @@ document.addEventListener("DOMContentLoaded", function () {
         const result = await response.json();
         console.log("💾 Full registration result:", result);
 
-        if (result.success) {
-          if (result.data && result.data.id_dokter) {
-            console.log(
-              "✅ SUCCESS: Doctor registered with ID:",
-              result.data.id_dokter
-            );
+        if (result.success && result.data && result.data.id_dokter) {
+          console.log("✅ SUCCESS: Doctor registered with ID:", result.data.id_dokter);
 
-            alert(
-              `✅ Registrasi Berhasil!\n\n` +
-                `Selamat datang, ${registrationData.data.nama}!\n\n` +
-                `Email: ${registrationData.data.email}\n` +
-                `Username: ${registrationData.data.username}\n` +
-                `ID Dokter: ${result.data.id_dokter}\n\n` +
-                `Silakan login untuk melanjutkan.`
-            );
+          alert(
+            `✅ Registrasi Berhasil!\n\n` +
+            `Selamat datang, ${registrationData.data.nama}!\n\n` +
+            `Email: ${registrationData.data.email}\n` +
+            `Username: ${registrationData.data.username}\n` +
+            `ID Dokter: ${result.data.id_dokter}\n\n` +
+            `Silakan login untuk melanjutkan.`
+          );
 
-            // Reset form and switch to login
-            dokterRegistrationForm.reset();
-            registerForm.style.display = "none";
-            loginForm.style.display = "block";
-          } else {
-            // Success but no id_dokter
-            console.warn("⚠️ User created but doctor record not inserted");
-            console.warn("Response:", result);
-
-            let debugMsg = `⚠️ User Created but Doctor Record Failed!\n\n`;
-            debugMsg += `✅ User ID: ${result.data?.user_id || "N/A"}\n`;
-            debugMsg += `✅ Email: ${result.data?.email || "N/A"}\n`;
-            debugMsg += `❌ ID Dokter: NULL\n\n`;
-            debugMsg += `🔍 TROUBLESHOOTING:\n`;
-            debugMsg += `1. Check browser console (F12) for details\n`;
-            debugMsg += `2. Check PHP error logs\n`;
-            debugMsg += `3. Check database connection\n\n`;
-
-            if (result.debug) {
-              debugMsg += `📋 Debug Info:\n${JSON.stringify(
-                result.debug,
-                null,
-                2
-              )}\n\n`;
-            }
-
-            if (result.error_details) {
-              debugMsg += `❌ Error Details:\n${JSON.stringify(
-                result.error_details,
-                null,
-                2
-              )}`;
-            }
-
-            alert(debugMsg);
-          }
+          // Reset form and switch to login
+          dokterRegistrationForm.reset();
+          registerFormDiv.style.display = "none";
+          loginFormDiv.style.display = "block";
         } else {
-          // Show detailed error
           console.error("❌ Registration failed:", result);
-
-          let errorMsg = "❌ Registrasi Gagal!\n\n";
-          errorMsg += `Message: ${result.message || "Terjadi kesalahan."}\n\n`;
-
-          if (result.error_details) {
-            errorMsg += "📋 Error Details:\n";
-            errorMsg += `Code: ${result.error_details.code || "N/A"}\n`;
-            errorMsg += `Message: ${result.error_details.message || "N/A"}\n`;
-            errorMsg += `Details: ${result.error_details.details || "N/A"}\n`;
-            errorMsg += `Hint: ${result.error_details.hint || "N/A"}\n\n`;
-          }
-
-          if (result.debug) {
-            errorMsg += "🔍 Debug Info:\n";
-            errorMsg += JSON.stringify(result.debug, null, 2);
-          }
-
-          alert(errorMsg);
+          alert(`❌ Registrasi Gagal!\n\n${result.message || "Terjadi kesalahan."}`);
         }
       } catch (error) {
         console.error("❌ Fetch error:", error);
-        alert(
-          `Terjadi kesalahan jaringan:\n\n${error.message}\n\nCheck browser console for details.`
-        );
+        alert(`Terjadi kesalahan jaringan:\n\n${error.message}`);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
       }
     });
+  } else {
+    console.warn("⚠️ Registration form not found!");
   }
 
   console.log("✅ Auth handlers ready (Enhanced for Asisten)");
-}); // End of DOMContentLoaded
+});

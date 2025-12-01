@@ -1,640 +1,526 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-	<title>Mapotek - Sistem Manajemen Praktik Dokter</title>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="format-detection" content="telephone=no">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="author" content="">
-	<meta name="keywords" content="">
-	<meta name="description" content="">
-
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
-		integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-	<link rel="stylesheet" type="text/css" href="css/normalize.css">
-	<link rel="stylesheet" type="text/css" href="icomoon/icomoon.css">
-	<link rel="stylesheet" type="text/css" href="css/vendor.css">
-	<link rel="stylesheet" type="text/css" href="style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAPOTEK - Medical Assistant System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Your New Custom CSS -->
+    <link rel="stylesheet" href="stylebaru.css">
 </head>
+<body>
+    <!-- AUTH MODAL OVERLAY (New Design) -->
+    <div id="authModalOverlay" style="display: none;">
+        <div class="auth-container">
+            <div class="auth-side auth-brand">
+                <div class="brand-content">
+                    <div class="brand-icon">🏥</div>
+                    <div class="brand-logo">MAPOTEK</div>
+                    <p class="brand-tagline">
+                        Medical Assistant & Patient-Oriented Treatment Evaluation Kit
+                    </p>
+                </div>
+            </div>
+            <div class="auth-side auth-form-side">
+                <!-- LOGIN FORM -->
+                <div id="loginForm" style="display: block;">
+                    <form>
+                        <div class="form-header">
+                            <h2>Selamat Datang</h2>
+                            <p>Masuk ke akun Anda untuk melanjutkan</p>
+                        </div>
+                        <div id="loginAlert" class="alert"></div>
+                        <div class="form-group">
+                            <label for="loginEmail">Email</label>
+                            <input type="email" id="loginEmail" class="form-control" placeholder="nama@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required>
+                                <button type="button" class="toggle-password" data-target="loginPassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Masuk</button>
+                        <div class="form-footer">
+                            <p>Belum punya akun? <a href="#" id="toRegister">Daftar sekarang</a></p>
+                        </div>
+                    </form>
+                </div>
 
-<body data-bs-spy="scroll" data-bs-target="#header" tabindex="0">
+                <!-- REGISTER FORM -->
+                <div id="registerForm" style="display: none;">
+                    <form id="dokterRegistrationForm">
+                        <div class="form-header">
+                            <h2>Daftar Akun Dokter</h2>
+                            <p>Lengkapi data untuk membuat akun baru</p>
+                        </div>
+                        <div id="registerAlert" class="alert"></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dokterNama">Nama Lengkap</label>
+                                <input type="text" id="dokterNama" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dokterNIK">NIK (16 Digit)</label>
+                                <input type="text" id="dokterNIK" class="form-control" maxlength="16" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dokterTanggalLahir">Tanggal Lahir</label>
+                                <input type="date" id="dokterTanggalLahir" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="dokterGender">Jenis Kelamin</label>
+                                <select id="dokterGender" class="form-control" required>
+                                    <option value="">Pilih</option>
+                                    <option value="Laki-Laki">Laki-Laki</option>
+                                    <option value="Perempuan">Perempuan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterEmail">Email</label>
+                            <input type="email" id="dokterEmail" class="form-control" placeholder="dokter@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterUsername">Username</label>
+                            <input type="text" id="dokterUsername" class="form-control" placeholder="username123" required readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterAlamat">Alamat Praktik</label>
+                            <input type="text" id="dokterAlamat" class="form-control" placeholder="Jl. Kesehatan No. 123" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterPhone">No. Telepon</label>
+                            <input type="tel" id="dokterPhone" class="form-control" placeholder="08123456789" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterPassword">Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="dokterPassword" class="form-control" placeholder="Min. 6 karakter" required>
+                                <button type="button" class="toggle-password" data-target="dokterPassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dokterPasswordConfirm">Konfirmasi Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="dokterPasswordConfirm" class="form-control" placeholder="Ulangi password" required>
+                                <button type="button" class="toggle-password" data-target="dokterPasswordConfirm">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Daftar Sekarang</button>
+                        <div class="form-footer">
+                            <p>Sudah punya akun? <a href="#" id="toLogin">Masuk di sini</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <button class="close">&times;</button>
+        </div>
+    </div>
 
-	<div id="header-wrap">
+    <!-- NAVBAR -->
+    <nav id="navbar" class="navbar navbar-expand-lg fixed-top py-3">
+        <div class="nav-wrapper">
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav nav-center">
+                    <li class="nav-item"><a class="nav-link" href="#beranda">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#kelebihan">Kelebihan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#video">Video</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#langganan">Langganan</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#mobile">Mobile</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                </ul>
+                <ul class="navbar-nav nav-right">
+                    <li class="nav-item"><a class="btn btn-primary ms-3 px-4 rounded-pill" href="#" id="openLogin">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-primary ms-3 px-4 rounded-pill" href="#" id="openRegister">Sign Up</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-		<div class="top-content">
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-md-6">
-						<div class="social-links">
-							<ul>
-								<li>
-									<a href="#"><i class="icon icon-facebook"></i></a>
-								</li>
-								<li>
-									<a href="#"><i class="icon icon-twitter"></i></a>
-								</li>
-								<li>
-									<a href="#"><i class="icon icon-youtube-play"></i></a>
-								</li>
-								<li>
-									<a href="#"><i class="icon icon-behance-square"></i></a>
-								</li>
-							</ul>
-						</div><!--social-links-->
-					</div>
-					<div class="col-md-6 text-end">
-						<ul class="auth-links">
-							<li><a href="#" id="openLogin">Login</a></li>
-							<li><a href="#" id="openRegister">Register</a></li>
-						</ul>
-					</div>
-				</div>
-			</div>
-		</div><!--top-content-->
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="beranda">
+        <div class="hero-box">
+            <div class="hero-content-left">
+                <h2 class="fw-bold text-center">MAPOTEK</h2>
+                <p class="lead">Medical Assistant & Patient-Oriented Treatment Evaluation kit</p>
+                <p class="lead">Sistem informasi manajemen praktik mandiri dokter berbasis web dan mobile</p>
+            </div>
+            <div class="image-absolute-wrapper">
+                <img src="gambar/barudokter.png" class="img-fluid" alt="Doctor">
+            </div>
+        </div>
+    </section>
 
-		<!-- Auth Modal -->
-		<div id="authModal" class="auth-modal">
-			<div class="auth-modal-content">
-				<span class="close">&times;</span>
+    <!-- PAGE TWO - PROBLEMS -->
+    <section class="page-two">
+        <div class="page-two-pin">
+            <div class="page-two-inner">
+                <h2 class="fw-bold text-center mb-5">Sebagai dokter, anda memiliki masalah</h2>
+                <div class="problems-container">
+                    <div class="problems-row">
+                        <div class="problem-box" style="width: 45%;">
+                            <div class="problem-content">Pencatatan administrasi masih dilakukan secara manual</div>
+                        </div>
+                        <div class="problem-box" style="width: 35%;">
+                            <div class="problem-content">antrian yang rumit dan sering molor</div>
+                        </div>
+                    </div>
+                    <div class="problems-row">
+                        <div class="problem-box" style="width: 60%;">
+                            <div class="problem-content">Biaya operasional tinggi karena harus mempekerjakan banyak staf administrasi</div>
+                        </div>
+                        <div class="problem-box" style="width: 25%;">
+                            <div class="problem-content">kesulitan mengetahui riwayat penyakit pasien</div>
+                        </div>
+                    </div>
+                    <div class="problems-row">
+                        <div class="problem-box" style="width: 30%;">
+                            <div class="problem-content">Laporan keuangan berantakan, sulit melacak pendapatan dan pengeluaran dengan pasti</div>
+                        </div>
+                        <div class="problem-box" style="width: 55%;">
+                            <div class="problem-content">Manajemen obat tidak efisien, sering terjadi kelebihan atau kekurangan stok</div>
+                        </div>
+                    </div>
+                    <div class="problems-row">
+                        <div class="problem-box" style="width: 40%;">
+                            <div class="problem-content">sering kehilangan pencatatan data data penting terkait praktik</div>
+                        </div>
+                        <div class="problem-box" style="width: 38%;">
+                            <div class="problem-content">Kesulitan dalam memanage rekam medis yang dari pasein</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-				<!-- Login Form -->
-				<div id="loginForm">
-					<h2 class="text-center mb-4">Login</h2>
-					<form>
-						<div class="mb-3">
-							<label>Email</label>
-							<input type="email" class="form-control" placeholder="Masukkan Email" required>
-						</div>
-						<div class="mb-3">
-							<label>Password</label>
-							<input type="password" class="form-control" placeholder="Masukkan Password" required>
-						</div>
-						<button type="submit" class="btn btn-primary w-100">Login</button>
-						<p class="text-center mt-3">
-							Belum punya akun? <a href="#" id="toRegister">Register</a>
-						</p>
-					</form>
-				</div>
+    <!-- PAGE THREE - FEATURES -->
+    <section class="features-everest" id="kelebihan">
+        <div class="features-header">
+            <h2>Mapotek hadir sebagai solusi</h2>
+            <p>Dirancang untuk mempermudah alur kerja praktik mandiri anda</p>
+        </div>
+        <div class="features-scroll-container">
+            <div class="features-sticky-wrapper">
+                <div class="feature-item" data-index="0">
+                    <div class="feature-content">
+                        <h3>Kelola Obat Lebih Mudah, Praktik Jadi Efisien</h3>
+                        <p>Stok selalu terpantau, riwayat keluar-masuk tercatat otomatis, dan filter obat hampir atau sudah kadalwarsa.</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/gambar_obat.png" alt="Icon Inventori Obat" class="feature-image">
+                    </div>
+                </div>
+                <div class="feature-item" data-index="1">
+                    <div class="feature-content">
+                        <h3>Data Pasien Lebih Aman & Terorganisir</h3>
+                        <p>Seluruh informasi pasien tersimpan rapi dan mudah diakses kapan saja.</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/dataa-secure.png" alt="Data Security" class="feature-image">
+                    </div>
+                </div>
+                <div class="feature-item" data-index="2">
+                    <div class="feature-content">
+                        <h3>Booking Online yang Nyaman & Real-Time</h3>
+                        <p>Tidak terjadi antrian yang menumpuk melebihi jam kerja atau antrian yang amburadul.</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/fixxdung.png" alt="Booking Online" class="feature-image">
+                    </div>
+                </div>
+                <div class="feature-item" data-index="3">
+                    <div class="feature-content">
+                        <h3>Pemeriksaan Lebih Terarah & Efisien</h3>
+                        <p>Dari keluhan hingga rekomendasi obat—semuanya digital, cepat, dan terstruktur.</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/asliitumah.png" alt="Pemeriksaan" class="feature-image">
+                    </div>
+                </div>
+                <div class="feature-item" data-index="4">
+                    <div class="feature-content">
+                        <h3>Mengurangi biaya operasional memperkerjakan banyak staff</h3>
+                        <p>Dengan biaya bulanan yang murah dan dapat mengurangi biaya oprasional</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/turunn.png" alt="Cost Reduction" class="feature-image">
+                    </div>
+                </div>
+                <div class="feature-item" data-index="5">
+                    <div class="feature-content">
+                        <h3>Pembukuan Otomatis & Profesional</h3>
+                        <p>Laporan pendapatan, pengeluaran, dan rekap bulanan tersaji otomatis.</p>
+                    </div>
+                    <div class="feature-visual">
+                        <img src="gambar/pembukuan fix.png" alt="Pembukuan" class="feature-image">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-				<!-- ========================================
-				     SIMPLIFIED REGISTRATION FORM (UPDATED)
-				     ======================================== -->
-				<div id="registerForm" style="display:none;">
-					<h2 class="text-center mb-4">Daftar Sebagai Dokter</h2>
-					<p class="text-muted text-center mb-4">Lengkapi data berikut untuk mendaftar</p>
-					
-					<form id="dokterRegistrationForm">
-						<!-- NIK -->
-						<div class="mb-3">
-							<label for="dokterNIK" class="form-label">
-								NIK <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="text" 
-								class="form-control" 
-								id="dokterNIK" 
-								placeholder="Masukkan NIK 16 digit"
-								maxlength="16"
-								pattern="[0-9]{16}"
-								required
-							>
-							<small class="text-muted">Masukkan NIK sesuai KTP (16 digit)</small>
-						</div>
+    <!-- VIDEO SECTION -->
+    <section class="video-section" id="video">
+        <h2 class="video-title">MAPOTEK siap meringankan kerja anda</h2>
+        <div class="video-frame">
+            <video controls autoplay muted>
+                <source src="gambar/murottal.mp4" type="video/mp4" />
+                Browser kamu tidak mendukung tag video.
+            </video>
+        </div>
+    </section>
 
-						<!-- Nama Lengkap -->
-						<div class="mb-3">
-							<label for="dokterNama" class="form-label">
-								Nama Lengkap <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="text" 
-								class="form-control" 
-								id="dokterNama" 
-								placeholder="Masukkan nama lengkap"
-								required
-							>
-						</div>
+    <!-- PRICING SECTION -->
+    <section class="pricing-section" id="langganan">
+        <div class="pricing-header">
+            <h2>Jadi bagian dari kami sekarang</h2>
+            <p>Nikmati semua fitur premium dengan harga yang terjangkau</p>
+        </div>
+        <div class="pricing-card-wrapper">
+            <div class="pricing-card">
+                <div class="pricing-card-header">
+                    <div class="pricing-icon">
+                        <img src="gambar/mapotekkk.png" alt="Premium Icon" class="img-fluid">
+                    </div>
+                    <h3 class="pricing-plan-name">MAPOTEK Premium</h3>
+                    <p class="pricing-duration">Akses Penuh 30 Hari</p>
+                </div>
+                <div class="pricing-card-body">
+                    <div class="pricing-price">
+                        <div class="price-amount">
+                            <span class="price-currency">Rp</span>150<span style="font-size: 48px;">.000,00</span>
+                        </div>
+                        <p class="price-period">per bulan</p>
+                    </div>
+                    <div class="pricing-cta">
+                        <a href="#" class="pricing-btn">Mulai Berlangganan</a>
+                        <button class="pricing-detail-btn" id="openPurchaseDetail">
+                            <i class="bi bi-info-circle"></i> Detail Pembelian
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-						<!-- Tanggal Lahir -->
-						<div class="mb-3">
-							<label for="dokterTanggalLahir" class="form-label">
-								Tanggal Lahir <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="date" 
-								class="form-control" 
-								id="dokterTanggalLahir"
-								required
-							>
-						</div>
+    <!-- MODAL DETAIL PEMBELIAN -->
+    <div id="purchaseDetailModal" style="display: none;">
+        <div class="purchase-modal-container">
+            <div class="purchase-modal-content">
+                <button class="purchase-close">&times;</button>
+                <div class="purchase-header">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <h3>Detail Pembelian Langganan</h3>
+                </div>
+                <div class="purchase-body">
+                    <p class="purchase-info">
+                        Pembelian langganan <strong>MAPOTEK Premium</strong> dilakukan pada bagian <strong>Profil</strong> setelah Anda melakukan registrasi dan masuk ke dalam halaman web MAPOTEK.
+                    </p>
+                    <div class="purchase-steps">
+                        <h4>Langkah-langkah:</h4>
+                        <ol>
+                            <li>Pembeli akan diarahkan pada <strong>"Sign Up"</strong> untuk membuat akun baru</li>
+                            <li>Lengkapi data registrasi Anda</li>
+                            <li><strong>Login</strong> dengan akun yang telah dibuat</li>
+                            <li>Masuk ke halaman <strong>Profil</strong></li>
+                            <li>Pilih paket <strong>MAPOTEK Premium</strong></li>
+                            <li>Lakukan pembayaran sesuai metode yang tersedia</li>
+                        </ol>
+                    </div>
+                    <div class="purchase-note">
+                        <i class="bi bi-shield-check"></i>
+                        <p>Pembayaran Anda aman dan terenkripsi. Langganan akan aktif segera setelah pembayaran terverifikasi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-						<!-- Jenis Kelamin -->
-						<div class="mb-3">
-							<label for="dokterGender" class="form-label">
-								Jenis Kelamin <span class="text-danger">*</span>
-							</label>
-							<select class="form-select" id="dokterGender" required>
-								<option value="">-- Pilih Jenis Kelamin --</option>
-								<option value="male">Laki-Laki</option>
-								<option value="female">Perempuan</option>
-							</select>
-						</div>
+    <!-- PHONE MOCKUP SECTION -->
+    <section class="phone-mockup-section" id="mobile">
+        <div class="phone-mockup-container">
+            <div class="phone-mockup-content">
+                <div class="phone-mockup-text">
+                    <div class="phone-mockup-badge">
+                        <span>⚡ Super App Untuk Pasien</span>
+                    </div>
+                    <h2 class="phone-mockup-title">
+                        kemudahan Bagi Pasien<br />
+                        Dalam <span class="gradient-text">Satu Aplikasi</span>
+                    </h2>
+                    <p class="phone-mockup-description">
+                        Booking online, rekomendasi obat terpercaya, riwayat pemeriksaan lengkap, dan banyak pilihan dokter. Semua kemudahan kesehatan dalam satu aplikasi.
+                    </p>
+                    <div class="phone-mockup-buttons">
+                        <button class="btn-download btn-google">
+                            <i class="bi bi-google-play"></i>
+                            Google Play
+                        </button>
+                    </div>
+                </div>
+                <div class="phone-mockup-device">
+                    <div class="phone-glow"></div>
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-status-bar">
+                                <span class="status-brand">MAPOTEK</span>
+                                <span class="status-time">09:41</span>
+                            </div>
+                            <div class="phone-features-list">
+                                <div class="phone-feature-item active" data-feature="0">
+                                    <div class="feature-icon-wrapper">
+                                        <div class="feature-icon">📅</div>
+                                    </div>
+                                    <div class="feature-info">
+                                        <h4>Booking Online</h4>
+                                        <p>Jadwal konsultasi mudah</p>
+                                    </div>
+                                </div>
+                                <div class="phone-feature-item" data-feature="1">
+                                    <div class="feature-icon-wrapper">
+                                        <div class="feature-icon">💊</div>
+                                    </div>
+                                    <div class="feature-info">
+                                        <h4>Rekomendasi Obat</h4>
+                                        <p>Resep dari dokter terpercaya</p>
+                                    </div>
+                                </div>
+                                <div class="phone-feature-item" data-feature="2">
+                                    <div class="feature-icon-wrapper">
+                                        <div class="feature-icon">📋</div>
+                                    </div>
+                                    <div class="feature-info">
+                                        <h4>Riwayat Pemeriksaan</h4>
+                                        <p>Rekam medis lengkap digital</p>
+                                    </div>
+                                </div>
+                                <div class="phone-feature-item" data-feature="3">
+                                    <div class="feature-icon-wrapper">
+                                        <div class="feature-icon">👨‍⚕️</div>
+                                    </div>
+                                    <div class="feature-info">
+                                        <h4>Pilihan Dokter</h4>
+                                        <p>Banyak dokter spesialis</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="phone-home-indicator"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="decorative-circle circle-1"></div>
+        <div class="decorative-circle circle-2"></div>
+    </section>
 
-						<!-- Email -->
-						<div class="mb-3">
-							<label for="dokterEmail" class="form-label">
-								Email <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="email" 
-								class="form-control" 
-								id="dokterEmail" 
-								placeholder="contoh@email.com"
-								required
-							>
-						</div>
+    <!-- FOOTER -->
+    <footer class="footer-section" id="contact">
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-column footer-brand-col">
+                    <div class="footer-logo">
+                        <div class="pricing-icon">
+                            <img src="gambar/mapotekkk.png" alt="Premium Icon" class="img-fluid">
+                        </div>
+                    </div>
+                    <p class="footer-tagline">Medical Assistant & Patient-Oriented Treatment Evaluation Kit</p>
+                    <p class="footer-description">Solusi digital terpadu untuk manajemen praktik mandiri dokter yang efisien, aman, dan profesional.</p>
+                    <div class="footer-social">
+                        <a href="#" class="social-link" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="social-link" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        <a href="#" class="social-link" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-column-title">Navigasi</h4>
+                    <ul class="footer-links">
+                        <li><a href="#beranda">Beranda</a></li>
+                        <li><a href="#kelebihan">Kelebihan</a></li>
+                        <li><a href="#video">Video Demo</a></li>
+                        <li><a href="#langganan">Langganan</a></li>
+                        <li><a href="#mobile">Aplikasi Mobile</a></li>
+                        <li><a href="#contact">Hubungi Kami</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-column-title">Fitur Utama</h4>
+                    <ul class="footer-links">
+                        <li><a href="#kelebihan">Manajemen Obat</a></li>
+                        <li><a href="#kelebihan">Data Pasien Digital</a></li>
+                        <li><a href="#kelebihan">Booking Online</a></li>
+                        <li><a href="#kelebihan">Rekam Medis</a></li>
+                        <li><a href="#kelebihan">Laporan Keuangan</a></li>
+                        <li><a href="#kelebihan">Analytics Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4 class="footer-column-title">Hubungi Kami</h4>
+                    <ul class="footer-contact">
+                        <li><i class="bi bi-geo-alt-fill"></i><span>Jl. Kesehatan No. 123<br>Jember, Jawa Timur 68121</span></li>
+                        <li><i class="bi bi-telephone-fill"></i><span>+62 812-3456-7890</span></li>
+                        <li><i class="bi bi-envelope-fill"></i><span>info@mapotek.com</span></li>
+                        <li><i class="bi bi-clock-fill"></i><span>Senin - Jumat: 08.00 - 17.00</span></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p class="copyright">&copy; 2024 MAPOTEK. All Rights Reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="#">Kebijakan Privasi</a>
+                        <span class="separator">|</span>
+                        <a href="#">Syarat & Ketentuan</a>
+                        <span class="separator">|</span>
+                        <a href="#">FAQ</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-wave">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".25"></path>
+                    <path d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".5"></path>
+                    <path d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z"></path>
+                </svg>
+            </div>
+        </div>
+    </footer>
 
-						<!-- Username (auto-generated) -->
-						<div class="mb-3">
-							<label for="dokterUsername" class="form-label">
-								Username <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="text" 
-								class="form-control" 
-								id="dokterUsername" 
-								placeholder="Username (otomatis terisi dari nama)"
-								required
-								readonly
-							>
-							<small class="text-muted">Username akan otomatis terisi dari nama Anda</small>
-						</div>
+    <!-- ========================================== -->
+    <!-- SCRIPTS (CORRECT ORDER) -->
+    <!-- ========================================== -->
+    
+    <!-- 1. Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- 2. Supabase Initialization -->
+    <script src="../../Dashboard/js/supabase-client.js"></script>
+	<!-- 3. Bootstrap Bundle -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-						<!-- Alamat -->
-						<div class="mb-3">
-							<label for="dokterAlamat" class="form-label">
-								Alamat <span class="text-danger">*</span>
-							</label>
-							<textarea 
-								class="form-control" 
-								id="dokterAlamat" 
-								rows="3"
-								placeholder="Masukkan alamat lengkap"
-								required
-							></textarea>
-						</div>
-
-						<!-- No Telepon -->
-						<div class="mb-3">
-							<label for="dokterPhone" class="form-label">
-								No. Telepon <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="tel" 
-								class="form-control" 
-								id="dokterPhone" 
-								placeholder="08xxxxxxxxxx"
-								required
-							>
-						</div>
-
-						<!-- Password -->
-						<div class="mb-3">
-							<label for="dokterPassword" class="form-label">
-								Password <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="password" 
-								class="form-control" 
-								id="dokterPassword" 
-								placeholder="Minimal 6 karakter"
-								minlength="6"
-								required
-							>
-						</div>
-
-						<!-- Konfirmasi Password -->
-						<div class="mb-3">
-							<label for="dokterPasswordConfirm" class="form-label">
-								Konfirmasi Password <span class="text-danger">*</span>
-							</label>
-							<input 
-								type="password" 
-								class="form-control" 
-								id="dokterPasswordConfirm" 
-								placeholder="Ulangi password"
-								minlength="6"
-								required
-							>
-						</div>
-
-						<!-- Submit Button -->
-						<button type="submit" class="btn btn-primary w-100 mb-3">
-							<i class="bi bi-person-plus"></i> Daftar Sekarang
-						</button>
-
-						<!-- Link to Login -->
-						<p class="text-center mb-0">
-							Sudah punya akun? 
-							<a href="#" id="toLogin" class="text-primary">Login di sini</a>
-						</p>
-					</form>
-				</div>
-				<!-- END REGISTRATION FORM -->
-			</div>
-		</div>
-
-		<header id="header">
-			<div class="container-fluid">
-				<div class="row">
-
-					<div class="col-md-2">
-						<div class="main-logo">
-							<a href="index.html"><img src="images/mapotekTxt.png" alt="logo"></a>
-						</div>
-					</div>
-
-					<div class="col-md-10">
-						<nav id="navbar">
-							<div class="main-menu stellarnav">
-								<ul class="menu-list">
-									<li class="menu-item active"><a href="#home">Home</a></li>
-									<li class="menu-item"><a href="#featured-books" class="nav-link">List Harga </a></li>
-									<li class="menu-item"><a href="#fitur-utama" class="nav-link">Fitur</a></li>
-									<li class="menu-item"><a href="#latest-blog" class="nav-link">Ulasan Pelanggan</a></li>
-									<li class="menu-item"><a href="#download-app" class="nav-link">Download App</a></li>
-								</ul>
-
-								<div class="hamburger">
-									<span class="bar"></span>
-									<span class="bar"></span>
-									<span class="bar"></span>
-								</div>
-							</div>
-						</nav>
-					</div>
-
-				</div>
-			</div>
-		</header>
-
-	</div><!--header-wrap-->
-
-	<section id="billboard">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div class="main-slider pattern-overlay">
-						<div class="slider-item">
-							<div class="banner-content">
-								<h2 class="banner-title">MAPOTEK</h2>
-								<p>Sistem informasi yang dirancang khusus untuk mempermudah manajemen praktik pribadi dokter.
-									Mempermudah dokter dalam mengelola data pasien, jadwal praktek, rekam medis, dan administrasi dan lainnya.
-									Simpel, intuitif, dan efisien - sesuai kebutuhan praktik</p>
-								<div class="btn-wrap"></div>
-							</div><!--banner-content-->
-							<img src="images/mapotekLogoo.png" alt="banner" class="banner-image">
-						</div><!--slider-item-->
-					</div><!--slider-->
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="featured-books" class="py-5 my-5">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-
-					<div class="section-header align-center">
-						<div class="title">
-							<span>List Harga</span>
-						</div>
-						<h2 class="section-title">Langganan Mapotek</h2>
-					</div>
-
-					<div class="product-list" data-aos="fade-up">
-						<div class="row">
-
-							<div class="col-md-3">
-								<div class="product-item">
-									<figure class="product-style">
-										<img src="images/free.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="Beli">Coba sekarang</button>
-									</figure>
-									<figcaption>
-										<h3>Gratis</h3>
-										<span>Trial 7 hari</span>
-										<div class="item-price">Rp 0</div>
-									</figcaption>
-								</div>
-							</div>
-
-							<div class="col-md-3">
-								<div class="product-item">
-									<figure class="product-style">
-										<img src="images/berlangganan.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="Beli">Beli sekarang</button>
-									</figure>
-									<figcaption>
-										<h3>1 bulan</h3>
-										<span>Langganan</span>
-										<div class="item-price">Rp 250.000,00</div>
-									</figcaption>
-								</div>
-							</div>
-
-							<div class="col-md-3">
-								<div class="product-item">
-									<figure class="product-style">
-										<img src="images/abi.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="beli">Beli sekarang</button>
-									</figure>
-									<figcaption>
-										<h3>3 bulan</h3>
-										<span>Langganan</span>
-										<div class="item-price">Rp 500.000,00</div>
-									</figcaption>
-								</div>
-							</div>
-
-							<div class="col-md-3">
-								<div class="product-item">
-									<figure class="product-style">
-										<img src="images/ummi.jpg" alt="Books" class="product-item">
-										<button type="button" class="add-to-cart" data-product-tile="beli">Beli sekarang</button>
-									</figure>
-									<figcaption>
-										<h3>1 tahun</h3>
-										<span>Langganan</span>
-										<div class="item-price">Rp 800.000,00</div>
-									</figcaption>
-								</div>
-							</div>
-
-						</div><!--ft-books-slider-->
-					</div><!--grid-->
-
-				</div><!--inner-content-->
-			</div>
-
-			<section id="fitur-utama"></section>
-			<div class="row">
-				<div class="col-md-12">
-					<div class="feature-text"></div>
-					<h4 class="section-title divider">Fitur Utama</h4>
-
-					<div class="feature-list">
-						<div class="feature-item">
-							<i class="icon icon-login"></i>
-							<div class="feature-text">
-								<h4>Login Multi-Role</h4>
-								<p>Owner, Admin, dan Dokter dengan hak akses berbeda</p>
-							</div>
-						</div>
-
-						<div class="feature-item">
-							<i class="icon icon-users"></i>
-							<div class="feature-text">
-								<h4>Manajemen Data Pasien</h4>
-								<p>Pencatatan pasien digital yang praktis dan aman</p>
-							</div>
-						</div>
-
-						<div class="feature-item">
-							<i class="icon icon-medicine"></i>
-							<div class="feature-text">
-								<h4>Pemantauan Stok Obat</h4>
-								<p>Monitoring stok obat otomatis dengan alert</p>
-							</div>
-						</div>
-
-						<div class="feature-item">
-							<i class="icon icon-clock"></i>
-							<div class="feature-text">
-								<h4>Absensi Staf Digital</h4>
-								<p>Sistem absensi yang efisien dan akurat</p>
-							</div>
-						</div>
-
-						<div class="feature-item">
-							<i class="icon icon-finance"></i>
-							<div class="feature-text">
-								<h4>Pencatatan Keuangan</h4>
-								<p>Laporan keuangan rapi dan terstruktur</p>
-							</div>
-						</div>
-
-						<div class="feature-item">
-							<i class="icon icon-ui"></i>
-							<div class="feature-text">
-								<h4>Antarmuka User-Friendly</h4>
-								<p>Desain simpel, clean, dan mudah digunakan</p>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="latest-blog" class="py-5 my-5">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-
-					<div class="section-header align-center">
-						<div class="title">
-							<span>What our clients say</span>
-						</div>
-						<h2 class="section-title">Ulasan Pelanggan</h2>
-					</div>
-
-					<div class="row">
-						<div class="col-md-4">
-							<article class="column" data-aos="fade-up">
-								<figure>
-									<a href="#" class="image-hvr-effect">
-										<img src="images/errrr.jpeg" alt="post" class="post-image">
-									</a>
-								</figure>
-								<div class="post-item"></div>
-							</article>
-						</div>
-
-						<div class="col-md-4">
-							<article class="column" data-aos="fade-up" data-aos-delay="200">
-								<figure>
-									<a href="#" class="image-hvr-effect">
-										<img src="images/errrr.jpeg" alt="post" class="post-image">
-									</a>
-								</figure>
-								<div class="post-item"></div>
-							</article>
-						</div>
-
-						<div class="col-md-4">
-							<article class="column" data-aos="fade-up" data-aos-delay="400">
-								<figure>
-									<a href="#" class="image-hvr-effect">
-										<img src="images/errrr.jpeg" alt="post" class="post-image">
-									</a>
-								</figure>
-								<div class="post-item"></div>
-							</article>
-						</div>
-					</div>
-
-					<div class="row">
-						<div class="btn-wrap align-center">
-							<a href="#" class="btn btn-outline-accent btn-accent-arrow" tabindex="0">Lihat Ulasan Lainnya
-								<i class="icon icon-ns-arrow-right"></i>
-							</a>
-						</div>
-					</div>
-
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<section id="download-app" class="leaf-pattern-overlay">
-		<div class="corner-pattern-overlay"></div>
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-md-8">
-					<div class="row">
-
-						<div class="col-md-5">
-							<figure>
-								<img src="images/mapotek_mobile.jpg" alt="phone" class="single-image">
-							</figure>
-						</div>
-
-						<div class="col-md-7">
-							<div class="app-info">
-								<h2 class="section-title divider">Download aplikasi!</h2>
-								<p>Aplikasi mobile kami tersedia di Android yang diperuntukkan untuk pasien
-									yang akan berkonsultasi dengan dokter yang berlangganan di Mapotek.</p>
-								<div class="google-app">
-									<img src="images/google-play.jpg" alt="google play">
-								</div>
-							</div>
-						</div>
-
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<footer id="footer">
-		<div class="container">
-			<div class="row">
-
-				<div class="col-md-4">
-					<div class="footer-item">
-						<div class="company-brand">
-							<img src="images/mapotekTxt.png" alt="logo" class="footer-logo">
-							<p>Kemenangan bersama kesabaran</p>
-						</div>
-					</div>
-				</div>
-
-				<div class="col-md-2">
-					<div class="footer-menu">
-						<h5>About Us</h5>
-						<ul class="menu-list">
-							<li class="menu-item"><a href="#">Vision</a></li>
-							<li class="menu-item"><a href="#">Articles</a></li>
-							<li class="menu-item"><a href="#">Careers</a></li>
-							<li class="menu-item"><a href="#">Service Terms</a></li>
-							<li class="menu-item"><a href="#">Donate</a></li>
-						</ul>
-					</div>
-				</div>
-
-				<div class="col-md-2">
-					<div class="footer-menu">
-						<h5>Discover</h5>
-						<ul class="menu-list">
-							<li class="menu-item"><a href="#">Home</a></li>
-							<li class="menu-item"><a href="#">Books</a></li>
-							<li class="menu-item"><a href="#">Authors</a></li>
-							<li class="menu-item"><a href="#">Subjects</a></li>
-							<li class="menu-item"><a href="#">Advanced Search</a></li>
-						</ul>
-					</div>
-				</div>
-
-				<div class="col-md-2">
-					<div class="footer-menu">
-						<h5>My Account</h5>
-						<ul class="menu-list">
-							<li class="menu-item"><a href="#">Sign In</a></li>
-							<li class="menu-item"><a href="#">View Cart</a></li>
-							<li class="menu-item"><a href="#">My Wishlist</a></li>
-							<li class="menu-item"><a href="#">Track My Order</a></li>
-						</ul>
-					</div>
-				</div>
-
-				<div class="col-md-2">
-					<div class="footer-menu">
-						<h5>Help</h5>
-						<ul class="menu-list">
-							<li class="menu-item"><a href="#">Help Center</a></li>
-							<li class="menu-item"><a href="#">Report a Problem</a></li>
-							<li class="menu-item"><a href="#">Suggesting Edits</a></li>
-							<li class="menu-item"><a href="#">Contact Us</a></li>
-						</ul>
-					</div>
-				</div>
-
-			</div>
-		</div>
-	</footer>
-
-	<div id="footer-bottom">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12">
-					<div class="copyright">
-						<div class="row">
-							<div class="col-md-6"></div>
-							<div class="col-md-6">
-								<div class="social-links align-right">
-									<ul>
-										<li><a href="#"><i class="icon icon-facebook"></i></a></li>
-										<li><a href="#"><i class="icon icon-twitter"></i></a></li>
-										<li><a href="#"><i class="icon icon-youtube-play"></i></a></li>
-										<li><a href="#"><i class="icon icon-behance-square"></i></a></li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</div><!--grid-->
-				</div><!--footer-bottom-content-->
-			</div>
-		</div>
-	</div>
-
-	<script src="js/jquery-1.11.0.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
-		integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
-		crossorigin="anonymous"></script>
-	<script src="js/plugins.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-	<script src="../../Dashboard/js/supabase-client.js"></script>
-	<script src="js/script.js"></script>
+	<!-- 4. Your OLD Auth Handler (Keep This - It Works!) -->
 	<script src="js/auth.js"></script>
 
+	<!-- 5. New Page Animations -->
+	<script src="js/animations.js"></script>
 </body>
-
 </html>
