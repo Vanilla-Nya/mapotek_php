@@ -911,7 +911,7 @@ class ProfileFragment {
     async initializeSubscription(email) {
         const access_token = localStorage.getItem('access_token');
         
-        const { data: { user }, error } = await supabaseClient.auth.getUser(access_token);
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
         
         if (error || !user) {
             localStorage.removeItem("access_token");

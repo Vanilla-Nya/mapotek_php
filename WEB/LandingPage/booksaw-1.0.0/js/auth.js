@@ -417,3 +417,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
   console.log("✅ Auth handlers ready (Enhanced for Asisten)");
 });
+
+// ========================================
+// PASSWORD TOGGLE FUNCTIONALITY
+// ========================================
+function initializePasswordToggles() {
+  const toggleButtons = document.querySelectorAll('.toggle-password');
+  
+  toggleButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('data-target');
+      const passwordInput = document.getElementById(targetId);
+      const icon = this.querySelector('i');
+      
+      if (passwordInput) {
+        // Toggle password visibility
+        if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          icon.classList.remove('bi-eye');
+          icon.classList.add('bi-eye-slash');
+        } else {
+          passwordInput.type = 'password';
+          icon.classList.remove('bi-eye-slash');
+          icon.classList.add('bi-eye');
+        }
+      }
+    });
+  });
+}
+
+// Call this function after DOM is loaded
+// Add this line after line 217 in your auth.js (after the console.log)
+initializePasswordToggles();
+console.log("✅ Password toggle handlers ready");

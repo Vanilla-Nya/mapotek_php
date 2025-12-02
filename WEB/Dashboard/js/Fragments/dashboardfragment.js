@@ -10,6 +10,9 @@ class DashboardFragment {
         this.charts = [];
         this.currentDate = new Date();
         console.log('🏠 DashboardFragment constructor called')
+        this.isDestroyed = false;
+        this._abortController = new AbortController();
+        this._eventListeners = []; // Track all event listeners
     }
 
     render() {
@@ -918,12 +921,31 @@ class DashboardFragment {
     async onInit() {
         console.log('⚙️ DashboardFragment.onInit() called');
         
+        // ✅ Reset destroyed flag
+        this.isDestroyed = false;
+        this._abortController = new AbortController();
+        
+        // ✅ Create new abort controller for this lifecycle
+        if (this._abortController) {
+            this._abortController.abort(); // Cancel any pending operations
+        }
+        this._abortController = new AbortController();
+        
         try {
             const user = JSON.parse(localStorage.getItem('user') || 'null');
             
             if (!user || !user.email) {
                 alert('Session expired. Please login again.');
                 window.location.href = '../LandingPage/booksaw-1.0.0/index.html';
+                return;
+            }
+
+            // ✅ Wait for DOM to be ready
+            await this.waitForDOM();
+            
+            // ✅ Check if destroyed during wait
+            if (this.isDestroyed || this._abortController.signal.aborted) {
+                console.log('⚠️ Fragment destroyed during initialization, aborting...');
                 return;
             }
 
@@ -934,10 +956,22 @@ class DashboardFragment {
             // Wait for Chart.js to initialize
             await new Promise(resolve => setTimeout(resolve, 500));
             
+            // ✅ Check again after async operation
+            if (this.isDestroyed || this._abortController.signal.aborted) {
+                console.log('⚠️ Fragment destroyed during Chart.js load, aborting...');
+                return;
+            }
+            
             console.log('📊 Chart.js loaded?', typeof window.Chart !== 'undefined');
             
             // Load doctor data
             await this.loadDoctorData(user.email);
+            
+            // ✅ Final check before setting up listeners
+            if (this.isDestroyed || this._abortController.signal.aborted) {
+                console.log('⚠️ Fragment destroyed during data load, aborting...');
+                return;
+            }
             
             // Setup navigation and listeners
             this.attachNavigationListeners();
@@ -947,12 +981,73 @@ class DashboardFragment {
             console.log('✅ Dashboard initialized!');
             
         } catch (error) {
+            if (error.name === 'AbortError') {
+                console.log('⚠️ Dashboard initialization aborted');
+                return;
+            }
             console.error('❌ Error in onInit:', error);
         }
     }
 
+    async waitForDOM() {
+        const maxAttempts = 50; // Increase from 20 to 50
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            const criticalElements = [
+                'doctorNameDisplay',
+                'faskesDisplay',
+                'qrCodeWrapper',
+                'queueTableBody',
+                'totalPatients',
+                'queueToday'
+            ];
+            
+            const allExist = criticalElements.every(id => document.getElementById(id));
+            
+            if (allExist) {
+                console.log('✅ DOM ready');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+            attempts++;
+        }
+        
+        throw new Error('DOM elements not ready after timeout');
+    }async waitForDOM() {
+        const maxAttempts = 50; // Increase from 20 to 50
+        let attempts = 0;
+        
+        while (attempts < maxAttempts) {
+            const criticalElements = [
+                'doctorNameDisplay',
+                'faskesDisplay',
+                'qrCodeWrapper',
+                'queueTableBody',
+                'totalPatients',
+                'queueToday'
+            ];
+            
+            const allExist = criticalElements.every(id => document.getElementById(id));
+            
+            if (allExist) {
+                console.log('✅ DOM ready');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+            attempts++;
+        }
+        
+        throw new Error('DOM elements not ready after timeout');
+    }
+
     attachNavigationListeners() {
         console.log('🎧 Attaching navigation listeners...');
+        
+        // ✅ Use abort signal for automatic cleanup
+        const signal = this._abortController.signal;
         
         // Profile navigation
         const btnGoToProfile = document.getElementById('btnGoToProfile');
@@ -961,23 +1056,29 @@ class DashboardFragment {
         
         if (btnGoToProfile) {
             btnGoToProfile.addEventListener('click', () => {
-                console.log('Navigate to Profile');
-                this.navigateToFragment('profile');
-            });
+                if (!this.isDestroyed) {
+                    console.log('Navigate to Profile');
+                    this.navigateToFragment('profile');
+                }
+            }, { signal }); // ✅ Auto-cleanup on abort
         }
         
         if (btnQRToProfile) {
             btnQRToProfile.addEventListener('click', () => {
-                console.log('Navigate to Profile (from QR card)');
-                this.navigateToFragment('profile');
-            });
+                if (!this.isDestroyed) {
+                    console.log('Navigate to Profile (from QR card)');
+                    this.navigateToFragment('profile');
+                }
+            }, { signal });
         }
         
         if (btnDashboardQR) {
             btnDashboardQR.addEventListener('click', () => {
-                console.log('Show QR Modal');
-                this.showQRModal();
-            });
+                if (!this.isDestroyed) {
+                    console.log('Show QR Modal');
+                    this.showQRModal();
+                }
+            }, { signal });
         }
         
         // Pembukuan navigation
@@ -986,24 +1087,30 @@ class DashboardFragment {
         
         if (btnLihatLaporanLengkap) {
             btnLihatLaporanLengkap.addEventListener('click', () => {
-                console.log('Navigate to Pembukuan');
-                this.navigateToFragment('pembukuan');
-            });
+                if (!this.isDestroyed) {
+                    console.log('Navigate to Pembukuan');
+                    this.navigateToFragment('pembukuan');
+                }
+            }, { signal });
         }
         
         if (btnFinancialDetail) {
             btnFinancialDetail.addEventListener('click', () => {
-                console.log('Navigate to Pembukuan (from icon)');
-                this.navigateToFragment('pembukuan');
-            });
+                if (!this.isDestroyed) {
+                    console.log('Navigate to Pembukuan (from icon)');
+                    this.navigateToFragment('pembukuan');
+                }
+            }, { signal });
         }
         
         // QR Modal download
         const btnDownloadQR = document.getElementById('btnDownloadQR');
         if (btnDownloadQR) {
             btnDownloadQR.addEventListener('click', () => {
-                this.downloadQRCode();
-            });
+                if (!this.isDestroyed) {
+                    this.downloadQRCode();
+                }
+            }, { signal });
         }
     }
 
@@ -1026,6 +1133,12 @@ class DashboardFragment {
         try {
             console.log('👨‍⚕️ Loading doctor data for:', email);
             
+            // ✅ CRITICAL: Check if destroyed at the start
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Fragment destroyed, aborting loadDoctorData');
+                return;
+            }
+            
             let userType = localStorage.getItem('user_role') || 'dokter';
             
             console.log('🔍 User type from localStorage:', userType);
@@ -1041,6 +1154,12 @@ class DashboardFragment {
                         .ilike('email', email)
                         .maybeSingle();
                     
+                    // ✅ Check after async operation
+                    if (this.isDestroyed || this._abortController?.signal.aborted) {
+                        console.log('⚠️ Fragment destroyed after DB check, aborting');
+                        return;
+                    }
+                    
                     if (dokter) {
                         userType = 'dokter';
                         localStorage.setItem('user_role', 'dokter');
@@ -1053,6 +1172,12 @@ class DashboardFragment {
                             .ilike('email', email)
                             .maybeSingle();
                         
+                        // ✅ Check again after async operation
+                        if (this.isDestroyed || this._abortController?.signal.aborted) {
+                            console.log('⚠️ Fragment destroyed after asisten check, aborting');
+                            return;
+                        }
+                        
                         if (asisten) {
                             userType = 'asisten_dokter';
                             localStorage.setItem('user_role', 'asisten_dokter');
@@ -1061,7 +1186,6 @@ class DashboardFragment {
                             console.log('✅ Detected: ASISTEN DOKTER');
                         } else {
                             console.error('❌ User not found in either table!');
-                            alert('User tidak ditemukan di sistem.');
                             return;
                         }
                     }
@@ -1079,30 +1203,53 @@ class DashboardFragment {
                 })
             });
 
+            // ✅ Check after fetch
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Fragment destroyed after API call, aborting');
+                return;
+            }
+
             const result = await response.json();
             console.log('📥 Dashboard API response:', result);
+
+            // ✅ Check after JSON parse
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Fragment destroyed after parsing response, aborting');
+                return;
+            }
 
             if (result.success && result.data) {
                 this.doctorData = result.data;
                 
-                // Display name
+                // ✅ CRITICAL FIX: Add null checks BEFORE setting textContent
                 const displayName = result.data.nama_lengkap || 'User';
-                document.getElementById('doctorNameDisplay').textContent = displayName;
+                const doctorNameDisplay = document.getElementById('doctorNameDisplay');
+                if (doctorNameDisplay && !this.isDestroyed) {
+                    doctorNameDisplay.textContent = displayName;
+                }
                 
                 // Display faskes or role badge
                 const faskesDisplay = document.getElementById('faskesDisplay');
-                if (result.data.user_type === 'asisten_dokter') {
-                    faskesDisplay.textContent = 'Asisten Dokter';
-                    faskesDisplay.classList.add('badge', 'bg-info');
-                    faskesDisplay.style.cssText = 'display: inline-block; padding: 8px 16px; border-radius: 8px;';
-                } else {
-                    faskesDisplay.textContent = result.data.nama_faskes || 'Faskes';
-                    faskesDisplay.classList.remove('badge', 'bg-info');
+                if (faskesDisplay && !this.isDestroyed) {
+                    if (result.data.user_type === 'asisten_dokter') {
+                        faskesDisplay.textContent = 'Asisten Dokter';
+                        faskesDisplay.classList.add('badge', 'bg-info');
+                        faskesDisplay.style.cssText = 'display: inline-block; padding: 8px 16px; border-radius: 8px;';
+                    } else {
+                        faskesDisplay.textContent = result.data.nama_faskes || 'Faskes';
+                        faskesDisplay.classList.remove('badge', 'bg-info');
+                    }
                 }
 
                 // Display avatar
-                if (result.data.avatar_url) {
+                if (result.data.avatar_url && !this.isDestroyed) {
                     this.displayAvatar(result.data.avatar_url);
+                }
+
+                // ✅ Check before loading QR
+                if (this.isDestroyed || this._abortController?.signal.aborted) {
+                    console.log('⚠️ Fragment destroyed before QR load, aborting');
+                    return;
                 }
 
                 // ✅ FIX: Load parent doctor's QR code for asisten dokter
@@ -1111,12 +1258,14 @@ class DashboardFragment {
                     await this.loadParentDoctorQR(result.data.id_dokter_parent);
                 } else if (result.data.user_type === 'dokter' && result.data.qr_code_data) {
                     // Regular doctor QR code
-                    this.displayQRCode(result.data.qr_code_data);
-                    console.log('✅ QR Code loaded');
+                    if (!this.isDestroyed) {
+                        this.displayQRCode(result.data.qr_code_data);
+                        console.log('✅ QR Code loaded');
+                    }
                 } else {
                     // No QR available
                     const qrWrapper = document.getElementById('qrCodeWrapper');
-                    if (qrWrapper) {
+                    if (qrWrapper && !this.isDestroyed) {
                         qrWrapper.innerHTML = `
                             <div class="text-muted text-center">
                                 <i class="bi bi-qr-code mb-2" style="font-size: 40px; opacity: 0.3;"></i>
@@ -1124,6 +1273,13 @@ class DashboardFragment {
                             </div>
                         `;
                     }
+                    console.log('QrWrapper : ' + qrWrapper);
+                }
+
+                // ✅ Check before loading stats
+                if (this.isDestroyed || this._abortController?.signal.aborted) {
+                    console.log('⚠️ Fragment destroyed before stats load, aborting');
+                    return;
                 }
 
                 // Determine which doctor ID to use for stats
@@ -1143,11 +1299,14 @@ class DashboardFragment {
                 
             } else {
                 console.error('❌ API returned error:', result.message);
-                alert(`Gagal memuat data: ${result.message}`);
             }
         } catch (error) {
+            // Check if it's an abort error
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Operation aborted - fragment was destroyed');
+                return;
+            }
             console.error('❌ Error loading doctor data:', error);
-            alert(`Error: ${error.message}`);
         }
     }
 
@@ -1192,22 +1351,47 @@ class DashboardFragment {
     }
 
     displayAvatar(avatarUrl) {
+        // 🚨 CRITICAL: Check if destroyed FIRST
+        if (this.isDestroyed || this._abortController?.signal.aborted) {
+            console.log('⚠️ Fragment destroyed, skipping displayAvatar');
+            return;
+        }
+        
         const img = document.getElementById('doctorAvatarImg');
         const icon = document.getElementById('doctorAvatarIcon');
         const blurBg = document.getElementById('profileBlurBg');
+        
+        // 🚨 Check if elements exist
+        if (!img || !icon || !blurBg) {
+            console.warn('⚠️ Avatar elements not found');
+            return;
+        }
 
         if (avatarUrl && avatarUrl !== '') {
             img.src = avatarUrl;
             img.classList.remove('d-none');
             icon.classList.add('d-none');
-            
             blurBg.style.backgroundImage = `url('${avatarUrl}')`;
         }
     }
 
     displayQRCode(qrData) {
+        // 🚨 Check if destroyed
+        if (this.isDestroyed || this._abortController?.signal.aborted) {
+            console.log('⚠️ Fragment destroyed, skipping displayQRCode');
+            return;
+        }
+        
         const wrapper = document.getElementById('qrCodeWrapper');
+        
+        // 🚨 Check if element exists
+        if (!wrapper) {
+            console.warn('⚠️ QR wrapper not found');
+            return;
+        }
+        
         wrapper.innerHTML = '';
+        console.log('Wrapper : ' + wrapper);
         
         const qrDiv = document.createElement('div');
         qrDiv.style.cssText = 'background: white; padding: 20px; border-radius: 12px; display: inline-block;';
@@ -1275,6 +1459,12 @@ class DashboardFragment {
     // ✅ UPDATED: Show skeleton loaders first
     async loadAllStats(id_dokter) {
         try {
+            // ✅ Check if destroyed before loading stats
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Fragment destroyed, skipping stats load');
+                return;
+            }
+            
             console.log('📊 Loading all stats...');
             
             // ✅ Show skeleton loaders FIRST
@@ -1289,6 +1479,12 @@ class DashboardFragment {
                 this.loadQueueDetails(id_dokter)
             ]);
             
+            // ✅ Check again after async operations
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Fragment destroyed after stats load, aborting chart load');
+                return;
+            }
+            
             console.log('✅ Basic stats loaded');
             
             // Load chart data
@@ -1299,10 +1495,13 @@ class DashboardFragment {
                 await this.loadChartData(id_dokter);
             } else {
                 console.error('❌ Chart.js still not loaded!');
-                alert('Chart library failed to load. Please refresh the page.');
             }
             
         } catch (error) {
+            if (this.isDestroyed || this._abortController?.signal.aborted) {
+                console.log('⚠️ Stats loading aborted');
+                return;
+            }
             console.error('❌ Error loading stats:', error);
         }
     }
@@ -1328,61 +1527,127 @@ class DashboardFragment {
     }
 
     async loadQueueStats(id_dokter) {
-        const response = await fetch('../API/dashboard_api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'get_queue_stats', id_dokter: id_dokter })
-        });
+        try {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_queue_stats', id_dokter: id_dokter })
+            });
 
-        const result = await response.json();
-        if (result.success && result.data) {
-            const stats = result.data;
-            document.getElementById('queueToday').textContent = stats.total || 0;
-            document.getElementById('badgeSelesai').textContent = `${stats.selesai || 0} Selesai`;
-            document.getElementById('badgeMenunggu').textContent = `${stats.menunggu || 0} Menunggu`;
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+
+            const result = await response.json();
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            if (result.success && result.data) {
+                const stats = result.data;
+                
+                const queueToday = document.getElementById('queueToday');
+                const badgeSelesai = document.getElementById('badgeSelesai');
+                const badgeMenunggu = document.getElementById('badgeMenunggu');
+                
+                if (queueToday && !this.isDestroyed) queueToday.textContent = stats.total || 0;
+                if (badgeSelesai && !this.isDestroyed) badgeSelesai.textContent = `${stats.selesai || 0} Selesai`;
+                if (badgeMenunggu && !this.isDestroyed) badgeMenunggu.textContent = `${stats.menunggu || 0} Menunggu`;
+            }
+        } catch (error) {
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading queue stats:', error);
+            }
         }
     }
 
     async loadMedicineAlerts(id_dokter) {
-        const response = await fetch('../API/dashboard_api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'get_medicine_alerts', id_dokter: id_dokter })
-        });
+        try {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_medicine_alerts', id_dokter: id_dokter })
+            });
 
-        const result = await response.json();
-        if (result.success && result.data) {
-            document.getElementById('obatExpired').textContent = result.data.expiring || 0;
-            document.getElementById('obatHabis').textContent = result.data.low_stock || 0;
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+
+            const result = await response.json();
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            if (result.success && result.data) {
+                const obatExpired = document.getElementById('obatExpired');
+                const obatHabis = document.getElementById('obatHabis');
+                
+                if (obatExpired && !this.isDestroyed) obatExpired.textContent = result.data.expiring || 0;
+                if (obatHabis && !this.isDestroyed) obatHabis.textContent = result.data.low_stock || 0;
+            }
+        } catch (error) {
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading medicine alerts:', error);
+            }
         }
     }
 
     async loadFinancialSummary(id_dokter) {
-        const response = await fetch('../API/dashboard_api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'get_financial_summary', id_dokter: id_dokter })
-        });
+        try {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_financial_summary', id_dokter: id_dokter })
+            });
 
-        const result = await response.json();
-        if (result.success && result.data) {
-            const data = result.data;
-            document.getElementById('totalPendapatan').textContent = 'Rp ' + this.formatNumber(data.pemasukan || 0);
-            document.getElementById('totalPengeluaran').textContent = 'Rp ' + this.formatNumber(data.pengeluaran || 0);
-            document.getElementById('labaBersih').textContent = 'Rp ' + this.formatNumber(data.profit || 0);
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+
+            const result = await response.json();
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            if (result.success && result.data) {
+                const data = result.data;
+                
+                const totalPendapatan = document.getElementById('totalPendapatan');
+                const totalPengeluaran = document.getElementById('totalPengeluaran');
+                const labaBersih = document.getElementById('labaBersih');
+                
+                if (totalPendapatan && !this.isDestroyed) totalPendapatan.textContent = 'Rp ' + this.formatNumber(data.pemasukan || 0);
+                if (totalPengeluaran && !this.isDestroyed) totalPengeluaran.textContent = 'Rp ' + this.formatNumber(data.pengeluaran || 0);
+                if (labaBersih && !this.isDestroyed) labaBersih.textContent = 'Rp ' + this.formatNumber(data.profit || 0);
+            }
+        } catch (error) {
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading financial summary:', error);
+            }
         }
     }
 
     async loadPatientStats(id_dokter) {
-        const response = await fetch('../API/dashboard_api.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'get_patient_stats', id_dokter: id_dokter })
-        });
+        try {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            const response = await fetch('../API/dashboard_api.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'get_patient_stats', id_dokter: id_dokter })
+            });
 
-        const result = await response.json();
-        if (result.success && result.data) {
-            document.getElementById('totalPatients').textContent = result.data.total_patients || 0;
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+
+            const result = await response.json();
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            if (result.success && result.data) {
+                const totalPatients = document.getElementById('totalPatients');
+                if (totalPatients && !this.isDestroyed) totalPatients.textContent = result.data.total_patients || 0;
+            }
+        } catch (error) {
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading patient stats:', error);
+            }
         }
     }
 
@@ -1393,9 +1658,10 @@ class DashboardFragment {
     // ✅ UPDATED: Show skeleton for queue table
     async loadQueueDetails(id_dokter) {
         try {
-            // ✅ Show skeleton loader FIRST
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             const tbody = document.getElementById('queueTableBody');
-            if (tbody) {
+            if (tbody && !this.isDestroyed) {
                 tbody.innerHTML = this.generateQueueSkeleton();
             }
             
@@ -1408,16 +1674,26 @@ class DashboardFragment {
                 })
             });
 
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+
             const result = await response.json();
             
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             if (result.success && result.data) {
-                this.displayQueueTable(result.data);
+                if (!this.isDestroyed) {
+                    this.displayQueueTable(result.data);
+                }
             } else {
-                this.displayEmptyQueue();
+                if (!this.isDestroyed) {
+                    this.displayEmptyQueue();
+                }
             }
         } catch (error) {
-            console.error('❌ Error loading queue details:', error);
-            this.displayEmptyQueue();
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading queue details:', error);
+                this.displayEmptyQueue();
+            }
         }
     }
 
@@ -1514,20 +1790,20 @@ class DashboardFragment {
     // ✅ UPDATED: Show skeleton for charts
     async loadChartData(id_dokter) {
         try {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             console.log('📊 Loading chart data for doctor:', id_dokter);
             
-            // ✅ Show skeleton loaders for charts
             const chart1Container = document.getElementById('graphic1');
             const chart2Container = document.getElementById('graphic2');
             
-            if (chart1Container) {
+            if (chart1Container && !this.isDestroyed) {
                 chart1Container.innerHTML = '<div class="skeleton skeleton-chart"></div>';
             }
-            if (chart2Container) {
+            if (chart2Container && !this.isDestroyed) {
                 chart2Container.innerHTML = '<div class="skeleton skeleton-chart"></div>';
             }
             
-            // Load patient visit chart
             const visitResponse = await fetch('../API/dashboard_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1536,9 +1812,13 @@ class DashboardFragment {
                     id_dokter: id_dokter 
                 })
             });
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             const visitResult = await visitResponse.json();
             
-            // Load financial chart
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             const financialResponse = await fetch('../API/dashboard_api.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1547,23 +1827,28 @@ class DashboardFragment {
                     id_dokter: id_dokter 
                 })
             });
+            
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
             const financialResult = await financialResponse.json();
             
-            // ✅ Restore canvas elements before creating charts
-            if (chart1Container) {
+            if (this.isDestroyed || this._abortController?.signal.aborted) return;
+            
+            if (chart1Container && !this.isDestroyed) {
                 chart1Container.innerHTML = '<canvas id="chart1"></canvas>';
             }
-            if (chart2Container) {
+            if (chart2Container && !this.isDestroyed) {
                 chart2Container.innerHTML = '<canvas id="chart2"></canvas>';
             }
             
-            // Update charts with real data
-            if (visitResult.success && financialResult.success) {
+            if (visitResult.success && financialResult.success && !this.isDestroyed) {
                 console.log('✅ Updating charts with data...');
                 this.updateChartsWithData(visitResult.data, financialResult.data);
             }
         } catch (error) {
-            console.error('❌ Error loading chart data:', error);
+            if (!this.isDestroyed) {
+                console.error('❌ Error loading chart data:', error);
+            }
         }
     }
 
@@ -1690,17 +1975,37 @@ class DashboardFragment {
     }
 
     startGraphicRotation() {
+        // ✅ Don't start if already destroyed
+        if (this.isDestroyed) {
+            console.log('⚠️ Fragment destroyed, not starting rotation');
+            return;
+        }
+        
+        // Clear any existing timer
+        if (this.graphicRotationTimer) {
+            clearInterval(this.graphicRotationTimer);
+        }
+        
         this.graphicRotationTimer = setInterval(() => {
+            // ✅ Check on every rotation
+            if (this.isDestroyed) {
+                console.log('⚠️ Fragment destroyed, stopping rotation');
+                clearInterval(this.graphicRotationTimer);
+                return;
+            }
             this.rotateGraphic();
         }, 8000);
     }
 
     rotateGraphic() {
+        // ✅ Safety check
+        if (this.isDestroyed) return;
+        
         const graphics = document.querySelectorAll('.graphic-container');
         const indicators = document.querySelectorAll('.indicator');
         const titleElement = document.getElementById('graphicTitle');
         
-        if (graphics.length === 0) return;
+        if (graphics.length === 0 || !titleElement) return;
         
         graphics[this.currentGraphicIndex].classList.remove('active');
         indicators[this.currentGraphicIndex].classList.remove('active');
@@ -1715,14 +2020,24 @@ class DashboardFragment {
     }
 
     setupIndicators() {
+        if (this.isDestroyed) return;
+        
+        const signal = this._abortController.signal;
         const indicators = document.querySelectorAll('.indicator');
+        
         indicators.forEach((indicator, index) => {
             indicator.addEventListener('click', () => {
+                // ✅ Check if destroyed
+                if (this.isDestroyed) return;
+                
                 clearInterval(this.graphicRotationTimer);
                 
                 const graphics = document.querySelectorAll('.graphic-container');
                 const allIndicators = document.querySelectorAll('.indicator');
                 const titleElement = document.getElementById('graphicTitle');
+                
+                // ✅ Safety check
+                if (!titleElement || this.isDestroyed) return;
                 
                 graphics.forEach(g => g.classList.remove('active'));
                 allIndicators.forEach(i => i.classList.remove('active'));
@@ -1735,23 +2050,49 @@ class DashboardFragment {
                 
                 this.currentGraphicIndex = index;
                 
-                setTimeout(() => this.startGraphicRotation(), 15000);
-            });
+                setTimeout(() => {
+                    if (!this.isDestroyed) {
+                        this.startGraphicRotation();
+                    }
+                }, 15000);
+            }, { signal }); // ✅ Auto-cleanup
         });
     }
 
     onDestroy() {
+        console.log('🧹 DashboardFragment.onDestroy() called');
+        
+        // ✅ Set flag FIRST
+        this.isDestroyed = true;
+        
+        // ✅ Abort all async operations
+        if (this._abortController) {
+            console.log('⚠️ Aborting all pending operations...');
+            this._abortController.abort();
+        }
+        
+        // ✅ Clear rotation timer
         if (this.graphicRotationTimer) {
+            console.log('⏹️ Clearing graphic rotation timer');
             clearInterval(this.graphicRotationTimer);
+            this.graphicRotationTimer = null;
         }
 
+        // ✅ Destroy charts
         this.charts.forEach(chart => {
-            if (chart) chart.destroy();
+            if (chart) {
+                console.log('📊 Destroying chart');
+                chart.destroy();
+            }
         });
+        this.charts = [];
 
+        // ✅ Remove injected styles
         const styleElement = document.getElementById('dashboard-styles');
         if (styleElement) {
             styleElement.remove();
         }
+        
+        console.log('✅ DashboardFragment destroyed completely');
     }
 }
