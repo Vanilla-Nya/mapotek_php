@@ -1664,7 +1664,7 @@ class ObatFragment {
     
     const modalHtml = `
       <div class="modal fade" id="modalEditObat" tabindex="-1" aria-labelledby="modalEditObatLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content modern-modal">
             <div class="modal-header-gradient">
               <div class="modal-header-content">
@@ -1676,7 +1676,7 @@ class ObatFragment {
               </button>
             </div>
             
-            <div class="modal-body modern-modal-body">
+            <div class="modal-body modern-modal-body" style="max-height: calc(100vh - 250px); overflow-y: auto;">
               <div class="loading-state" id="editLoading">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
@@ -1730,11 +1730,11 @@ class ObatFragment {
                         <input type="text" class="modern-input" id="edit_total_stock" readonly>
                       </div>
                       
-                      <div class="col-md-5 d-flex align-items-end gap-2">
-                        <button type="button" class="btn-modern btn-info" id="btnTambahStockEdit">
+                      <div class="col-md-5 d-flex flex-column justify-content-end gap-2">
+                        <button type="button" class="btn-modern btn-info w-100" id="btnTambahStockEdit">
                           <i class="bi bi-plus-circle me-2"></i>Tambahkan Stock
                         </button>
-                        <button type="button" id="btnSimpanEdit" class="btn-modern btn-success">
+                        <button type="button" id="btnSimpanEdit" class="btn-modern btn-success w-100">
                           <i class="bi bi-check-circle me-2"></i>
                           <span id="btnSimpanEditLabel">Simpan</span>
                           <span id="btnSimpanEditSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
