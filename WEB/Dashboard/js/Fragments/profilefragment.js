@@ -1109,6 +1109,15 @@ class ProfileFragment {
             document.getElementById('qrisLinkOption').classList.add('d-none');
         });
 
+        document.getElementById('qrisOptionLink')?.addEventListener('change', () => {
+            document.getElementById('qrisUploadOption').classList.add('d-none');
+            document.getElementById('qrisLinkOption').classList.remove('d-none');
+            document.getElementById('qrisPreview').classList.add('d-none');
+            document.getElementById('qrisFile').value = '';
+            this.qrisFileBlob = null;
+            this.qrisUrlLink = null;
+        });
+
         document.getElementById('qrisFile')?.addEventListener('change', (e) => this.previewQRIS(e.target.files[0]));
         document.getElementById('qrisLink')?.addEventListener('input', (e) => this.previewQRISFromLink(e.target.value));
         document.getElementById('btnSaveQRIS')?.addEventListener('click', () => this.saveQRIS());
