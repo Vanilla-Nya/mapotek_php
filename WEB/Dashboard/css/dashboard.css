@@ -354,3 +354,14 @@ body.modal-open {
     position: relative;
     z-index: 3;
 }
+
+.nav-item.nav-disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.nav-item .lock-icon {
+  font-size: 12px;
+  opacity: 0.7;
+}

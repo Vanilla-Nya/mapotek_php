@@ -204,11 +204,32 @@ const CustomAlert = {
     
     // Return promise for async usage
     return new Promise((resolve) => {
+      // Setup event listeners
+      const confirmBtn = document.getElementById('customAlertConfirm');
+      const cancelBtn = document.getElementById('customAlertCancel');
+      
       if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => resolve(true), { once: true });
+        confirmBtn.addEventListener('click', () => {
+          this.hide();
+          if (onConfirm) onConfirm();
+          resolve(true);
+        });
       }
+      
       if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => resolve(false), { once: true });
+        cancelBtn.addEventListener('click', () => {
+          this.hide();
+          if (onCancel) onCancel();
+          resolve(false);
+        });
+      }
+      
+      // Auto close
+      if (autoClose > 0) {
+        setTimeout(() => {
+          this.hide();
+          resolve(false);
+        }, autoClose);
       }
     });
   },
