@@ -250,6 +250,13 @@ public class loginActivity extends AppCompatActivity {
                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                     String responseBody = response.body().string();
 
+                    Log.d("API_Login", "=== LOGIN RESPONSE ===");
+                    Log.d("API_Login", "Status Code: " + response.code());
+                    Log.d("API_Login", "Status Message: " + response.message());
+                    Log.d("API_Login", "Is Successful: " + response.isSuccessful());
+                    Log.d("API_Login", "Response Headers: " + response.headers().toString());
+                    Log.d("API_Login", "Response Body: " + responseBody);
+
                     runOnUiThread(() -> {
                         // Hide progress
                         progressBar.setVisibility(View.GONE);
@@ -283,6 +290,7 @@ public class loginActivity extends AppCompatActivity {
 
             // Get access token and user ID
             String accessToken = jsonResponse.getString("access_token");
+            Log.d("API_Login", "Access Token: " + accessToken);
             JSONObject user = jsonResponse.getJSONObject("user");
             String userId = user.getString("id");
 
@@ -307,6 +315,9 @@ public class loginActivity extends AppCompatActivity {
     }
 
     private void fetchUserDetails(String userId, String accessToken, String email) {
+        Log.d("API_Login", "=== FETCHING USER DETAILS ===");
+        Log.d("API_Login", "User ID: " + userId);
+        Log.d("API_Login", "Email: " + email);
         // Optional: Fetch additional user details from your 'pasien' table
         // For now, we'll just proceed to the main activity
 
@@ -322,6 +333,9 @@ public class loginActivity extends AppCompatActivity {
     }
 
     private void handleLoginError(int statusCode, String responseBody) {
+        Log.e("API_Login", "=== HANDLING LOGIN ERROR ===");
+        Log.e("API_Login", "Status Code: " + statusCode);
+        Log.e("API_Login", "Error Response Body: " + responseBody);
         String errorMessage;
 
         try {

@@ -107,45 +107,60 @@ public class DashboardFragment extends Fragment {
      * Fetches name and avatar URL
      */
     private void loadUserData() {
-        Log.d(TAG, "Loading user data for patient: " + patientId);
+        Log.d(TAG, "=== LOADING USER DATA ===");
+        Log.d(TAG, "Patient ID: " + patientId);
 
         // ✅ Get both name AND avatar_url
         String params = "nama,avatar_url&id_pasien=eq." + patientId;
+        Log.d(TAG, "Query params: " + params);
 
         supabaseHelper.select(requireContext(), "pasien", params,
                 authManager.getAccessToken(),
                 new supabaseHelper.SupabaseCallback() {
                     @Override
                     public void onSuccess(String response) {
+                        Log.d(TAG, "=== USER DATA API SUCCESS ===");
+                        Log.d(TAG, "Raw Response: " + response);
+
                         try {
                             JSONArray jsonArray = new JSONArray(response);
+                            Log.d(TAG, "Response Array Length: " + jsonArray.length());
 
                             if (jsonArray.length() > 0) {
                                 JSONObject userData = jsonArray.getJSONObject(0);
+                                Log.d(TAG, "User Data Object: " + userData.toString(2)); // Pretty print
 
                                 String name = userData.optString("nama", "Pengguna");
                                 String avatarUrl = userData.optString("avatar_url", null);
 
-                                Log.d(TAG, "User data loaded - Name: " + name);
-                                Log.d(TAG, "Avatar URL: " + avatarUrl);
+                                Log.d(TAG, "Parsed - Name: " + name);
+                                Log.d(TAG, "Parsed - Avatar URL: " + avatarUrl);
+                                Log.d(TAG, "Avatar URL is null: " + (avatarUrl == null));
+                                Log.d(TAG, "Avatar URL is empty: " + (avatarUrl != null && avatarUrl.trim().isEmpty()));
 
                                 requireActivity().runOnUiThread(() -> {
                                     tvUserName.setText(name);
+                                    Log.d(TAG, "✅ User name set to TextView: " + name);
+
                                     loadWelcomeAvatar(avatarUrl);
                                 });
                             } else {
-                                Log.w(TAG, "No user data found");
+                                Log.w(TAG, "⚠️ No user data found in response");
+                                Log.w(TAG, "Empty array returned");
                             }
 
                         } catch (Exception e) {
-                            Log.e(TAG, "Error parsing user data: " + e.getMessage());
+                            Log.e(TAG, "=== ERROR PARSING USER DATA ===");
+                            Log.e(TAG, "Exception: " + e.getMessage());
+                            Log.e(TAG, "Response that caused error: " + response);
                             e.printStackTrace();
                         }
                     }
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "Error loading user data: " + error);
+                        Log.e(TAG, "=== USER DATA API ERROR ===");
+                        Log.e(TAG, "Error message: " + error);
                     }
                 });
     }
@@ -242,7 +257,9 @@ public class DashboardFragment extends Fragment {
         }
 
         isLoadingBookings = true;
-        Log.d(TAG, "Loading bookings for patient: " + patientId);
+        Log.d(TAG, "=== LOADING BOOKINGS ===");
+        Log.d(TAG, "Patient ID: " + patientId);
+        Log.d(TAG, "Access Token: " + (authManager.getAccessToken() != null ? "Present" : "NULL"));
 
         // Show loading state
         loadingBooking.setVisibility(View.VISIBLE);
@@ -258,57 +275,86 @@ public class DashboardFragment extends Fragment {
                 "&order=no_antrian,created_at.desc" +
                 "&limit=100";
 
+        Log.d(TAG, "Table: " + table);
+        Log.d(TAG, "Query params: " + params);
+
         supabaseHelper.select(requireContext(), table, params, authManager.getAccessToken(),
                 new supabaseHelper.SupabaseCallback() {
                     @Override
                     public void onSuccess(String response) {
+                        Log.d(TAG, "=== BOOKINGS API SUCCESS ===");
                         Log.d(TAG, "Raw bookings response: " + response);
+                        Log.d(TAG, "Response length: " + response.length());
 
                         requireActivity().runOnUiThread(() -> {
                             try {
                                 JSONArray allBookings = new JSONArray(response);
+                                Log.d(TAG, "Total bookings in response: " + allBookings.length());
+
+                                // Log each booking before filtering
+                                for (int i = 0; i < allBookings.length(); i++) {
+                                    JSONObject booking = allBookings.getJSONObject(i);
+                                    Log.d(TAG, "Booking " + i + ": " + booking.toString(2));
+                                    Log.d(TAG, "  - Queue: " + booking.optString("no_antrian"));
+                                    Log.d(TAG, "  - Status: " + booking.optString("status_antrian"));
+                                    Log.d(TAG, "  - Deleted: " + booking.optInt("is_deleted"));
+                                    Log.d(TAG, "  - Created: " + booking.optString("created_at"));
+                                }
 
                                 // Apply blockchain + status filtering
                                 JSONArray filteredBookings = filterActiveBookings(allBookings);
+                                Log.d(TAG, "After filtering: " + filteredBookings.length() + " active bookings");
 
                                 loadingBooking.setVisibility(View.GONE);
 
                                 if (filteredBookings.length() == 0) {
+                                    Log.d(TAG, "No active bookings to display");
                                     emptyBooking.setVisibility(View.VISIBLE);
                                     bookingContainer.setVisibility(View.GONE);
                                 } else {
+                                    Log.d(TAG, "Displaying bookings...");
                                     emptyBooking.setVisibility(View.GONE);
                                     bookingContainer.setVisibility(View.VISIBLE);
 
                                     // Limit to 10 most recent
                                     int limit = Math.min(10, filteredBookings.length());
+                                    Log.d(TAG, "Will display " + limit + " bookings (limit: 10)");
+
                                     for (int i = 0; i < limit; i++) {
                                         JSONObject booking = filteredBookings.getJSONObject(i);
+                                        Log.d(TAG, "Adding booking card " + (i + 1) + "/" + limit);
                                         addBookingCard(booking);
                                     }
 
-                                    Log.d(TAG, "✅ Displayed " + limit + " active bookings");
+                                    Log.d(TAG, "✅ Successfully displayed " + limit + " active bookings");
                                 }
 
                             } catch (Exception e) {
-                                Log.e(TAG, "Error parsing bookings: " + e.getMessage());
+                                Log.e(TAG, "=== ERROR PARSING BOOKINGS ===");
+                                Log.e(TAG, "Exception: " + e.getMessage());
+                                Log.e(TAG, "Response that caused error: " + response);
+                                e.printStackTrace();
                                 showError("Gagal memuat data booking");
                             } finally {
                                 // ✅ Allow loading again
                                 isLoadingBookings = false;
+                                Log.d(TAG, "Loading flag reset");
                             }
                         });
                     }
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "Error loading bookings: " + error);
+                        Log.e(TAG, "=== BOOKINGS API ERROR ===");
+                        Log.e(TAG, "Error message: " + error);
+
                         requireActivity().runOnUiThread(() -> {
                             loadingBooking.setVisibility(View.GONE);
                             showError("Gagal memuat booking: " + error);
 
                             // ✅ Allow loading again even on error
                             isLoadingBookings = false;
+                            Log.d(TAG, "Loading flag reset (error case)");
                         });
                     }
                 });
@@ -319,57 +365,93 @@ public class DashboardFragment extends Fragment {
      * Think of it like: Git history - only show the latest commit for each branch
      */
     private JSONArray filterActiveBookings(JSONArray allBookings) {
+        Log.d(TAG, "=== FILTERING BOOKINGS ===");
+        Log.d(TAG, "Input bookings count: " + allBookings.length());
+
         try {
             JSONArray filtered = new JSONArray();
             HashMap<String, JSONObject> latestByQueue = new HashMap<>();
 
             // Step 1: Get the LATEST record for each no_antrian
+            Log.d(TAG, "Step 1: Finding latest record for each queue number");
+
             for (int i = 0; i < allBookings.length(); i++) {
                 JSONObject booking = allBookings.getJSONObject(i);
                 String queueNumber = booking.optString("no_antrian", "");
 
                 if (queueNumber.isEmpty()) {
+                    Log.w(TAG, "Skipping booking with empty queue number at index " + i);
                     continue; // Skip invalid queue numbers
                 }
 
                 // ✅ Always keep the newest record (compare created_at)
                 if (!latestByQueue.containsKey(queueNumber)) {
                     latestByQueue.put(queueNumber, booking);
-                    Log.d(TAG, "Latest for " + queueNumber + ": " + booking.optString("status_antrian"));
+                    Log.d(TAG, "  First entry for " + queueNumber +
+                            " | Status: " + booking.optString("status_antrian") +
+                            " | Created: " + booking.optString("created_at"));
                 } else {
                     // Compare dates to ensure we have the latest
                     String currentDate = latestByQueue.get(queueNumber).optString("created_at", "");
                     String newDate = booking.optString("created_at", "");
 
+                    Log.d(TAG, "  Comparing " + queueNumber +
+                            " | Current: " + currentDate +
+                            " | New: " + newDate);
+
                     if (newDate.compareTo(currentDate) > 0) {
                         latestByQueue.put(queueNumber, booking);
-                        Log.d(TAG, "Updated latest for " + queueNumber + ": " + booking.optString("status_antrian"));
+                        Log.d(TAG, "  ✅ Updated to newer record for " + queueNumber +
+                                " | Status: " + booking.optString("status_antrian"));
+                    } else {
+                        Log.d(TAG, "  ⏭️ Keeping older record (newer already exists)");
                     }
                 }
             }
 
+            Log.d(TAG, "Latest records found: " + latestByQueue.size());
+
             // Step 2: Filter by is_deleted and status
+            Log.d(TAG, "Step 2: Filtering by is_deleted and status");
+
+            int shownCount = 0;
+            int hiddenCount = 0;
+
             for (JSONObject latest : latestByQueue.values()) {
                 int isDeleted = latest.optInt("is_deleted", 0);
                 String status = latest.optString("status_antrian", "");
+                String queueNum = latest.optString("no_antrian", "");
 
                 // Only show if: NOT deleted AND status is acceptable
                 boolean shouldShow = (isDeleted == 0) && isStatusVisible(status);
 
                 if (shouldShow) {
                     filtered.put(latest);
-                    Log.d(TAG, "✅ Showing: " + latest.optString("no_antrian") +
-                            " | Status: " + status);
+                    shownCount++;
+                    Log.d(TAG, "  ✅ SHOWING: " + queueNum +
+                            " | Status: " + status +
+                            " | Deleted: " + isDeleted);
                 } else {
-                    Log.d(TAG, "❌ Hiding: " + latest.optString("no_antrian") +
-                            " | Deleted: " + isDeleted + " | Status: " + status);
+                    hiddenCount++;
+                    Log.d(TAG, "  ❌ HIDING: " + queueNum +
+                            " | Status: " + status +
+                            " | Deleted: " + isDeleted +
+                            " | Reason: " + (isDeleted == 1 ? "Deleted" : "Status not visible"));
                 }
             }
+
+            Log.d(TAG, "=== FILTERING COMPLETE ===");
+            Log.d(TAG, "Total processed: " + latestByQueue.size());
+            Log.d(TAG, "Shown: " + shownCount);
+            Log.d(TAG, "Hidden: " + hiddenCount);
+            Log.d(TAG, "Final filtered count: " + filtered.length());
 
             return filtered;
 
         } catch (Exception e) {
-            Log.e(TAG, "Error filtering bookings: " + e.getMessage());
+            Log.e(TAG, "=== ERROR FILTERING BOOKINGS ===");
+            Log.e(TAG, "Exception: " + e.getMessage());
+            e.printStackTrace();
             return new JSONArray();
         }
     }
@@ -378,20 +460,29 @@ public class DashboardFragment extends Fragment {
      * Define which statuses should be visible
      */
     private boolean isStatusVisible(String status) {
+        boolean visible;
+
         switch (status) {
             case "Belum Periksa":
-                return true;
+                visible = true;
+                Log.d(TAG, "Status '" + status + "' is VISIBLE");
+                break;
 
             // Hide these statuses
             case "Di Terima":
             case "Sedang Diperiksa":
             case "Selesai":
-                return false;
+                visible = false;
+                Log.d(TAG, "Status '" + status + "' is HIDDEN");
+                break;
 
             default:
-                Log.w(TAG, "Unknown status: " + status);
-                return false;
+                visible = false;
+                Log.w(TAG, "⚠️ Unknown status: '" + status + "' - treating as HIDDEN");
+                break;
         }
+
+        return visible;
     }
 
     /**
@@ -399,6 +490,9 @@ public class DashboardFragment extends Fragment {
      */
     private void addBookingCard(JSONObject booking) {
         try {
+            Log.d(TAG, "=== ADDING BOOKING CARD ===");
+            Log.d(TAG, "Booking data: " + booking.toString(2));
+
             View bookingCard = LayoutInflater.from(requireContext())
                     .inflate(R.layout.item_booking_card, bookingContainer, false);
 
@@ -411,28 +505,45 @@ public class DashboardFragment extends Fragment {
             // Get doctor name from nested object
             JSONObject dokter = booking.optJSONObject("dokter");
             String doctorName = dokter != null ? dokter.optString("nama_lengkap", "Dokter") : "Dokter";
+            Log.d(TAG, "Doctor object: " + (dokter != null ? dokter.toString() : "null"));
+            Log.d(TAG, "Doctor name: " + doctorName);
+
+            String queueNumber = booking.optString("no_antrian", "-");
+            String status = booking.optString("status_antrian", "Belum Periksa");
+            String dateStr = booking.optString("tanggal_antrian", "");
+            String timeStr = booking.optString("jam_antrian", "");
+
+            Log.d(TAG, "Card data:");
+            Log.d(TAG, "  - Queue: " + queueNumber);
+            Log.d(TAG, "  - Status: " + status);
+            Log.d(TAG, "  - Date: " + dateStr);
+            Log.d(TAG, "  - Time: " + timeStr);
 
             tvDoctorName.setText(doctorName);
-            tvQueueNumber.setText("No. Antrian: " + booking.optString("no_antrian", "-"));
-            tvStatus.setText(booking.optString("status_antrian", "Belum Periksa"));
+            tvQueueNumber.setText("No. Antrian: " + queueNumber);
+            tvStatus.setText(status);
 
             // Format date
-            String dateStr = booking.optString("tanggal_antrian", "");
-            tvDate.setText(formatDate(dateStr));
+            String formattedDate = formatDate(dateStr);
+            tvDate.setText(formattedDate);
+            Log.d(TAG, "  - Formatted date: " + formattedDate);
 
             // Format time
-            String timeStr = booking.optString("jam_antrian", "");
             tvTime.setText(timeStr);
 
             // Status color
-            String status = booking.optString("status_antrian", "");
             int statusColor = getStatusColor(status);
             tvStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(statusColor));
+            Log.d(TAG, "  - Status color: " + String.format("#%08X", statusColor));
 
             bookingContainer.addView(bookingCard);
+            Log.d(TAG, "✅ Booking card added successfully");
 
         } catch (Exception e) {
-            Log.e(TAG, "Error adding booking card: " + e.getMessage());
+            Log.e(TAG, "=== ERROR ADDING BOOKING CARD ===");
+            Log.e(TAG, "Exception: " + e.getMessage());
+            Log.e(TAG, "Booking data: " + booking.toString());
+            e.printStackTrace();
         }
     }
 

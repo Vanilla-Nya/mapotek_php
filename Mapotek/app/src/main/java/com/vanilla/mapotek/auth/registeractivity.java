@@ -127,6 +127,7 @@ public class registeractivity extends AppCompatActivity {
 
             @Override
             public void onError(String error) {
+                Log.e("API_Province", "Error: " + error);
                 Toast.makeText(registeractivity.this,
                         "Gagal memuat data provinsi: " + error, Toast.LENGTH_SHORT).show();
                 resetSpinner(spProvinsi, "Pilih Provinsi");
@@ -516,6 +517,7 @@ public class registeractivity extends AppCompatActivity {
     }
 
     private void login(JSONObject data, JSONObject userData) {
+        Log.d("API_Login", "Login Request: " + data.toString());
         supabaseHelper.login(this, data, new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
