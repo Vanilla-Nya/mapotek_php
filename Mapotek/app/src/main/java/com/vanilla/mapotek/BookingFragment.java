@@ -41,6 +41,12 @@ public class BookingFragment extends Fragment {
     private String selectedDate;
     private String selectedTime;
     private String queueNumber;
+    private String doctorWorkingHours; // e.g., "16:00-21:00"
+
+    private int startHour = -1;
+    private int startMinute = -1;
+    private int endHour = -1;
+    private int endMinute = -1;
 
     private AuthManager authManager;
 
@@ -78,7 +84,9 @@ public class BookingFragment extends Fragment {
         Log.d(TAG, "  Doctor Name: " + doctorName);
         Log.d(TAG, "  Doctor ID: " + doctorId);
         Log.d(TAG, "  Patient ID: " + patientId);
-        Log.d(TAG, "  Auth Manager: " + (authManager != null ? "Initialized" : "NULL"));
+
+        // Fetch doctor's working hours
+        fetchDoctorWorkingHours();
     }
 
     private void initializeViews(View view) {
@@ -105,14 +113,101 @@ public class BookingFragment extends Fragment {
         btnSubmit.setOnClickListener(v -> submitBooking());
     }
 
+    private void fetchDoctorWorkingHours() {
+        Log.d(TAG, "=== FETCHING DOCTOR WORKING HOURS ===");
+
+        String accessToken = authManager.getAccessToken();
+        String table = "dokter";
+        String params = "jam_kerja&id_dokter=eq." + doctorId;
+
+        Log.d(TAG, "Query: " + params);
+
+        supabaseHelper.select(requireContext(), table, params, accessToken,
+                new supabaseHelper.SupabaseCallback() {
+                    @Override
+                    public void onSuccess(String response) {
+                        Log.d(TAG, "=== DOCTOR WORKING HOURS SUCCESS ===");
+                        Log.d(TAG, "Response: " + response);
+
+                        try {
+                            JSONArray jsonArray = new JSONArray(response);
+                            if (jsonArray.length() > 0) {
+                                JSONObject doctor = jsonArray.getJSONObject(0);
+                                doctorWorkingHours = doctor.optString("jam_kerja", "");
+
+                                Log.d(TAG, "Doctor working hours: " + doctorWorkingHours);
+
+                                if (!doctorWorkingHours.isEmpty()) {
+                                    parseWorkingHours(doctorWorkingHours);
+                                } else {
+                                    Log.w(TAG, "No working hours set - allowing any time");
+                                    requireActivity().runOnUiThread(() -> {
+                                        Toast.makeText(requireContext(),
+                                                "Dokter belum mengatur jam kerja, Anda bisa pilih jam kapan saja",
+                                                Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing working hours: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "=== ERROR FETCHING WORKING HOURS ===");
+                        Log.e(TAG, "Error: " + error);
+
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(),
+                                    "Gagal memuat jam kerja dokter",
+                                    Toast.LENGTH_SHORT).show();
+                        });
+                    }
+                });
+    }
+
+    private void parseWorkingHours(String workingHours) {
+        Log.d(TAG, "=== PARSING WORKING HOURS ===");
+        Log.d(TAG, "Input: " + workingHours);
+
+        try {
+            // Expected format: "16:00-21:00" or "16.00-21.00"
+            String[] parts = workingHours.split("-");
+
+            if (parts.length == 2) {
+                // Parse start time
+                String[] startParts = parts[0].trim().split("[.:]");
+                startHour = Integer.parseInt(startParts[0]);
+                startMinute = startParts.length > 1 ? Integer.parseInt(startParts[1]) : 0;
+
+                // Parse end time
+                String[] endParts = parts[1].trim().split("[.:]");
+                endHour = Integer.parseInt(endParts[0]);
+                endMinute = endParts.length > 1 ? Integer.parseInt(endParts[1]) : 0;
+
+                Log.d(TAG, "Parsed working hours:");
+                Log.d(TAG, "  Start: " + startHour + ":" + startMinute);
+                Log.d(TAG, "  End: " + endHour + ":" + endMinute);
+
+                requireActivity().runOnUiThread(() -> {
+                    Toast.makeText(requireContext(),
+                            "Jam praktek: " + workingHours,
+                            Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                Log.w(TAG, "Invalid working hours format: " + workingHours);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing working hours: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void showDatePicker() {
         Log.d(TAG, "=== DATE PICKER OPENED ===");
         Calendar calendar = Calendar.getInstance();
-
-        Log.d(TAG, "Current date: " +
-                calendar.get(Calendar.YEAR) + "-" +
-                (calendar.get(Calendar.MONTH) + 1) + "-" +
-                calendar.get(Calendar.DAY_OF_MONTH));
 
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 requireContext(),
@@ -133,10 +228,8 @@ public class BookingFragment extends Fragment {
                     tvSelectedDate.setText(displayDate);
 
                     Log.d(TAG, "Display date (dd MMM yyyy): " + displayDate);
-                    Log.d(TAG, "UI updated with selected date");
 
                     // Generate queue number when date is selected
-                    Log.d(TAG, "Triggering queue number generation...");
                     generateQueueNumber();
                 },
                 calendar.get(Calendar.YEAR),
@@ -145,137 +238,141 @@ public class BookingFragment extends Fragment {
         );
 
         // Don't allow past dates
-        long minDate = System.currentTimeMillis();
-        datePickerDialog.getDatePicker().setMinDate(minDate);
-        Log.d(TAG, "Min date set to: " + new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(minDate));
-
+        datePickerDialog.getDatePicker().setMinDate(System.currentTimeMillis());
         datePickerDialog.show();
-        Log.d(TAG, "Date picker dialog shown");
     }
 
     private void showTimePicker() {
         Log.d(TAG, "=== TIME PICKER OPENED ===");
+
         Calendar calendar = Calendar.getInstance();
+        int initialHour = calendar.get(Calendar.HOUR_OF_DAY);
+        int initialMinute = calendar.get(Calendar.MINUTE);
 
-        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
-        int currentMinute = calendar.get(Calendar.MINUTE);
-
-        Log.d(TAG, "Current time: " + currentHour + ":" + currentMinute);
+        // If doctor has set working hours, use those
+        if (startHour != -1 && endHour != -1) {
+            Log.d(TAG, "Using doctor's working hours: " + startHour + ":" + startMinute + " - " + endHour + ":" + endMinute);
+            initialHour = startHour;
+            initialMinute = startMinute;
+        } else {
+            Log.d(TAG, "No working hours set - allowing any time");
+        }
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(
                 requireContext(),
                 (view, hourOfDay, minute) -> {
                     Log.d(TAG, "=== TIME SELECTED ===");
-                    Log.d(TAG, "Raw values - Hour: " + hourOfDay + ", Minute: " + minute);
+                    Log.d(TAG, "Selected: " + hourOfDay + ":" + minute);
 
-                    selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
-
-                    Log.d(TAG, "Formatted time (HH:mm): " + selectedTime);
-
-                    tvSelectedTime.setText(selectedTime);
-                    Log.d(TAG, "UI updated with selected time");
+                    // Only validate if working hours are set
+                    if (startHour != -1 && endHour != -1) {
+                        if (isTimeWithinWorkingHours(hourOfDay, minute)) {
+                            selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
+                            tvSelectedTime.setText(selectedTime);
+                            Log.d(TAG, "✅ Time accepted: " + selectedTime);
+                        } else {
+                            Log.w(TAG, "❌ Time outside working hours");
+                            Toast.makeText(requireContext(),
+                                    "Waktu harus dalam jam praktek: " + doctorWorkingHours,
+                                    Toast.LENGTH_LONG).show();
+                            tvSelectedTime.setText("-");
+                            selectedTime = null;
+                        }
+                    } else {
+                        // No working hours restriction - accept any time
+                        selectedTime = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute);
+                        tvSelectedTime.setText(selectedTime);
+                        Log.d(TAG, "✅ Time accepted (no restrictions): " + selectedTime);
+                    }
                 },
-                currentHour,
-                currentMinute,
+                initialHour,
+                initialMinute,
                 true // 24-hour format
         );
 
-        Log.d(TAG, "Time picker format: 24-hour");
+        // Set title based on whether working hours exist
+        if (startHour != -1 && endHour != -1) {
+            timePickerDialog.setTitle("Pilih jam (Praktek: " + doctorWorkingHours + ")");
+        } else {
+            timePickerDialog.setTitle("Pilih jam");
+        }
+
         timePickerDialog.show();
-        Log.d(TAG, "Time picker dialog shown");
+    }
+
+    private boolean isTimeWithinWorkingHours(int hour, int minute) {
+        // Convert to minutes for easier comparison
+        int selectedTimeInMinutes = hour * 60 + minute;
+        int startTimeInMinutes = startHour * 60 + startMinute;
+        int endTimeInMinutes = endHour * 60 + endMinute;
+
+        boolean isValid = selectedTimeInMinutes >= startTimeInMinutes &&
+                selectedTimeInMinutes <= endTimeInMinutes;
+
+        Log.d(TAG, "Time validation:");
+        Log.d(TAG, "  Selected: " + selectedTimeInMinutes + " min (" + hour + ":" + minute + ")");
+        Log.d(TAG, "  Start: " + startTimeInMinutes + " min");
+        Log.d(TAG, "  End: " + endTimeInMinutes + " min");
+        Log.d(TAG, "  Valid: " + isValid);
+
+        return isValid;
     }
 
     private void generateQueueNumber() {
         Log.d(TAG, "=== GENERATING QUEUE NUMBER ===");
         Log.d(TAG, "Selected Date: " + selectedDate);
 
-        // Show loading
         tvQueueNumber.setText("Generating...");
 
         String accessToken = authManager.getAccessToken();
-        Log.d(TAG, "Access Token: " + (accessToken != null ? "Present" : "NULL"));
-
-        // Step 1: Get last queue number for today
-        String today = selectedDate; // "2025-10-10"
+        String today = selectedDate;
         String table = "antrian";
         String params = "no_antrian&tanggal_antrian=eq." + today + "&order=created_at.desc&limit=1";
 
-        Log.d(TAG, "API Request:");
-        Log.d(TAG, "  Table: " + table);
-        Log.d(TAG, "  Params: " + params);
-        Log.d(TAG, "  Query: Get last queue number for date: " + today);
+        Log.d(TAG, "Query: " + params);
 
         supabaseHelper.select(requireContext(), table, params, accessToken,
                 new supabaseHelper.SupabaseCallback() {
                     @Override
                     public void onSuccess(String response) {
                         Log.d(TAG, "=== QUEUE NUMBER API SUCCESS ===");
-                        Log.d(TAG, "Raw Response: " + response);
-                        Log.d(TAG, "Response Length: " + response.length());
+                        Log.d(TAG, "Response: " + response);
 
                         try {
                             String lastQueueNumber = null;
-
-                            // Parse response
                             JSONArray jsonArray = new JSONArray(response);
-                            Log.d(TAG, "Response Array Length: " + jsonArray.length());
 
                             if (jsonArray.length() > 0) {
                                 JSONObject lastRecord = jsonArray.getJSONObject(0);
-                                Log.d(TAG, "Last Record: " + lastRecord.toString(2));
-
                                 lastQueueNumber = lastRecord.optString("no_antrian");
-                                Log.d(TAG, "Last Queue Number Found: " + lastQueueNumber);
-                            } else {
-                                Log.d(TAG, "⚠️ No queue found for today - will be first!");
-                                Log.d(TAG, "This will generate Q001");
+                                Log.d(TAG, "Last queue: " + lastQueueNumber);
                             }
 
-                            // Generate new queue number
-                            Log.d(TAG, "Calling QueueNumberGenerator.generateFromLast()");
-                            Log.d(TAG, "  Input: " + lastQueueNumber);
-
                             queueNumber = QueueNumberGenerator.generateFromLast(lastQueueNumber);
-
-                            Log.d(TAG, "✅ Generated Queue Number: " + queueNumber);
-                            Log.d(TAG, "Format: Q + 3-digit counter");
+                            Log.d(TAG, "✅ Generated: " + queueNumber);
 
                             requireActivity().runOnUiThread(() -> {
                                 tvQueueNumber.setText("No. Antrian: " + queueNumber);
-                                Log.d(TAG, "UI Updated - Queue number displayed");
-
                                 Toast.makeText(requireContext(),
                                         "Queue number: " + queueNumber,
                                         Toast.LENGTH_SHORT).show();
                             });
 
                         } catch (Exception e) {
-                            Log.e(TAG, "=== ERROR GENERATING QUEUE ===");
-                            Log.e(TAG, "Exception: " + e.getMessage());
-                            Log.e(TAG, "Response that caused error: " + response);
+                            Log.e(TAG, "Error: " + e.getMessage());
                             e.printStackTrace();
-
-                            requireActivity().runOnUiThread(() -> {
-                                Toast.makeText(requireContext(),
-                                        "Error: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                            });
                         }
                     }
 
                     @Override
                     public void onError(String error) {
                         Log.e(TAG, "=== QUEUE NUMBER API ERROR ===");
-                        Log.e(TAG, "Error Message: " + error);
-                        Log.e(TAG, "Falling back to Q001");
+                        Log.e(TAG, "Error: " + error);
 
-                        // If error, just generate with counter 1
                         queueNumber = QueueNumberGenerator.generateFromLast(null);
-                        Log.d(TAG, "Fallback Queue Number: " + queueNumber);
 
                         requireActivity().runOnUiThread(() -> {
                             tvQueueNumber.setText("No. Antrian: " + queueNumber);
-                            Log.d(TAG, "UI Updated with fallback queue number");
                         });
                     }
                 });
@@ -285,42 +382,45 @@ public class BookingFragment extends Fragment {
         Log.d(TAG, "=== SUBMIT BOOKING CLICKED ===");
 
         // Validate all fields
-        Log.d(TAG, "Validating fields...");
-        Log.d(TAG, "  Selected Date: " + selectedDate);
-        Log.d(TAG, "  Selected Time: " + selectedTime);
-        Log.d(TAG, "  Queue Number: " + queueNumber);
-        Log.d(TAG, "  Doctor ID: " + doctorId);
-        Log.d(TAG, "  Patient ID: " + patientId);
-
         if (selectedDate == null || selectedDate.isEmpty()) {
-            Log.w(TAG, "❌ Validation failed: Date is empty");
             Toast.makeText(requireContext(), "Pilih tanggal terlebih dahulu", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedTime == null || selectedTime.isEmpty()) {
-            Log.w(TAG, "❌ Validation failed: Time is empty");
             Toast.makeText(requireContext(), "Pilih jam terlebih dahulu", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (queueNumber == null || queueNumber.isEmpty()) {
-            Log.w(TAG, "❌ Validation failed: Queue number is empty");
             Toast.makeText(requireContext(), "Nomor antrian belum tersedia", Toast.LENGTH_SHORT).show();
             return;
+        }
+
+        // Additional validation for working hours (only if set)
+        if (startHour != -1 && endHour != -1) {
+            String[] timeParts = selectedTime.split(":");
+            int hour = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
+
+            if (!isTimeWithinWorkingHours(hour, minute)) {
+                Toast.makeText(requireContext(),
+                        "Waktu harus dalam jam praktek: " + doctorWorkingHours,
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+        } else {
+            Log.d(TAG, "No working hours restriction - accepting any time");
         }
 
         Log.d(TAG, "✅ All validations passed");
 
         try {
-            // Generate UUID for id_antrian
             String uniqueId = java.util.UUID.randomUUID().toString();
-            Log.d(TAG, "Generated UUID: " + uniqueId);
 
-            // Create booking data
             JSONObject bookingData = new JSONObject();
-            bookingData.put("id_antrian", uniqueId);              // ← UUID for database ID
-            bookingData.put("no_antrian", queueNumber);           // ← Queue number for display
+            bookingData.put("id_antrian", uniqueId);
+            bookingData.put("no_antrian", queueNumber);
             bookingData.put("id_pasien", patientId);
             bookingData.put("id_dokter", doctorId);
             bookingData.put("tanggal_antrian", selectedDate);
@@ -328,68 +428,28 @@ public class BookingFragment extends Fragment {
             bookingData.put("jenis_pasien", "UMUM");
             bookingData.put("status_antrian", "Belum Periksa");
 
-            Log.d(TAG, "=== BOOKING DATA ===");
-            Log.d(TAG, bookingData.toString(2)); // Pretty print
-            Log.d(TAG, "Field breakdown:");
-            Log.d(TAG, "  id_antrian: " + uniqueId);
-            Log.d(TAG, "  no_antrian: " + queueNumber);
-            Log.d(TAG, "  id_pasien: " + patientId);
-            Log.d(TAG, "  id_dokter: " + doctorId);
-            Log.d(TAG, "  tanggal_antrian: " + selectedDate);
-            Log.d(TAG, "  jam_antrian: " + selectedTime);
-            Log.d(TAG, "  jenis_pasien: UMUM");
-            Log.d(TAG, "  status_antrian: Belum Periksa");
+            Log.d(TAG, "Booking data: " + bookingData.toString(2));
 
-            // Insert directly to Supabase (blockchain trigger will still fire!)
             String table = "antrian";
             String accessToken = authManager.getAccessToken();
-
-            Log.d(TAG, "=== API INSERT REQUEST ===");
-            Log.d(TAG, "Table: " + table);
-            Log.d(TAG, "Access Token: " + (accessToken != null ? "Present" : "NULL"));
-            Log.d(TAG, "Blockchain trigger will fire automatically");
 
             supabaseHelper.insert(requireContext(), table, bookingData, accessToken,
                     new supabaseHelper.SupabaseCallback() {
                         @Override
                         public void onSuccess(String response) {
-                            Log.d(TAG, "=== BOOKING API SUCCESS ===");
-                            Log.d(TAG, "Raw Response: " + response);
-                            Log.d(TAG, "Response Length: " + response.length());
-
-                            try {
-                                // Try to parse response
-                                JSONArray responseArray = new JSONArray(response);
-                                if (responseArray.length() > 0) {
-                                    JSONObject insertedData = responseArray.getJSONObject(0);
-                                    Log.d(TAG, "Inserted Data: " + insertedData.toString(2));
-                                }
-                            } catch (Exception e) {
-                                Log.d(TAG, "Response is not JSON array (might be success message)");
-                            }
-
-                            Log.d(TAG, "✅ Booking created successfully!");
-                            Log.d(TAG, "Queue Number: " + queueNumber);
-                            Log.d(TAG, "Date: " + selectedDate);
-                            Log.d(TAG, "Time: " + selectedTime);
+                            Log.d(TAG, "✅ Booking successful!");
 
                             requireActivity().runOnUiThread(() -> {
                                 Toast.makeText(requireContext(),
                                         "Booking berhasil! No. Antrian: " + queueNumber,
                                         Toast.LENGTH_LONG).show();
-
-                                Log.d(TAG, "Navigating back to previous screen");
-                                // Go back to previous screen
                                 requireActivity().getSupportFragmentManager().popBackStack();
                             });
                         }
 
                         @Override
                         public void onError(String error) {
-                            Log.e(TAG, "=== BOOKING API ERROR ===");
-                            Log.e(TAG, "Error Message: " + error);
-                            Log.e(TAG, "Booking Data: " + bookingData.toString());
-                            Log.e(TAG, "❌ Booking failed");
+                            Log.e(TAG, "❌ Booking failed: " + error);
 
                             requireActivity().runOnUiThread(() -> {
                                 Toast.makeText(requireContext(),
@@ -400,11 +460,8 @@ public class BookingFragment extends Fragment {
                     });
 
         } catch (Exception e) {
-            Log.e(TAG, "=== ERROR CREATING BOOKING DATA ===");
-            Log.e(TAG, "Exception: " + e.getMessage());
-            Log.e(TAG, "Stack Trace:");
+            Log.e(TAG, "Error: " + e.getMessage());
             e.printStackTrace();
-
             Toast.makeText(requireContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
