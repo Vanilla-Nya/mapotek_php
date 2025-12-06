@@ -457,7 +457,7 @@ class PasienFragment {
                 params += `&nama=ilike.*${encodeURIComponent(searchQuery)}*`;
             }
 
-            const response = await fetch(`/mapotek_php/WEB/API/pasien.php?${params}`);
+            const response = await fetch(`/MAPOTEK_PHP/WEB/API/pasien.php?${params}`);
             const result = await response.json();
 
             if (result.success) {
@@ -539,7 +539,7 @@ class PasienFragment {
             console.log('Patient not in current list, fetching data...');
             try {
                 // Fetch patient from API
-                const response = await fetch(`/mapotek_php/WEB/API/pasien.php?select=*&id_pasien=eq.${patientId}`);
+                const response = await fetch(`/MAPOTEK_PHP/WEB/API/pasien.php?select=*&id_pasien=eq.${patientId}`);
                 const result = await response.json();
                 
                 if (result.success && result.data && result.data.length > 0) {
@@ -629,7 +629,7 @@ class PasienFragment {
             await new Promise(resolve => setTimeout(resolve, 300));
 
             // Step 1: Get all unique encounters for this patient (completed only)
-            const antrianResponse = await fetch(`/mapotek_php/WEB/API/auth/antrian.php?select=*&id_pasien=eq.${patientId}&status_antrian=eq.Selesai&id_encounter_satusehat=not.is.null&order=tanggal_antrian.desc,jam_antrian.desc`);
+            const antrianResponse = await fetch(`/MAPOTEK_PHP/WEB/API/auth/antrian.php?select=*&id_pasien=eq.${patientId}&status_antrian=eq.Selesai&id_encounter_satusehat=not.is.null&order=tanggal_antrian.desc,jam_antrian.desc`);
             const antrianResult = await antrianResponse.json();
 
             if (!antrianResult.success || !antrianResult.data || antrianResult.data.length === 0) {
@@ -662,7 +662,7 @@ class PasienFragment {
                 console.log(`🔍 Processing encounter: ${encounterId}`);
                 
                 // Step 2: Get ALL antrian entries with this encounter
-                const allAntrianResponse = await fetch(`/mapotek_php/WEB/API/auth/antrian.php?select=id_antrian&id_encounter_satusehat=eq.${encounterId}`);
+                const allAntrianResponse = await fetch(`/MAPOTEK_PHP/WEB/API/auth/antrian.php?select=id_antrian&id_encounter_satusehat=eq.${encounterId}`);
                 const allAntrianResult = await allAntrianResponse.json();
                 
                 let pemeriksaan = null;
@@ -679,7 +679,7 @@ class PasienFragment {
                     
                     // Step 3: Try to find pemeriksaan for ANY of these antrian IDs
                     for (const antrianId of antrianIds) {
-                        const pemeriksaanResponse = await fetch(`/mapotek_php/WEB/API/pemeriksaan.php?select=*&id_antrian=eq.${antrianId}`);
+                        const pemeriksaanResponse = await fetch(`/MAPOTEK_PHP/WEB/API/pemeriksaan.php?select=*&id_antrian=eq.${antrianId}`);
                         const pemeriksaanResult = await pemeriksaanResponse.json();
                         
                         if (pemeriksaanResult.success && pemeriksaanResult.data && pemeriksaanResult.data.length > 0) {
@@ -695,7 +695,7 @@ class PasienFragment {
                     // Get anamnesa
                     if (pemeriksaan.id_anamnesa) {
                         try {
-                            const anamnesaResponse = await fetch(`/mapotek_php/WEB/API/anamnesa.php?select=*&id_anamnesa=eq.${pemeriksaan.id_anamnesa}`);
+                            const anamnesaResponse = await fetch(`/MAPOTEK_PHP/WEB/API/anamnesa.php?select=*&id_anamnesa=eq.${pemeriksaan.id_anamnesa}`);
                             const anamnesaResult = await anamnesaResponse.json();
                             if (anamnesaResult.success && anamnesaResult.data && anamnesaResult.data.length > 0) {
                                 anamnesa = anamnesaResult.data[0];
@@ -707,7 +707,7 @@ class PasienFragment {
                     
                     // Get vital signs
                     try {
-                        const vitalResponse = await fetch(`/mapotek_php/WEB/API/table_pemeriksaan_loinc.php?select=*,loinc:id_ioinc(display)&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
+                        const vitalResponse = await fetch(`/MAPOTEK_PHP/WEB/API/table_pemeriksaan_loinc.php?select=*,loinc:id_ioinc(display)&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
                         const vitalResult = await vitalResponse.json();
                         if (vitalResult.success && vitalResult.data) {
                             vitalSigns = vitalResult.data;
@@ -718,7 +718,7 @@ class PasienFragment {
                     
                     // Get diagnosis ICD-X
                     try {
-                        const diagnosisResponse = await fetch(`/mapotek_php/WEB/API/diagnosis_icdx.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
+                        const diagnosisResponse = await fetch(`/MAPOTEK_PHP/WEB/API/diagnosis_icdx.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
                         const diagnosisResult = await diagnosisResponse.json();
                         if (diagnosisResult.success && diagnosisResult.data) {
                             diagnosa = diagnosisResult.data;
@@ -729,7 +729,7 @@ class PasienFragment {
                     
                     // Get diagnosis ICD-IX
                     try {
-                        const prosedurResponse = await fetch(`/mapotek_php/WEB/API/diagnosis_icdix.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
+                        const prosedurResponse = await fetch(`/MAPOTEK_PHP/WEB/API/diagnosis_icdix.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
                         const prosedurResult = await prosedurResponse.json();
                         if (prosedurResult.success && prosedurResult.data) {
                             diagnosaProsedur = prosedurResult.data;
@@ -740,7 +740,7 @@ class PasienFragment {
                     
                     // Get medicines
                     try {
-                        const obatResponse = await fetch(`/mapotek_php/WEB/API/pemeriksaan_obat.php?select=*,obat:id_obat(nama_obat,id_jenis_obat,jenis_obat:id_jenis_obat(nama_jenis_obat))&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
+                        const obatResponse = await fetch(`/MAPOTEK_PHP/WEB/API/pemeriksaan_obat.php?select=*,obat:id_obat(nama_obat,id_jenis_obat,jenis_obat:id_jenis_obat(nama_jenis_obat))&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
                         const obatResult = await obatResponse.json();
                         if (obatResult.success && obatResult.data) {
                             obat = obatResult.data;
@@ -751,11 +751,11 @@ class PasienFragment {
                     
                     // Get prescriptions
                     try {
-                        const resepResponse = await fetch(`/mapotek_php/WEB/API/resep.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
+                        const resepResponse = await fetch(`/MAPOTEK_PHP/WEB/API/resep.php?select=*&id_pemeriksaan=eq.${pemeriksaan.id_pemeriksaan}`);
                         const resepResult = await resepResponse.json();
                         if (resepResult.success && resepResult.data && resepResult.data.length > 0) {
                             for (let r of resepResult.data) {
-                                const detailResponse = await fetch(`/mapotek_php/WEB/API/resep_detail.php?select=*&id_resep=eq.${r.id_resep}`);
+                                const detailResponse = await fetch(`/MAPOTEK_PHP/WEB/API/resep_detail.php?select=*&id_resep=eq.${r.id_resep}`);
                                 const detailResult = await detailResponse.json();
                                 if (detailResult.success && detailResult.data) {
                                     resep.push({
@@ -774,7 +774,7 @@ class PasienFragment {
                 let doctor = null;
                 if (displayAntrian.id_dokter) {
                     try {
-                        const doctorResponse = await fetch(`/mapotek_php/WEB/API/dokter.php?select=*&id_dokter=eq.${displayAntrian.id_dokter}`);
+                        const doctorResponse = await fetch(`/MAPOTEK_PHP/WEB/API/dokter.php?select=*&id_dokter=eq.${displayAntrian.id_dokter}`);
                         const doctorResult = await doctorResponse.json();
                         if (doctorResult.success && doctorResult.data && doctorResult.data.length > 0) {
                             doctor = doctorResult.data[0];
@@ -1515,7 +1515,7 @@ class PasienFragment {
                 alamat: formattedAddress
             };
             
-            const authResponse = await fetch('/mapotek_php/WEB/API/auth.php', {
+            const authResponse = await fetch('/MAPOTEK_PHP/WEB/API/auth.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json'
@@ -1545,7 +1545,7 @@ class PasienFragment {
                 alamat: formattedAddress
             };
 
-            const response = await fetch('/mapotek_php/WEB/API/pasien.php', {
+            const response = await fetch('/MAPOTEK_PHP/WEB/API/pasien.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',

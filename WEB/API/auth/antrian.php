@@ -9,7 +9,7 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once __DIR__ . '/encounter_satusehat_api.php';
-require_once __DIR__ . '/../apiclient.php';
+require_once __DIR__ . '/../ApiClient.php';
 require_once __DIR__ . '/satusehat_clinical_api.php';
 
 $method = $_SERVER['REQUEST_METHOD'];

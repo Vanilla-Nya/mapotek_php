@@ -142,8 +142,8 @@ class ObatFragment {
                 <div class="form-section">
                   <h6 class="section-title">Informasi Obat</h6>
                   
-                  <div class="row g-3">
-                    <div class="col-md-5">
+                  <div class="row g-3">  <!-- ✅ ADD THIS ROW WRAPPER -->
+                    <div class="col-md-4">
                       <label for="nama_obat" class="modern-label">
                         Nama Obat <span class="required">*</span>
                       </label>
@@ -155,13 +155,23 @@ class ObatFragment {
                       <label for="id_jenis_obat" class="modern-label">
                         Jenis Obat <span class="required">*</span>
                       </label>
-                      <select id="id_jenis_obat" name="id_jenis_obat" class="modern-select" required>
-                        <option value="">Pilih jenis...</option>
-                      </select>
-                      <div class="invalid-feedback">Pilih jenis obat.</div>
+                      <input 
+                        type="text" 
+                        id="id_jenis_obat" 
+                        name="id_jenis_obat" 
+                        class="modern-input" 
+                        list="jenisObatList"
+                        placeholder="Pilih atau ketik jenis obat baru..."
+                        required
+                        autocomplete="off"
+                      >
+                      <datalist id="jenisObatList">
+                        <!-- Options populated by JS -->
+                      </datalist>
+                      <div class="invalid-feedback">Pilih atau masukkan jenis obat.</div>
                     </div>
                     
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                       <label for="bentuk_obat" class="modern-label">
                         Bentuk Obat <span class="required">*</span>
                       </label>
@@ -170,7 +180,7 @@ class ObatFragment {
                       </select>
                       <div class="invalid-feedback">Pilih bentuk obat.</div>
                     </div>
-                  </div>
+                  </div>  <!-- ✅ CLOSE ROW HERE -->
                 </div>
 
                 <div class="form-section">
@@ -1003,6 +1013,13 @@ class ObatFragment {
 
   // Inject toast notification system
   injectToastSystem() {
+
+    if (!document.body) {
+      console.warn('⚠️ document.body not ready, delaying toast injection');
+      setTimeout(() => this.injectToastSystem(), 100);
+      return;
+    }
+    
     if (document.getElementById('obat-toast-container')) return;
 
     // Toast container
@@ -1466,19 +1483,19 @@ class ObatFragment {
 
   // Populate jenis obat dropdown
   populateJenisObat() {
-    const sel = document.getElementById('id_jenis_obat');
-    if (!sel) return;
+    const datalist = document.getElementById('jenisObatList');
+    if (!datalist) return;
     
-    sel.innerHTML = '<option value="">Pilih jenis...</option>';
+    datalist.innerHTML = '';
     
     this.jenisObatOptions.forEach(item => {
       const opt = document.createElement('option');
-      opt.value = item.id_jenis_obat || item.id;
-      opt.textContent = item.nama_jenis_obat || item.nama_jenis || item.name;
-      sel.appendChild(opt);
+      opt.value = item.nama_jenis_obat || item.nama_jenis || item.name;
+      opt.setAttribute('data-id', item.id_jenis_obat || item.id);
+      datalist.appendChild(opt);
     });
     
-    console.log(`✅ Jenis obat populated: ${sel.options.length} options`);
+    console.log(`✅ Jenis obat datalist populated: ${datalist.options.length} options`);
   }
 
   // Populate bentuk obat dropdown
@@ -1664,7 +1681,7 @@ class ObatFragment {
     
     const modalHtml = `
       <div class="modal fade" id="modalEditObat" tabindex="-1" aria-labelledby="modalEditObatLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content modern-modal">
             <div class="modal-header-gradient">
               <div class="modal-header-content">
@@ -1676,7 +1693,7 @@ class ObatFragment {
               </button>
             </div>
             
-            <div class="modal-body modern-modal-body">
+            <div class="modal-body modern-modal-body" style="max-height: calc(100vh - 250px); overflow-y: auto;">
               <div class="loading-state" id="editLoading">
                 <div class="spinner-border text-primary" role="status">
                   <span class="visually-hidden">Loading...</span>
@@ -1702,11 +1719,20 @@ class ObatFragment {
                         <label for="edit_jenis_obat" class="modern-label">
                           Jenis Obat <span class="required">*</span>
                         </label>
-                        <select class="modern-select" id="edit_jenis_obat" required>
-                          <option value="">Pilih jenis...</option>
-                        </select>
-                        <div class="invalid-feedback">Pilih jenis obat</div>
-                      </div>
+                        <input 
+                          type="text" 
+                          class="modern-input" 
+                          id="edit_jenis_obat"
+                          list="editJenisObatList"
+                          placeholder="Pilih atau ketik jenis obat baru..."
+                          required
+                          autocomplete="off"
+                        >
+                        <datalist id="editJenisObatList">
+                          <!-- Options populated by JS -->
+                        </datalist>
+                        <div class="invalid-feedback">Pilih atau masukkan jenis obat</div>
+                     </div>
                       
                       <div class="col-md-4">
                         <label for="edit_bentuk_obat" class="modern-label">
@@ -1730,11 +1756,11 @@ class ObatFragment {
                         <input type="text" class="modern-input" id="edit_total_stock" readonly>
                       </div>
                       
-                      <div class="col-md-5 d-flex align-items-end gap-2">
-                        <button type="button" class="btn-modern btn-info" id="btnTambahStockEdit">
+                      <div class="col-md-5 d-flex flex-column justify-content-end gap-2">
+                        <button type="button" class="btn-modern btn-info w-100" id="btnTambahStockEdit">
                           <i class="bi bi-plus-circle me-2"></i>Tambahkan Stock
                         </button>
-                        <button type="button" id="btnSimpanEdit" class="btn-modern btn-success">
+                        <button type="button" id="btnSimpanEdit" class="btn-modern btn-success w-100">
                           <i class="bi bi-check-circle me-2"></i>
                           <span id="btnSimpanEditLabel">Simpan</span>
                           <span id="btnSimpanEditSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
@@ -1914,30 +1940,43 @@ class ObatFragment {
   async populateEditDropdowns(selectedJenisId, selectedBentuk) {
     console.log('🔄 Populating dropdowns with:', { selectedJenisId, selectedBentuk });
     
-    const jenisSelect = document.getElementById('edit_jenis_obat');
-    if (jenisSelect) {
-      jenisSelect.innerHTML = '<option value="">Pilih jenis...</option>';
+    // ✅ JENIS OBAT - Use Datalist (allows custom input)
+    const jenisDatalist = document.getElementById('editJenisObatList');
+    const jenisInput = document.getElementById('edit_jenis_obat');
+    
+    if (jenisDatalist && jenisInput) {
+      jenisDatalist.innerHTML = '';
+      
+      let selectedJenisName = '';
       
       if (this.jenisObatOptions.length > 0) {
         this.jenisObatOptions.forEach(item => {
           const opt = document.createElement('option');
-          opt.value = item.id_jenis_obat;
-          opt.textContent = item.nama_jenis_obat;
+          opt.value = item.nama_jenis_obat;
+          opt.setAttribute('data-id', item.id_jenis_obat);
           
           if (item.id_jenis_obat === selectedJenisId) {
-            opt.selected = true;
-            console.log('✅ Selected jenis:', item.nama_jenis_obat);
+            selectedJenisName = item.nama_jenis_obat;
+            console.log('✅ Selected jenis:', item.nama_jenis_obat, 'ID:', item.id_jenis_obat);
           }
           
-          jenisSelect.appendChild(opt);
+          jenisDatalist.appendChild(opt);
         });
-      } else {
-        console.warn('⚠️ No jenis obat options available');
       }
+      
+      // Set the input value to the selected jenis name
+      jenisInput.value = selectedJenisName;
+      // ✅ Store the original ID AND NAME for comparison
+      jenisInput.setAttribute('data-original-id', selectedJenisId || '');
+      jenisInput.setAttribute('data-original-name', selectedJenisName);
+      
+      console.log('✅ Jenis obat datalist populated with', this.jenisObatOptions.length, 'options');
+      console.log('📝 Current value:', selectedJenisName, 'Original ID:', selectedJenisId);
     } else {
-      console.error('❌ Jenis obat select not found');
+      console.error('❌ Jenis obat datalist or input not found');
     }
     
+    // ✅ BENTUK OBAT - Keep as select
     const bentukSelect = document.getElementById('edit_bentuk_obat');
     if (bentukSelect) {
       bentukSelect.innerHTML = '<option value="">Pilih bentuk...</option>';
@@ -1955,8 +1994,6 @@ class ObatFragment {
           
           bentukSelect.appendChild(opt);
         });
-      } else {
-        console.warn('⚠️ No bentuk obat options available');
       }
     } else {
       console.error('❌ Bentuk obat select not found');
@@ -2468,76 +2505,140 @@ class ObatFragment {
 
   // Handle submit new medicine
   async handleSubmit() {
-    const form = document.getElementById('formTambahObat');
-    const btnLabel = document.getElementById('btnSimpanLabel');
-    const btnSpinner = document.getElementById('btnSimpanSpinner');
+  const form = document.getElementById('formTambahObat');
+  const btnLabel = document.getElementById('btnSimpanLabel');
+  const btnSpinner = document.getElementById('btnSimpanSpinner');
+  const btnSimpan = document.getElementById('btnSimpanObat');
+  
+  // ✅ PREVENT DOUBLE SUBMISSION
+  if (btnSimpan.disabled) {
+    console.log('⚠️ Submit already in progress, ignoring...');
+    return;
+  }
+  
+  // Validate form
+  if (!form.checkValidity()) {
+    form.classList.add('was-validated');
+    this.showToast('Mohon lengkapi semua field yang wajib diisi', 'warning');
+    return;
+  }
+  
+  // Check doctor ID
+  if (!this.currentDokterId) {
+    this.showToast('❌ ID Dokter tidak ditemukan', 'error');
+    return;
+  }
+  
+  // ✅ DISABLE BUTTON IMMEDIATELY
+  btnSimpan.disabled = true;
+  btnLabel.textContent = 'Menyimpan...';
+  btnSpinner.classList.remove('d-none');
+  
+  this.showLoadingOverlay('Menyimpan obat baru...');
+  
+  try {
+    const formData = new FormData(form);
+    const jenisObatInput = formData.get('id_jenis_obat').trim();
     
-    if (!form.checkValidity()) {
-      form.classList.add('was-validated');
-      this.showToast('Mohon lengkapi semua field yang wajib diisi', 'warning');
-      return;
-    }
+    // 🔍 Check if it's a new jenis obat or existing one (CASE-INSENSITIVE)
+    let idJenisObat = null;
     
-    if (!this.currentDokterId) {
-      this.showToast('❌ ID Dokter tidak ditemukan', 'error');
-      return;
-    }
+    // ✅ Search with case-insensitive comparison
+    const existingJenis = this.jenisObatOptions.find(
+      item => {
+        const itemName = (item.nama_jenis_obat || item.nama_jenis || item.name || '').toLowerCase().trim();
+        const inputName = jenisObatInput.toLowerCase().trim();
+        return itemName === inputName;
+      }
+    );
     
-    btnLabel.textContent = 'Menyimpan...';
-    btnSpinner.classList.remove('d-none');
-    
-    this.showLoadingOverlay('Menyimpan obat baru...');
-    
-    try {
-      const formData = new FormData(form);
+    if (existingJenis) {
+      // ✅ Use existing ID - NO INSERT
+      idJenisObat = existingJenis.id_jenis_obat || existingJenis.id;
+      console.log('✅ Using existing jenis obat:', existingJenis.nama_jenis_obat, '(ID:', idJenisObat, ')');
+      console.log('🚫 Skipping INSERT - jenis obat already exists');
+    } else {
+      // ✅ Create new jenis obat - ONLY IF NOT EXISTS
+      console.log('🆕 Jenis obat not found, creating new:', jenisObatInput);
       
-      const payload = {
-        action: 'addObat',
-        nama_obat: formData.get('nama_obat'),
-        id_jenis_obat: formData.get('id_jenis_obat'),
-        bentuk_obat: formData.get('bentuk_obat'),
-        harga_jual: this.parseRupiah(formData.get('harga_jual_master')),
-        harga_beli: this.parseRupiah(formData.get('harga_beli')),
-        stok: parseInt(formData.get('stok')),
-        tanggal_expired: formData.get('tanggal_expired'),
-        id_dokter: this.currentDokterId
-      };
-      
-      console.log('📤 Sending payload:', payload);
-      
-      const response = await fetch(`${this.apiBasePath}/obat.php`, {
+      const jenisResponse = await fetch(`${this.apiBasePath}/obat.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          action: 'addJenisObat',
+          nama_jenis: jenisObatInput,
+          id_dokter: this.currentDokterId
+        })
       });
       
-      const result = await response.json();
-      console.log('📥 Response:', result);
+      const jenisResult = await jenisResponse.json();
       
-      if (!result.success) {
-        throw new Error(result.message || 'Gagal menyimpan data');
+      if (!jenisResult.success) {
+        throw new Error(jenisResult.message || 'Gagal membuat jenis obat baru');
       }
       
-      this.showToast(result.message || 'Data obat berhasil disimpan', 'success');
+      idJenisObat = jenisResult.data[0].id_jenis_obat;
+      console.log('✅ New jenis obat created with ID:', idJenisObat);
       
-      await this.loadMedicines();
-      
-      setTimeout(() => {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalTambahObat'));
-        if (modal) modal.hide();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('❌ Error saving:', error);
-      this.showToast(error.message, 'error');
-    } finally {
-      btnLabel.textContent = 'Simpan';
-      btnSpinner.classList.add('d-none');
-      this.hideLoadingOverlay();
+      // Reload jenis obat options to include the new one
+      await this.loadJenisObat();
     }
+    
+    // Now create the medicine with the id_jenis_obat
+    const payload = {
+      action: 'addObat',
+      nama_obat: formData.get('nama_obat'),
+      id_jenis_obat: idJenisObat,  // ✅ Use the ID (new or existing)
+      bentuk_obat: formData.get('bentuk_obat'),
+      harga_jual: this.parseRupiah(formData.get('harga_jual_master')),
+      harga_beli: this.parseRupiah(formData.get('harga_beli')),
+      stok: parseInt(formData.get('stok')),
+      tanggal_expired: formData.get('tanggal_expired'),
+      id_dokter: this.currentDokterId
+    };
+    
+    console.log('📤 Sending payload:', payload);
+    
+    const response = await fetch(`${this.apiBasePath}/obat.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const result = await response.json();
+    console.log('📥 Response:', result);
+    
+    if (!result.success) {
+      throw new Error(result.message || 'Gagal menyimpan data');
+    }
+    
+    // ✅ Show success message
+    this.showToast(result.message || 'Data obat berhasil disimpan', 'success');
+    
+    // ✅ Reload medicines list
+    await this.loadMedicines();
+    
+    // ✅ Close modal after short delay
+    setTimeout(() => {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalTambahObat'));
+      if (modal) modal.hide();
+    }, 1000);
+    
+  } catch (error) {
+    console.error('❌ Error saving:', error);
+    this.showToast(error.message, 'error');
+  } finally {
+    // ✅ ALWAYS RE-ENABLE BUTTON
+    btnLabel.textContent = 'Simpan';
+    btnSpinner.classList.add('d-none');
+    btnSimpan.disabled = false;
+    this.hideLoadingOverlay();
   }
+}
 
   // Handle edit submit
   async handleEditSubmit() {
@@ -2557,17 +2658,97 @@ class ObatFragment {
     this.showLoadingOverlay('Menyimpan perubahan...');
     
     try {
+      const jenisInput = document.getElementById('edit_jenis_obat');
+      const jenisObatInputValue = jenisInput.value.trim();
+      const originalName = jenisInput.getAttribute('data-original-name') || '';
+      const originalId = jenisInput.getAttribute('data-original-id') || '';
+      
+      console.log('═══════════════════════════════════════════════');
+      console.log('🔍 EDIT JENIS OBAT DEBUG');
+      console.log('═══════════════════════════════════════════════');
+      console.log('Input value:', jenisObatInputValue);
+      console.log('Original name:', originalName);
+      console.log('Original ID:', originalId);
+      console.log('Has changed?', jenisObatInputValue !== originalName);
+      
+      // 🔍 Check if jenis obat has changed
+      let idJenisObat = null;
+      
+      if (jenisObatInputValue === originalName && originalId) {
+        // ✅ No change - use original ID
+        idJenisObat = originalId;
+        console.log('✅ Jenis obat unchanged, using original ID:', idJenisObat);
+      } else {
+        // ✅ Changed - check if new value exists or needs to be created
+        console.log('🔄 Jenis obat changed, searching for:', jenisObatInputValue);
+        
+        // Search with case-insensitive comparison
+        const existingJenis = this.jenisObatOptions.find(
+          item => {
+            const itemName = (item.nama_jenis_obat || item.nama_jenis || item.name || '').toLowerCase().trim();
+            const inputName = jenisObatInputValue.toLowerCase().trim();
+            return itemName === inputName;
+          }
+        );
+        
+        if (existingJenis) {
+          // ✅ Use existing ID - NO INSERT
+          idJenisObat = existingJenis.id_jenis_obat || existingJenis.id;
+          console.log('✅ Found existing jenis obat:', existingJenis.nama_jenis_obat);
+          console.log('✅ Using existing ID:', idJenisObat);
+          console.log('🚫 Skipping INSERT - jenis obat already exists');
+        } else {
+          // ✅ Create new jenis obat - ONLY IF NOT EXISTS
+          console.log('🆕 Jenis obat not found, creating new:', jenisObatInputValue);
+          
+          const jenisResponse = await fetch(`${this.apiBasePath}/obat.php`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              action: 'addJenisObat',
+              nama_jenis: jenisObatInputValue,
+              id_dokter: this.currentDokterId
+            })
+          });
+          
+          const jenisResult = await jenisResponse.json();
+          console.log('📥 Add jenis obat response:', jenisResult);
+          
+          if (!jenisResult.success) {
+            throw new Error(jenisResult.message || 'Gagal membuat jenis obat baru');
+          }
+          
+          idJenisObat = jenisResult.data[0].id_jenis_obat;
+          console.log('✅ New jenis obat created with ID:', idJenisObat);
+          
+          // Reload jenis obat options
+          await this.loadJenisObat();
+        }
+      }
+      
+      console.log('═══════════════════════════════════════════════');
+      console.log('📤 FINAL ID TO USE:', idJenisObat);
+      console.log('═══════════════════════════════════════════════');
+      
+      // Validate we have an ID
+      if (!idJenisObat) {
+        throw new Error('ID jenis obat tidak valid');
+      }
+      
+      // Now update the medicine
       const payload = {
         action: 'updateObat',
         id_obat: document.getElementById('edit_id_obat').value,
         nama_obat: document.getElementById('edit_nama_obat').value,
-        id_jenis_obat: document.getElementById('edit_jenis_obat').value,
+        id_jenis_obat: idJenisObat,  // ✅ Use the correct ID
         bentuk_obat: document.getElementById('edit_bentuk_obat').value,
         barcode: document.getElementById('edit_barcode').value,
         id_dokter: this.currentDokterId
       };
       
-      console.log('📤 Sending update payload:', payload);
+      console.log('📤 Sending update payload:', JSON.stringify(payload, null, 2));
       
       const response = await fetch(`${this.apiBasePath}/obat.php`, {
         method: 'POST',
@@ -2586,6 +2767,7 @@ class ObatFragment {
       
       this.showToast(result.message || 'Perubahan berhasil disimpan', 'success');
       
+      // Reload medicines to see the change
       await this.loadMedicines();
       
       setTimeout(() => {
@@ -2595,6 +2777,7 @@ class ObatFragment {
       
     } catch (error) {
       console.error('❌ Error updating:', error);
+      console.error('❌ Stack:', error.stack);
       this.showToast(error.message, 'error');
     } finally {
       btnLabel.textContent = 'Simpan';

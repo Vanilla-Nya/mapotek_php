@@ -806,7 +806,7 @@ class AsistenDokterFragment {
 
             // ⭐ STEP 1: Create auth account
             console.log('📝 Creating auth account...');
-            const authResponse = await fetch('/mapotek_php/WEB/API/auth.php', {
+            const authResponse = await fetch('/MAPOTEK_PHP/WEB/API/auth.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -854,7 +854,7 @@ class AsistenDokterFragment {
             console.log('📝 Inserting asisten_dokter with UUID:', authUserId);
             
             // ⭐ STEP 4: Insert into database
-            const response = await fetch('/mapotek_php/WEB/API/asisten_dokter.php', {
+            const response = await fetch('/MAPOTEK_PHP/WEB/API/asisten_dokter.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
