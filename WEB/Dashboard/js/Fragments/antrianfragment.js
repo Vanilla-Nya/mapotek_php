@@ -204,32 +204,11 @@ const CustomAlert = {
     
     // Return promise for async usage
     return new Promise((resolve) => {
-      // Setup event listeners (only once)
-      const confirmBtn = document.getElementById('customAlertConfirm');
-      const cancelBtn = document.getElementById('customAlertCancel');
-      
       if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-          this.hide();
-          if (onConfirm) onConfirm();
-          resolve(true);
-        });
+        confirmBtn.addEventListener('click', () => resolve(true), { once: true });
       }
-      
       if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-          this.hide();
-          if (onCancel) onCancel();
-          resolve(false);
-        });
-      }
-      
-      // Auto close
-      if (autoClose > 0) {
-        setTimeout(() => {
-          this.hide();
-          resolve(false);
-        }, autoClose);
+        cancelBtn.addEventListener('click', () => resolve(false), { once: true });
       }
     });
   },
@@ -2522,20 +2501,7 @@ class AntrianFragment {
   setupPaymentEventListeners() {
     console.log('🔧 Setting up payment event listeners...');
     
-    // Patient Type buttons - BPJS/UMUM
-    document.querySelectorAll('.patient-type-btn').forEach(btn => {
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-      
-      newBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('👤 Patient type clicked:', newBtn.dataset.type);
-        this.updatePatientType(newBtn.dataset.type);
-      });
-    });
-    
-    // Payment method buttons - Cash/QRIS
+    // Payment method buttons - clone to remove old listeners
     document.querySelectorAll('.payment-method-btn').forEach(btn => {
       const newBtn = btn.cloneNode(true);
       btn.parentNode.replaceChild(newBtn, btn);
@@ -2547,18 +2513,6 @@ class AntrianFragment {
         this.updatePaymentMethod(newBtn.dataset.method);
       });
     });
-
-    // Payment amount input - calculate change
-    const paymentInput = document.getElementById('paymentAmount');
-    if (paymentInput) {
-      const newInput = paymentInput.cloneNode(true);
-      paymentInput.parentNode.replaceChild(newInput, paymentInput);
-      
-      newInput.addEventListener('input', () => {
-        console.log('💰 Amount changed:', newInput.value);
-        this.calculateChange();
-      });
-    }
 
     // Process payment button
     const processBtn = document.getElementById('processPaymentBtn');
