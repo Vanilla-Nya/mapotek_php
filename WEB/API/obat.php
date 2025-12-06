@@ -654,52 +654,18 @@ try {
             // ➕ ADD JENIS OBAT (Medicine Type)
             // ═══════════════════════════════════════════════════════════════
             case 'addJenisObat':
-            case 'add_jenis_obat':
-                error_log("➕ Adding new jenis obat...");
-                
-                // Validate required fields
-                if (!isset($payload['nama_jenis']) || trim($payload['nama_jenis']) === '') {
-                    throw new Exception('Nama jenis obat wajib diisi');
+            case 'add_jenis':
+                $namaJenis = trim($payload['nama_jenis'] ?? '');
+                if (empty($namaJenis)) {
+                    throw new Exception('Nama jenis obat tidak boleh kosong');
                 }
                 
-                $namaJenis = trim($payload['nama_jenis']);
-                $idDokter = $payload['id_dokter'];
+                error_log("➕ Adding jenis obat: $namaJenis");
                 
-                error_log("📝 Creating jenis obat: $namaJenis");
+                $data = ['nama_jenis_obat' => $namaJenis];
+                $result = supabase('POST', 'jenis_obat', '', $data);
                 
-                // Check if jenis already exists (case-insensitive)
-                try {
-                    $checkQuery = "jenis_obat?id_dokter=eq.$idDokter&nama_jenis_obat=ilike." . urlencode($namaJenis);
-                    $existing = supabase('GET', $checkQuery, 'select=id_jenis_obat,nama_jenis_obat');
-                    
-                    if (is_array($existing) && !empty($existing)) {
-                        error_log("✅ Jenis obat already exists: " . $existing[0]['id_jenis_obat']);
-                        
-                        echo json_encode([
-                            'success' => true,
-                            'data' => $existing,
-                            'message' => 'Jenis obat sudah ada',
-                            'already_exists' => true
-                        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-                        break;
-                    }
-                } catch (Exception $e) {
-                    error_log("⚠️ Check existing failed: " . $e->getMessage());
-                }
-                
-                // Insert new jenis obat
-                $insertData = [
-                    'nama_jenis_obat' => $namaJenis,
-                    'id_dokter' => $idDokter
-                ];
-                
-                $result = supabase('POST', 'jenis_obat', '', $insertData);
-                
-                if (!is_array($result) || empty($result)) {
-                    throw new Exception('Gagal menambahkan jenis obat');
-                }
-                
-                error_log("✅ Jenis obat created successfully: " . $result[0]['id_jenis_obat']);
+                error_log("✅ Jenis obat added successfully");
                 
                 echo json_encode([
                     'success' => true,
@@ -748,84 +714,49 @@ try {
                 error_log("✅ Medicine added successfully via RPC");
                 error_log("📦 RPC result: " . json_encode($result));
 
-                // ✅ IMPROVED: Get id_obat reliably
-                $idObat = null;
-                
-                // Method 1: Check RPC result
-                if (is_array($result) && !empty($result)) {
-                    $idObat = $result[0]['id_obat'] ?? null;
-                    if ($idObat) {
-                        error_log("✅ Got id_obat from RPC result: $idObat");
-                    }
-                }
-                
-                // Method 2: Query if not in RPC result
-                if (!$idObat) {
-                    error_log("⚠️ id_obat not in RPC result, querying database...");
-                    
-                    // Wait for database commit
-                    usleep(200000); // 0.2 seconds
-                    
-                    // ✅ FIXED: Use proper filter syntax
-                    $namaObatEncoded = urlencode($params['p_nama_obat']);
-                    $idDokterParam = $params['p_id_dokter'];
-                    
-                    error_log("🔍 Searching for: nama='$params[p_nama_obat]', id_dokter='$idDokterParam'");
-                    
-                    $queryResult = supabase(
-                        'GET',
-                        "obat?nama_obat=eq.$namaObatEncoded&id_dokter=eq.$idDokterParam&order=created_at.desc&limit=1",
-                        'select=id_obat,nama_obat,created_at'
-                    );
-                    
-                    error_log("📦 Query result: " . json_encode($queryResult));
-                    
-                    if (is_array($queryResult) && !empty($queryResult)) {
-                        $idObat = $queryResult[0]['id_obat'];
-                        error_log("✅ Found id_obat via query: $idObat");
-                    } else {
-                        error_log("❌ Could not find medicine in database!");
-                        error_log("❌ This might be an RLS issue - check 'obat' table SELECT policies");
-                    }
-                }
-                
-                // ✅ CREATE PENGELUARAN with better error handling
+                // 🆕 CREATE PENGELUARAN AFTER SUCCESSFUL MEDICINE ADDITION
                 $pengeluaranInfo = null;
                 
-                if ($idObat) {
-                    error_log("💰 Creating pengeluaran for medicine ID: $idObat");
+                if (is_array($result) && !empty($result)) {
+                    // Get id_obat from result
+                    $idObat = $result[0]['id_obat'] ?? null;
                     
-                    $pengeluaranInfo = createPengeluaranObat(
-                        $idObat,
-                        $params['p_nama_obat'],
-                        $params['p_stok'],
-                        $params['p_harga_beli'],
-                        $params['p_id_dokter']
-                    );
-                    
-                    if ($pengeluaranInfo) {
-                        error_log("✅ Pengeluaran created successfully: " . json_encode($pengeluaranInfo));
-                    } else {
-                        error_log("⚠️ Pengeluaran creation returned null - check error logs above");
+                    // If RPC doesn't return id_obat, query for it
+                    if (!$idObat) {
+                        error_log("⚠️ id_obat not in RPC result, querying...");
+                        $queryResult = supabase(
+                            'GET',
+                            'obat?nama_obat=eq.' . urlencode($params['p_nama_obat']) . '&id_dokter=eq.' . $params['p_id_dokter'] . '&order=created_at.desc&limit=1',
+                            'select=id_obat'
+                        );
+                        
+                        if (is_array($queryResult) && !empty($queryResult)) {
+                            $idObat = $queryResult[0]['id_obat'];
+                            error_log("✅ Found id_obat: $idObat");
+                        }
                     }
-                } else {
-                    error_log("❌ Cannot create pengeluaran - id_obat is null!");
-                }
-
-                // Return response
-                $message = 'Obat dan detail berhasil ditambahkan';
-                if ($pengeluaranInfo) {
-                    $message .= ' (pengeluaran Rp ' . number_format($pengeluaranInfo['total'], 0, ',', '.') . ' tercatat)';
-                } else {
-                    $message .= ' (⚠️ pengeluaran gagal tercatat - periksa RLS policies)';
+                    
+                    // Create pengeluaran if we have id_obat
+                    if ($idObat) {
+                        $pengeluaranInfo = createPengeluaranObat(
+                            $idObat,
+                            $params['p_nama_obat'],
+                            $params['p_stok'],
+                            $params['p_harga_beli'],
+                            $params['p_id_dokter']
+                        );
+                        
+                        if ($pengeluaranInfo) {
+                            error_log("✅ Pengeluaran created: " . json_encode($pengeluaranInfo));
+                        }
+                    }
                 }
 
                 echo json_encode([
                     'success' => true,
                     'data' => $result,
                     'pengeluaran' => $pengeluaranInfo,
-                    'id_obat' => $idObat, // ✅ Return this for debugging
-                    'message' => $message
+                    'message' => 'Obat dan detail berhasil ditambahkan' . ($pengeluaranInfo ? ' (pengeluaran tercatat)' : '')
                 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 break;
 
@@ -1016,42 +947,49 @@ function createPengeluaranObat($idObat, $namaObat, $jumlah, $hargaBeli, $idDokte
             'keterangan' => "Beli Obat: $namaObat ($jumlah unit)",
             'id_dokter' => $idDokter,
             'tanggal' => date('Y-m-d'),
-            'id_antrian' => null,
-            'total' => $totalHarga
+            'id_antrian' => null
         ];
         
         error_log("💰 Creating pengeluaran: " . json_encode($pengeluaranData));
         
-        // Try to insert
+        // Insert into pengeluaran
         $pengeluaranResult = supabase('POST', 'pengeluaran', '', $pengeluaranData);
         
-        // ✅ If empty (RLS blocking SELECT), query it back
-        if (empty($pengeluaranResult)) {
-            error_log("⚠️ Empty response, trying to retrieve via query...");
-            
-            // Wait a moment for DB to commit
-            usleep(100000); // 0.1 second
-            
-            // Query back the most recent pengeluaran for this doctor
-            $query = "pengeluaran?id_dokter=eq.$idDokter&tanggal=eq." . date('Y-m-d') . "&order=created_at.desc&limit=1";
-            $queryResult = supabase('GET', $query, 'select=id_pengeluaran,keterangan,total');
-            
-            if (!empty($queryResult) && isset($queryResult[0]['id_pengeluaran'])) {
-                $pengeluaranResult = $queryResult;
-                error_log("✅ Retrieved pengeluaran via query: " . $queryResult[0]['id_pengeluaran']);
-            } else {
-                error_log("❌ Could not retrieve pengeluaran - check RLS policies!");
-                return null;
-            }
+        // 🔍 DEBUG: Log the exact response
+        error_log("📦 PENGELUARAN RESULT TYPE: " . gettype($pengeluaranResult));
+        error_log("📦 PENGELUARAN RESULT: " . json_encode($pengeluaranResult));
+        error_log("📦 IS ARRAY: " . (is_array($pengeluaranResult) ? 'YES' : 'NO'));
+        error_log("📦 IS EMPTY: " . (empty($pengeluaranResult) ? 'YES' : 'NO'));
+        
+        // Check if error
+        if (isset($pengeluaranResult['error'])) {
+            throw new Exception('Pengeluaran insert failed: ' . $pengeluaranResult['error']);
         }
         
+        // Check if result is empty array (RLS issue)
+        if (empty($pengeluaranResult)) {
+            error_log("❌ CRITICAL: Empty response - likely RLS blocking SELECT after INSERT");
+            throw new Exception('RLS blocking: pengeluaran inserted but cannot be retrieved. Check RLS policies.');
+        }
+        
+        // Check if array but malformed
+        if (!is_array($pengeluaranResult)) {
+            error_log("❌ CRITICAL: Response is not an array");
+            throw new Exception('Invalid response type from pengeluaran insert');
+        }
+        
+        // Get the ID
         $idPengeluaran = $pengeluaranResult[0]['id_pengeluaran'] ?? null;
         
         if (!$idPengeluaran) {
-            throw new Exception('id_pengeluaran not available');
+            error_log("❌ CRITICAL: No id_pengeluaran in result");
+            error_log("❌ Available keys: " . implode(', ', array_keys($pengeluaranResult[0] ?? [])));
+            throw new Exception('id_pengeluaran not returned from insert');
         }
         
-        // Create detail
+        error_log("✅ Pengeluaran created with ID: $idPengeluaran");
+        
+        // Create pengeluaran_detail
         $detailData = [
             'id_pengeluaran' => $idPengeluaran,
             'id_obat' => $idObat,
@@ -1059,7 +997,10 @@ function createPengeluaranObat($idObat, $namaObat, $jumlah, $hargaBeli, $idDokte
             'harga' => $hargaBeli
         ];
         
-        supabase('POST', 'pengeluaran_detail', '', $detailData);
+        error_log("💰 Creating pengeluaran_detail: " . json_encode($detailData));
+        $detailResult = supabase('POST', 'pengeluaran_detail', '', $detailData);
+        
+        error_log("✅ Pengeluaran detail created");
         
         return [
             'id_pengeluaran' => $idPengeluaran,
@@ -1069,6 +1010,7 @@ function createPengeluaranObat($idObat, $namaObat, $jumlah, $hargaBeli, $idDokte
         
     } catch (Exception $e) {
         error_log("❌ Error creating pengeluaran: " . $e->getMessage());
-        return null;
+        error_log("❌ Stack: " . $e->getTraceAsString());
+        throw $e;
     }
 }
