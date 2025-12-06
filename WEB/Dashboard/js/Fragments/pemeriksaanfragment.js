@@ -116,7 +116,7 @@ class ICDXSelectionModal {
     tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(8);
     
     try {
-      const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd10.json');
+      const response = await fetch('/mapotek_php/WEB/Dashboard/resource/icd10.json');
       if (!response.ok) throw new Error('Failed to load icd10.json');
       
       const jsonData = await response.json();
@@ -409,7 +409,7 @@ class ICDIXSelectionModal {
     tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(8);
     
     try {
-      const response = await fetch('/MAPOTEK_PHP/WEB/Dashboard/resource/icd9.json');
+      const response = await fetch('/mapotek_php/WEB/Dashboard/resource/icd9.json');
       if (!response.ok) throw new Error('Failed to load icd9.json');
       
       const jsonData = await response.json();
@@ -706,7 +706,7 @@ class ObatSelectionModal {
     }
     
     try {
-      const url = `/MAPOTEK_PHP/WEB/API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
+      const url = `/mapotek_php/WEB/API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
       console.log("📤 Fetching from:", url);
       
       this.showLoading(true);

@@ -148,7 +148,7 @@ class PemeriksaanFragmentLoader {
             
             const script = document.createElement('script');
             // ✅ Try absolute path from root
-            script.src = '/MAPOTEK_PHP/WEB/Dashboard/js/Fragments/pemeriksaanfragment.js';
+            script.src = '/mapotek_php/WEB/Dashboard/js/Fragments/pemeriksaanfragment.js';
             script.async = true;
             
             script.onload = () => {
