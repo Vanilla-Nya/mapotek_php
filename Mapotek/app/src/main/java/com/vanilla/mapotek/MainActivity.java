@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private FloatingActionButton fabScanQR;
+    private FloatingActionButton fabChatbot;
     private static final int QR_SCAN_REQUEST = 200;
 
     // Fragments
@@ -88,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
         initializeViews();
         setupFragments();
         setupFAB();
+        setupChatbotFAB();
         setupBackPressHandler();
 
         if (savedInstanceState == null) {
@@ -129,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeViews() {
         fabScanQR = findViewById(R.id.fabScanQR);
+        fabChatbot = findViewById(R.id.fabChatbot);
 
         // Custom navigation views
         findViewById(R.id.navDashboard).setOnClickListener(v -> selectNavItemInternal("dashboard"));
@@ -228,6 +231,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupFAB() {
         fabScanQR.setOnClickListener(v -> openQRScanner());
+    }
+
+    private void setupChatbotFAB() {
+        fabChatbot.setOnClickListener(v -> openChatbot());
+    }
+
+    private void openChatbot() {
+        Intent intent = new Intent(MainActivity.this, ChatbotActivity.class);
+        startActivity(intent);
     }
 
     private void loadFragment(Fragment fragment, String tag) {

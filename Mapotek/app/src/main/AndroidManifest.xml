@@ -31,6 +31,11 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
         <activity
+            android:name=".ChatbotActivity"
+            android:label="Asisten Medis"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity
             android:name=".auth.loginActivity"
             android:exported="false" />
         <activity

@@ -15,6 +15,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Chatbot FAB - Top Right Corner -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabChatbot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_chat"
+        android:contentDescription="Medical Assistant"
+        app:backgroundTint="@color/primary_color"
+        app:tint="@color/white"
+        app:borderWidth="0dp"
+        app:elevation="8dp"
+        app:fabSize="normal" />
+
     <!-- Bottom Navigation -->
     <FrameLayout
         android:id="@+id/bottomNavContainer"
@@ -49,7 +64,6 @@
                     android:focusable="true"
                     android:background="?android:attr/selectableItemBackgroundBorderless">
 
-                    <!-- Circle Background -->
                     <View
                         android:id="@+id/circleDashboard"
                         android:layout_width="48dp"
@@ -158,7 +172,7 @@
         </androidx.cardview.widget.CardView>
     </FrameLayout>
 
-    <!-- QR Scanner FAB - Positioned AFTER bottom nav to appear on top -->
+    <!-- QR Scanner FAB - Bottom Center -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabScanQR"
         android:layout_width="wrap_content"
