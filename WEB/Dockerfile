@@ -1,11 +1,9 @@
-# Use Apache + PHP 8.2
 FROM php:8.2-apache
 
-# Enable required extensions
-RUN docker-php-ext-install curl
+# cURL is already included in PHP 8.2 base image — no need to install
 
-# Copy project files to Apache web root
-COPY . /var/www/html/
-
-# Enable mod_rewrite (optional)
+# Enable rewrite (optional)
 RUN a2enmod rewrite
+
+# Copy app files
+COPY . /var/www/html/
