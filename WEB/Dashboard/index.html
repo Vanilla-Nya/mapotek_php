@@ -1,656 +1,722 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mapotek Dashboard</title>
-    
+
     <!-- Cropper.js CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
+    />
+
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
+    />
+
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/animations.css">
-    
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+
     <!-- ⭐ NEW: Pasien Form Styles -->
-    <link rel="stylesheet" href="css/pasien-styles.css">
-    
+    <link rel="stylesheet" href="css/pasien-styles.css" />
+
     <style>
-        /* ========================================
+      /* ========================================
            TOP BAR STYLES 
            ======================================== */
-        .top-bar {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        }
+      .top-bar {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
 
-        /* Top Bar Profile Card with Blur Effect */
-        .top-bar-profile {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 20px 8px 8px;
-            border-radius: 50px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 180px;
-        }
+      /* Top Bar Profile Card with Blur Effect */
+      .top-bar-profile {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 20px 8px 8px;
+        border-radius: 50px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 180px;
+      }
 
-        .top-bar-profile:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
-        }
+      .top-bar-profile:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.4);
+      }
 
-        /* 🎨 Blurred background from profile photo */
-        .top-bar-profile::before {
-            content: '';
-            position: absolute;
-            top: -15px;
-            left: -15px;
-            right: -15px;
-            bottom: -15px;
-            background-image: var(--topbar-bg-image, linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%));
-            background-size: cover;
-            background-position: center;
-            filter: blur(10px) brightness(0.9) saturate(1.2);
-            opacity: 0.4;
-            z-index: 0;
-            transition: all 0.5s ease;
-        }
+      /* 🎨 Blurred background from profile photo */
+      .top-bar-profile::before {
+        content: "";
+        position: absolute;
+        top: -15px;
+        left: -15px;
+        right: -15px;
+        bottom: -15px;
+        background-image: var(
+          --topbar-bg-image,
+          linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%)
+        );
+        background-size: cover;
+        background-position: center;
+        filter: blur(10px) brightness(0.9) saturate(1.2);
+        opacity: 0.4;
+        z-index: 0;
+        transition: all 0.5s ease;
+      }
 
-        /* Overlay for readability */
-        .top-bar-profile::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(10px);
-            z-index: 1;
-            border-radius: 50px;
-        }
+      /* Overlay for readability */
+      .top-bar-profile::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        z-index: 1;
+        border-radius: 50px;
+      }
 
-        .top-bar-profile > * {
-            position: relative;
-            z-index: 2;
-        }
+      .top-bar-profile > * {
+        position: relative;
+        z-index: 2;
+      }
 
-        /* Avatar */
-        .top-bar-avatar {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
-            background: linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
+      /* Avatar */
+      .top-bar-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        background: linear-gradient(135deg, #77d2d0 0%, #5ab8b6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
 
-        .top-bar-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+      .top-bar-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
 
-        .top-bar-avatar i {
-            font-size: 24px;
-            color: white;
-        }
+      .top-bar-avatar i {
+        font-size: 24px;
+        color: white;
+      }
 
-        /* User info */
-        .top-bar-user-info {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
+      /* User info */
+      .top-bar-user-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
 
-        .top-bar-user-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            margin: 0;
-            line-height: 1.2;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+      .top-bar-user-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
-        .top-bar-user-role {
-            font-size: 12px;
-            color: #666;
-            margin: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+      .top-bar-user-role {
+        font-size: 12px;
+        color: #666;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
 
-        /* ========================================
+      /* ========================================
            ENHANCED SIDEBAR DESIGN
            ======================================== */
-        
-        .sidebar {
-            width: 280px;
-            height: 100vh;
-            max-height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background: linear-gradient(180deg, #77d2d0 0%, #5ab8b6 100%);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            border-top-right-radius: 20px;
-            border-bottom-right-radius: 20px;
-            box-shadow: 8px 0 30px rgba(0, 0, 0, 0.12);
-            overflow: visible;
-        }
 
-        .sidebar.collapsed {
-            width: 80px;
-        }
+      .sidebar {
+        width: 280px;
+        height: 100vh;
+        max-height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: linear-gradient(180deg, #77d2d0 0%, #5ab8b6 100%);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        border-top-right-radius: 20px;
+        border-bottom-right-radius: 20px;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.12);
+        overflow: visible;
+      }
 
-        /* ========================================
+      .sidebar.collapsed {
+        width: 80px;
+      }
+
+      /* ========================================
            ENHANCED SIDEBAR HEADER WITH LOGO
            ======================================== */
-        
-        .sidebar-header {
-            padding: 30px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.4s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            min-height: 180px;
-            flex-shrink: 0;
-            position: relative;
-            overflow: hidden;
+
+      .sidebar-header {
+        padding: 30px 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        min-height: 180px;
+        flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .sidebar.collapsed .sidebar-header {
+        padding: 20px 10px;
+        gap: 0;
+        min-height: 100px;
+      }
+
+      /* Decorative background pattern */
+      .sidebar-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0);
         }
-
-        .sidebar.collapsed .sidebar-header {
-            padding: 20px 10px;
-            gap: 0;
-            min-height: 100px;
+        50% {
+          transform: translate(-20px, -20px);
         }
+      }
 
-        /* Decorative background pattern */
-        .sidebar-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-            animation: float 6s ease-in-out infinite;
-        }
+      /* Logo Container */
+      .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.4s ease;
+        position: relative;
+        z-index: 2;
+      }
 
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-20px, -20px); }
-        }
+      /* Logo Image Styling */
+      .sidebar-logo-img {
+        width: 120px;
+        height: auto;
+        max-height: 120px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+        transition: all 0.4s ease;
+        background: white;
+        padding: 15px;
+        border-radius: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+      }
 
-        /* Logo Container */
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.4s ease;
-            position: relative;
-            z-index: 2;
-        }
+      .sidebar.collapsed .sidebar-logo-img {
+        width: 55px;
+        max-height: 55px;
+        padding: 10px;
+      }
 
-        /* Logo Image Styling */
-        .sidebar-logo-img {
-            width: 120px;
-            height: auto;
-            max-height: 120px;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
-            transition: all 0.4s ease;
-            background: white;
-            padding: 15px;
-            border-radius: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-        }
+      .sidebar-logo-img:hover {
+        transform: scale(1.05) rotate(2deg);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
 
-        .sidebar.collapsed .sidebar-logo-img {
-            width: 55px;
-            max-height: 55px;
-            padding: 10px;
-        }
+      /* Mapotek Text Styling */
+      .sidebar-brand-text {
+        font-size: 26px;
+        font-weight: 800;
+        color: white;
+        letter-spacing: 1px;
+        text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.4s ease;
+        white-space: nowrap;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        position: relative;
+        margin: 0;
+      }
 
-        .sidebar-logo-img:hover {
-            transform: scale(1.05) rotate(2deg);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-        }
+      .sidebar.collapsed .sidebar-brand-text {
+        font-size: 0;
+        height: 0;
+        opacity: 0;
+      }
 
-        /* Mapotek Text Styling */
-        .sidebar-brand-text {
-            font-size: 26px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: 1px;
-            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.4s ease;
-            white-space: nowrap;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            position: relative;
-            margin: 0;
-        }
+      .sidebar-brand-text::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 3px;
+        background: white;
+        border-radius: 2px;
+        transition: width 0.3s ease;
+      }
 
-        .sidebar.collapsed .sidebar-brand-text {
-            font-size: 0;
-            height: 0;
-            opacity: 0;
-        }
+      .logo-container:hover .sidebar-brand-text::after {
+        width: 80%;
+      }
 
-        .sidebar-brand-text::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 3px;
-            background: white;
-            border-radius: 2px;
-            transition: width 0.3s ease;
-        }
+      .sidebar-tagline {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        transition: all 0.4s ease;
+        margin: 0;
+      }
 
-        .logo-container:hover .sidebar-brand-text::after {
-            width: 80%;
-        }
+      .sidebar.collapsed .sidebar-tagline {
+        font-size: 0;
+        height: 0;
+        opacity: 0;
+      }
 
-        .sidebar-tagline {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.85);
-            font-weight: 500;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.4s ease;
-            margin: 0;
-        }
+      /* Remove old collapsed state rules */
 
-        .sidebar.collapsed .sidebar-tagline {
-            font-size: 0;
-            height: 0;
-            opacity: 0;
-        }
-
-        /* Remove old collapsed state rules */
-
-        /* ========================================
+      /* ========================================
            NAVIGATION STYLES
            ======================================== */
-        
-        .sidebar-nav {
-            padding: 20px 0;
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            min-height: 0;
-        }
 
-        /* Scrollbar Styling */
-        .sidebar-nav::-webkit-scrollbar {
-            width: 6px;
-        }
+      .sidebar-nav {
+        padding: 20px 0;
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-height: 0;
+      }
 
-        .sidebar-nav::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
+      /* Scrollbar Styling */
+      .sidebar-nav::-webkit-scrollbar {
+        width: 6px;
+      }
 
-        .sidebar-nav::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-        }
+      .sidebar-nav::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
 
-        .sidebar-nav::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
+      .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+      }
 
-        .nav-item {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            position: relative;
-            margin: 4px 12px;
-            border-radius: 12px;
-            overflow: hidden;
-            padding: 14px 20px;
-        }
+      .sidebar-nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
 
-        .sidebar.collapsed .nav-item {
-            justify-content: center;
-            padding: 0;
-            margin: 10px auto;
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-        }
+      .nav-item {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        white-space: nowrap;
+        position: relative;
+        margin: 4px 12px;
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 14px 20px;
+      }
 
-        .nav-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 0;
-            background: rgba(255, 255, 255, 0.2);
-            transition: width 0.3s ease;
-        }
+      .sidebar.collapsed .nav-item {
+        justify-content: center;
+        padding: 0;
+        margin: 10px auto;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+      }
 
-        .nav-item:hover::before {
-            width: 100%;
-        }
+      .nav-item::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: rgba(255, 255, 255, 0.2);
+        transition: width 0.3s ease;
+      }
 
-        .nav-item:hover {
-            transform: translateX(4px);
-            background: rgba(255, 255, 255, 0.15);
-        }
+      .nav-item:hover::before {
+        width: 100%;
+      }
 
-        .nav-item.active {
-            background: rgba(255, 255, 255, 0.25);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
+      .nav-item:hover {
+        transform: translateX(4px);
+        background: rgba(255, 255, 255, 0.15);
+      }
 
-        .nav-item.active::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 4px;
-            height: 60%;
-            background: white;
-            border-radius: 2px 0 0 2px;
-        }
+      .nav-item.active {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
 
-        .sidebar.collapsed .nav-item:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: scale(1.08);
-        }
+      .nav-item.active::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 60%;
+        background: white;
+        border-radius: 2px 0 0 2px;
+      }
 
-        .sidebar.collapsed .nav-item.active {
-            background: rgba(255, 255, 255, 0.35);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-        }
+      .sidebar.collapsed .nav-item:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(1.08);
+      }
 
-        .sidebar.collapsed .nav-item.active::after {
-            display: none;
-        }
+      .sidebar.collapsed .nav-item.active {
+        background: rgba(255, 255, 255, 0.35);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+      }
 
-        .nav-item i {
-            min-width: 30px;
-            font-size: 22px;
-            transition: all 0.3s ease;
-            position: relative;
-            z-index: 2;
-        }
+      .sidebar.collapsed .nav-item.active::after {
+        display: none;
+      }
 
-        .sidebar.collapsed .nav-item i {
-            margin: 0;
-            font-size: 24px;
-        }
+      .nav-item i {
+        min-width: 30px;
+        font-size: 22px;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 2;
+      }
 
-        .nav-text {
-            transition: opacity 0.3s ease, width 0.3s ease;
-            margin-left: 15px;
-            font-weight: 500;
-            font-size: 15px;
-            position: relative;
-            z-index: 2;
-        }
+      .sidebar.collapsed .nav-item i {
+        margin: 0;
+        font-size: 24px;
+      }
 
-        .sidebar.collapsed .nav-text {
-            opacity: 0;
-            width: 0;
-            margin: 0;
-            display: none;
-        }
+      .nav-text {
+        transition: opacity 0.3s ease, width 0.3s ease;
+        margin-left: 15px;
+        font-weight: 500;
+        font-size: 15px;
+        position: relative;
+        z-index: 2;
+      }
 
-        /* ========================================
+      .sidebar.collapsed .nav-text {
+        opacity: 0;
+        width: 0;
+        margin: 0;
+        display: none;
+      }
+
+      /* ========================================
            FOOTER STYLES
            ======================================== */
-        
-        .sidebar-footer {
-            margin-top: auto;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 15px 0;
-            background: rgba(255, 255, 255, 0.05);
-            flex-shrink: 0;
-        }
 
-        /* ========================================
+      .sidebar-footer {
+        margin-top: auto;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 15px 0;
+        background: rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
+      }
+
+      /* ========================================
            ENHANCED TOGGLE BUTTON 🎯
            ======================================== */
-        
-        .sidebar-toggle {
-            position: absolute;
-            right: -20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            z-index: 1001;
-            border: none !important;
-            background: white !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-        }
 
-        .sidebar-toggle:hover {
-            background: #f0f0f0 !important;
-            transform: translateY(-50%) scale(1.15);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
+      .sidebar-toggle {
+        position: absolute;
+        right: -20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        z-index: 1001;
+        border: none !important;
+        background: white !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+      }
 
-        .sidebar-toggle:active {
-            transform: translateY(-50%) scale(1.05);
-        }
+      .sidebar-toggle:hover {
+        background: #f0f0f0 !important;
+        transform: translateY(-50%) scale(1.15);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
 
-        .sidebar-toggle i {
-            transition: transform 0.3s ease;
-            color: #77d2d0;
-            font-weight: bold;
-            font-size: 20px;
-        }
+      .sidebar-toggle:active {
+        transform: translateY(-50%) scale(1.05);
+      }
 
-        .sidebar.collapsed .sidebar-toggle i {
-            transform: rotate(180deg);
-        }
+      .sidebar-toggle i {
+        transition: transform 0.3s ease;
+        color: #77d2d0;
+        font-weight: bold;
+        font-size: 20px;
+      }
 
-        /* ========================================
+      .sidebar.collapsed .sidebar-toggle i {
+        transform: rotate(180deg);
+      }
+
+      /* ========================================
            MAIN CONTENT ADJUSTMENT
            ======================================== */
-        
-        .main-content {
-            margin-left: 280px;
-            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 100vh;
-        }
 
-        .sidebar.collapsed ~ .main-content {
-            margin-left: 80px;
-        }
+      .main-content {
+        margin-left: 280px;
+        transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 100vh;
+      }
 
-        /* ========================================
+      .sidebar.collapsed ~ .main-content {
+        margin-left: 80px;
+      }
+
+      /* ========================================
            MOBILE RESPONSIVE
            ======================================== */
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                border-radius: 0;
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0 !important;
-            }
-            
-            .sidebar-toggle {
-                display: none;
-            }
 
-            .top-bar-user-info {
-                display: none;
-            }
-            
-            .top-bar-profile {
-                min-width: auto;
-                padding: 8px;
-            }
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          border-radius: 0;
         }
 
-        /* ========================================
+        .sidebar.active {
+          transform: translateX(0);
+        }
+
+        .main-content {
+          margin-left: 0 !important;
+        }
+
+        .sidebar-toggle {
+          display: none;
+        }
+
+        .top-bar-user-info {
+          display: none;
+        }
+
+        .top-bar-profile {
+          min-width: auto;
+          padding: 8px;
+        }
+      }
+
+      /* ========================================
            DRAWER OVERLAY
            ======================================== */
-        .drawer-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-            z-index: 999;
-        }
+      .drawer-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        z-index: 999;
+      }
 
-        .drawer-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
+      .drawer-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Drawer Overlay for Mobile -->
     <div class="drawer-overlay" id="drawerOverlay"></div>
 
     <!-- Enhanced Sidebar -->
     <aside class="sidebar" id="sidebar">
-        <!-- Enhanced Header with Logo -->
-        <div class="sidebar-header">
-            <div class="logo-container">
-                <!-- Logo Image -->
-                <img src="../Dashboard/images/Logo_Mapotek(Tanpa_Tulisan(Remove_BG)).png" 
-                     alt="Mapotek Logo" 
-                     class="sidebar-logo-img">
-                <!-- Brand Text -->
-                <h1 class="sidebar-brand-text">MAPOTEK</h1>
-                <p class="sidebar-tagline">Healthcare System</p>
-            </div>
+      <!-- Enhanced Header with Logo -->
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <!-- Logo Image -->
+          <img
+            src="../Dashboard/images/Logo_Mapotek(Tanpa_Tulisan(Remove_BG)).png"
+            alt="Mapotek Logo"
+            class="sidebar-logo-img"
+          />
+          <!-- Brand Text -->
+          <h1 class="sidebar-brand-text">MAPOTEK</h1>
+          <p class="sidebar-tagline">Healthcare System</p>
         </div>
-        
-        <!-- Navigation -->
-        <nav class="sidebar-nav flex-grow-1">
-            <a href="#dashboard" class="nav-item active d-flex align-items-center text-white text-decoration-none" data-fragment="dashboard">
-                <i class="bi bi-house-door"></i>
-                <span class="nav-text">Dashboard</span>
-            </a>
-            <a href="#pasien" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pasien">
-                <i class="bi bi-people"></i>
-                <span class="nav-text">Pasien</span>
-            </a>
-            <a href="#obat" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="obat">
-                <i class="bi bi-capsule"></i>
-                <span class="nav-text">Obat</span>
-            </a>
-            <a href="#antrian" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="antrian">
-                <i class="bi bi-clock-history"></i>
-                <span class="nav-text">Antrian</span>
-            </a>
-            <a href="#pemeriksaan" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pemeriksaan">
-                <i class="bi bi-heart-pulse"></i>
-                <span class="nav-text">Pemeriksaan</span>
-            </a>
-            <a href="#pembukuan" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="pembukuan">
-                <i class="bi bi-journal-text"></i>
-                <span class="nav-text">Pembukuan</span>
-            </a>
-            <a href="#asistendokter" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="asistendokter">
-                <i class="bi bi-person-badge"></i>
-                <span class="nav-text">Asisten Dokter</span>
-            </a>
-        </nav>
+      </div>
 
-        <!-- Footer -->
-        <div class="sidebar-footer">
-            <a href="#profile" class="nav-item d-flex align-items-center text-white text-decoration-none" data-fragment="profile">
-                <i class="bi bi-person-circle"></i>
-                <span class="nav-text">Profile</span>
-            </a>
-            <a href="#" id="btnLogoutSidebar" class="nav-item d-flex align-items-center text-white text-decoration-none">
-                <i class="bi bi-box-arrow-right"></i>
-                <span class="nav-text">Logout</span>
-            </a>
-        </div>
-        
-        <!-- Toggle Button -->
-        <button class="sidebar-toggle btn rounded-circle shadow position-absolute" id="sidebarToggle">
-            <i class="bi bi-chevron-left"></i>
-        </button>
+      <!-- Navigation -->
+      <nav class="sidebar-nav flex-grow-1">
+        <a
+          href="#dashboard"
+          class="nav-item active d-flex align-items-center text-white text-decoration-none"
+          data-fragment="dashboard"
+        >
+          <i class="bi bi-house-door"></i>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        <a
+          href="#pasien"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="pasien"
+        >
+          <i class="bi bi-people"></i>
+          <span class="nav-text">Pasien</span>
+        </a>
+        <a
+          href="#obat"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="obat"
+        >
+          <i class="bi bi-capsule"></i>
+          <span class="nav-text">Obat</span>
+        </a>
+        <a
+          href="#antrian"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="antrian"
+        >
+          <i class="bi bi-clock-history"></i>
+          <span class="nav-text">Antrian</span>
+        </a>
+        <a
+          href="#pemeriksaan"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="pemeriksaan"
+        >
+          <i class="bi bi-heart-pulse"></i>
+          <span class="nav-text">Pemeriksaan</span>
+        </a>
+        <a
+          href="#pembukuan"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="pembukuan"
+        >
+          <i class="bi bi-journal-text"></i>
+          <span class="nav-text">Pembukuan</span>
+        </a>
+        <a
+          href="#asistendokter"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="asistendokter"
+        >
+          <i class="bi bi-person-badge"></i>
+          <span class="nav-text">Asisten Dokter</span>
+        </a>
+      </nav>
+
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <a
+          href="#profile"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+          data-fragment="profile"
+        >
+          <i class="bi bi-person-circle"></i>
+          <span class="nav-text">Profile</span>
+        </a>
+        <a
+          href="#"
+          id="btnLogoutSidebar"
+          class="nav-item d-flex align-items-center text-white text-decoration-none"
+        >
+          <i class="bi bi-box-arrow-right"></i>
+          <span class="nav-text">Logout</span>
+        </a>
+      </div>
+
+      <!-- Toggle Button -->
+      <button
+        class="sidebar-toggle btn rounded-circle shadow position-absolute"
+        id="sidebarToggle"
+      >
+        <i class="bi bi-chevron-left"></i>
+      </button>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Top Bar with Blurred Profile Card 🎨 -->
-        <header class="top-bar p-3 d-flex align-items-center">
-            <button class="btn d-md-none me-3" id="menuToggle">
-                <i class="bi bi-list fs-3"></i>
-            </button>
-            <h1 class="fs-4 mb-0 flex-grow-1" id="pageTitle">
-                <i class="bi bi-house-door me-2"></i>Dashboard
-            </h1>
-            
-            <!-- Blurred Profile Card -->
-            <div class="top-bar-profile" id="topBarProfile" onclick="window.navigateToProfile()">
-                <div class="top-bar-avatar" id="topBarAvatar">
-                    <img id="topBarAvatarImg" src="" alt="Avatar" class="d-none">
-                    <i class="bi bi-person-fill" id="topBarAvatarIcon"></i>
-                </div>
-                <div class="top-bar-user-info">
-                    <p class="top-bar-user-name" id="topBarUserName">Loading...</p>
-                    <p class="top-bar-user-role" id="topBarUserRole">Loading...</p>
-                </div>
-            </div>
-        </header>
+      <!-- Top Bar with Blurred Profile Card 🎨 -->
+      <header class="top-bar p-3 d-flex align-items-center">
+        <button class="btn d-md-none me-3" id="menuToggle">
+          <i class="bi bi-list fs-3"></i>
+        </button>
+        <h1 class="fs-4 mb-0 flex-grow-1" id="pageTitle">
+          <i class="bi bi-house-door me-2"></i>Dashboard
+        </h1>
 
-        <!-- Fragment Container -->
-        <div class="content-area p-4" id="fragmentContainer">
-            <!-- Fragments will be loaded here -->
+        <!-- Blurred Profile Card -->
+        <div
+          class="top-bar-profile"
+          id="topBarProfile"
+          onclick="window.navigateToProfile()"
+        >
+          <div class="top-bar-avatar" id="topBarAvatar">
+            <img id="topBarAvatarImg" src="" alt="Avatar" class="d-none" />
+            <i class="bi bi-person-fill" id="topBarAvatarIcon"></i>
+          </div>
+          <div class="top-bar-user-info">
+            <p class="top-bar-user-name" id="topBarUserName">Loading...</p>
+            <p class="top-bar-user-role" id="topBarUserRole">Loading...</p>
+          </div>
         </div>
+      </header>
+
+      <!-- Fragment Container -->
+      <div class="content-area p-4" id="fragmentContainer">
+        <!-- Fragments will be loaded here -->
+      </div>
     </main>
 
     <!-- Modal Root Container -->
@@ -673,7 +739,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- 6. Address Format Utility -->
-    <script src="js/utils/addressFormat.js"></script>
+    <script src="js/Utils/addressFormat.js"></script>
 
     <!-- 7. USER PROFILE UPDATER - Must load BEFORE app.js! -->
     <script src="js/user-profile-updater.js"></script>
@@ -682,34 +748,34 @@
     <script src="js/userRole.js"></script>
 
     <!-- 9. Modal Helper - BEFORE fragments! -->
-    <script src="js/utils/modal-helper.js"></script>
+    <script src="js/Utils/modal-helper.js"></script>
 
     <!-- ⭐ 10. Fragment Manager - MUST BE BEFORE FRAGMENTS! ⭐ -->
     <script src="js/fragmentmanager.js"></script>
 
     <!-- 11. Load All Fragment Files - AFTER FragmentManager -->
-    <script src="js/fragments/dashboardfragment.js"></script>
-    <script src="js/fragments/pasienfragment.js"></script>
-    <script src="js/fragments/obatfragment.js"></script>
-    <script src="js/fragments/antrianfragment.js"></script>
-    <script src="js/fragments/pemeriksaanfragment.js"></script>
-    <script src="js/fragments/pembukuanfragment.js"></script>
-    <script src="js/fragments/profilefragment.js"></script>
-    <script src="js/fragments/asistendokterfragment.js"></script>
+    <script src="js/Fragments/dashboardfragment.js"></script>
+    <script src="js/Fragments/pasienfragment.js"></script>
+    <script src="js/Fragments/obatfragment.js"></script>
+    <script src="js/Fragments/antrianfragment.js"></script>
+    <script src="js/Fragments/pemeriksaanfragment.js"></script>
+    <script src="js/Fragments/pembukuanfragment.js"></script>
+    <script src="js/Fragments/profilefragment.js"></script>
+    <script src="js/Fragments/asistendokterfragment.js"></script>
 
     <!-- 12. Load Main App - LAST! -->
     <script src="js/app.js"></script>
 
     <!-- 13. Initialize modal styles when page loads -->
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener("DOMContentLoaded", () => {
         if (window.modalHelper) {
-            window.modalHelper.initializeStyles();
-            console.log("✅ Modal helper loaded and styles initialized");
+          window.modalHelper.initializeStyles();
+          console.log("✅ Modal helper loaded and styles initialized");
         } else {
-            console.error("❌ Modal helper not found! Check the path.");
+          console.error("❌ Modal helper not found! Check the path.");
         }
-    });
+      });
     </script>
-</body>
+  </body>
 </html>
