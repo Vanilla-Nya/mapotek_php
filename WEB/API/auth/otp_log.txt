@@ -1,0 +1,25 @@
+2025-12-07 09:13:31 - Email: Vanillanyan990@gmail.com, OTP: 468022
+2025-12-07 09:14:14 - Email: Vanillanyan990@gmail.com, OTP: 127457
+2025-12-07 09:22:49 - Email: Vanillanyan990@gmail.com, OTP: 800257, Sent: YES
+2025-12-07 09:26:50 - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 09:27:21 - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 09:27:46 - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 09:28:08 - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 09:38:47 - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 09:42:50 - ERROR - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate. | PHPMailer: SMTP Error: Could not authenticate.
+2025-12-07 09:45:17 - ERROR - SMTP Error: Could not authenticate.
+2025-12-07 10:02:38 - SUCCESS (Mailtrap) - Email: Vanillanyan990@gmail.com, OTP: 656770
+2025-12-07 10:08:36 - SUCCESS (Mailtrap) - Email: Vanillanyan990@gmail.com, OTP: 632723
+2025-12-07 10:15:17 - ERROR - Email: Vanillanyan990@gmail.com, Error: SMTP Error: Could not authenticate.
+2025-12-07 10:17:27 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 680261
+2025-12-07 10:20:23 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 919559
+2025-12-07 10:23:54 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 255606
+2025-12-07 10:28:42 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 375391
+2025-12-07 10:31:55 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 453885
+2025-12-07 10:34:09 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 462245
+2025-12-07 10:35:56 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 322283
+2025-12-07 10:38:25 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 676409
+2025-12-07 10:39:16 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 608861
+2025-12-07 10:42:42 - SUCCESS (Gmail) - Email: asunayuuki289@gmail.com, OTP: 884786
+2025-12-07 11:31:15 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 959360
+2025-12-07 11:34:51 - SUCCESS (Gmail) - Email: Vanillanyan990@gmail.com, OTP: 327591

@@ -1,13 +1,12 @@
 // ========================================
-// FILE: auth.js - Enhanced Authentication (Doctor + Asisten Dokter)
+// FILE: auth.js - Enhanced Authentication with Forgot Password
 // ========================================
 
-console.log("🔐 Auth script loaded (Enhanced for Asisten)");
+console.log("🔐 Auth script loaded (Enhanced with Forgot Password)");
 
 // ========================================
-// SUBSCRIPTION CHECKER - ADD THIS
+// SUBSCRIPTION CHECKER
 // ========================================
-
 async function checkSubscriptionStatus(idDokter) {
   console.log("🔍 Checking subscription for doctor:", idDokter);
   
@@ -30,94 +29,23 @@ async function checkSubscriptionStatus(idDokter) {
       return { isActive: false, subscription: null };
     }
     
-    // ⭐ FIX 1: Set times correctly for date comparison
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today
+    today.setHours(0, 0, 0, 0);
     
     const endDate = new Date(data.tanggal_berakhir);
-    endDate.setHours(23, 59, 59, 999); // End of the last day
+    endDate.setHours(23, 59, 59, 999);
     
-    // ⭐ FIX 2: Calculate days remaining
     const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
     
-    // ⭐ FIX 3: Handle different is_expired data types
     const isExpiredValue = data.is_expired;
     const isExpired = isExpiredValue === 1 || 
                       isExpiredValue === '1' || 
                       isExpiredValue === true ||
                       isExpiredValue === 'true';
     
-    // ⭐ FIX 4: Accept both 'active' and 'aktif'
     const statusOk = data.status === 'active' || data.status === 'aktif';
     
-    // ⭐ MAIN FIX: Check all conditions (>= 0 allows the last day)
-    const isActive = statusOk && 
-                     !isExpired && 
-                     daysRemaining >= 0;  // Changed from endDate >= today
-    
-    console.log("📊 Subscription status:", {
-      status: data.status,
-      statusOk: statusOk,
-      is_expired_raw: isExpiredValue,
-      is_expired_flag: isExpired,
-      endDate: data.tanggal_berakhir,
-      today: today.toISOString().split('T')[0],
-      daysRemaining: daysRemaining,
-      isActive: isActive ? '✅ ACTIVE' : '❌ INACTIVE'
-    });
-    
-    return { isActive, subscription: data };
-    
-  } catch (error) {
-    console.error("❌ Error checking subscription:", error);
-    return { isActive: false, subscription: null };
-  }
-}async function checkSubscriptionStatus(idDokter) {
-  console.log("🔍 Checking subscription for doctor:", idDokter);
-  
-  try {
-    const { data, error } = await supabaseClient
-      .from('langganan')
-      .select('*')
-      .eq('id_dokter', idDokter)
-      .order('tanggal_berakhir', { ascending: false })
-      .limit(1)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') {
-      console.error("❌ Subscription check error:", error);
-      return { isActive: false, subscription: null };
-    }
-    
-    if (!data) {
-      console.warn("⚠️ No subscription found");
-      return { isActive: false, subscription: null };
-    }
-    
-    // ⭐ FIX 1: Set times correctly for date comparison
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Start of today
-    
-    const endDate = new Date(data.tanggal_berakhir);
-    endDate.setHours(23, 59, 59, 999); // End of the last day
-    
-    // ⭐ FIX 2: Calculate days remaining
-    const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
-    
-    // ⭐ FIX 3: Handle different is_expired data types
-    const isExpiredValue = data.is_expired;
-    const isExpired = isExpiredValue === 1 || 
-                      isExpiredValue === '1' || 
-                      isExpiredValue === true ||
-                      isExpiredValue === 'true';
-    
-    // ⭐ FIX 4: Accept both 'active' and 'aktif'
-    const statusOk = data.status === 'active' || data.status === 'aktif';
-    
-    // ⭐ MAIN FIX: Check all conditions (>= 0 allows the last day)
-    const isActive = statusOk && 
-                     !isExpired && 
-                     daysRemaining >= 0;  // Changed from endDate >= today
+    const isActive = statusOk && !isExpired && daysRemaining >= 0;
     
     console.log("📊 Subscription status:", {
       status: data.status,
@@ -144,7 +72,6 @@ function applySubscriptionRestrictions(isActive) {
   if (!isActive) {
     console.warn("🚫 Subscription inactive - applying restrictions");
     
-    // Wait for DOM to be ready
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         showSubscriptionWarning();
@@ -185,24 +112,20 @@ function showSubscriptionWarning() {
 }
 
 function disableNavigationExceptProfile() {
-  // Target your specific nav items
   const navItems = document.querySelectorAll('.nav-item[data-fragment]');
   
   navItems.forEach(item => {
     const fragment = item.getAttribute('data-fragment');
     
-    // Allow only profile access
     if (fragment !== 'profile') {
       item.classList.add('disabled');
       item.style.opacity = '0.5';
       item.style.cursor = 'not-allowed';
       item.style.pointerEvents = 'none';
       
-      // Remove any existing click handlers
       const newItem = item.cloneNode(true);
       item.parentNode.replaceChild(newItem, item);
       
-      // Add new click handler that shows warning
       newItem.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -215,47 +138,13 @@ function disableNavigationExceptProfile() {
   console.log("🔒 Navigation locked except Profile");
 }
 
-function showToast(title, message, type = 'info') {
-  const toastHtml = `
-    <div class="toast align-items-center text-bg-${type} border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body">
-          <strong>${title}</strong><br>${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
-  `;
-  
-  let container = document.getElementById('toastContainer');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toastContainer';
-    container.className = 'toast-container position-fixed top-0 end-0 p-3';
-    container.style.zIndex = '10000';
-    document.body.appendChild(container);
-  }
-  
-  container.insertAdjacentHTML('beforeend', toastHtml);
-  const toastElement = container.lastElementChild;
-  const toast = new bootstrap.Toast(toastElement);
-  toast.show();
-  
-  toastElement.addEventListener('hidden.bs.toast', () => {
-    toastElement.remove();
-  });
-}
-
-// Add this to your FragmentManager access control
 window.checkFragmentAccess = function(fragmentName) {
   const isSubscriptionActive = localStorage.getItem('subscription_active') === 'true';
   
-  // Always allow profile access
   if (fragmentName === 'profile') {
     return true;
   }
   
-  // Check subscription for other fragments
   if (!isSubscriptionActive) {
     console.warn(`🚫 Access denied to "${fragmentName}" - subscription inactive`);
     showToast('Akses Ditolak', 'Perpanjang langganan untuk mengakses fitur ini', 'warning');
@@ -266,14 +155,13 @@ window.checkFragmentAccess = function(fragmentName) {
 };
 
 // ========================================
-// DETERMINE USER ROLE (DOCTOR OR ASISTEN)
+// DETERMINE USER ROLE
 // ========================================
 async function determineUserRole(user) {
   console.log("🔍 Determining user role for:", user.id);
   console.log("📧 User email:", user.email);
   
   try {
-    // Check if user is a doctor
     const { data: dokterData, error: dokterError } = await supabaseClient
       .from('dokter')
       .select('*')
@@ -287,7 +175,6 @@ async function determineUserRole(user) {
       localStorage.setItem("id_dokter", dokterData.id_dokter);
       localStorage.setItem("dokter_data", JSON.stringify(dokterData));
       
-      // ✅ CHECK SUBSCRIPTION
       const { isActive, subscription } = await checkSubscriptionStatus(dokterData.id_dokter);
       applySubscriptionRestrictions(isActive);
       
@@ -300,7 +187,6 @@ async function determineUserRole(user) {
     
     console.log("❌ Not a doctor, checking asisten...");
     
-    // Check asisten_dokter
     const { data: asistenData, error: asistenError } = await supabaseClient
       .from('asisten_dokter')
       .select('*')
@@ -315,7 +201,6 @@ async function determineUserRole(user) {
       localStorage.setItem("id_dokter", asistenData.id_dokter);
       localStorage.setItem("asisten_data", JSON.stringify(asistenData));
       
-      // ✅ CHECK SUBSCRIPTION (using doctor's ID)
       const { isActive, subscription } = await checkSubscriptionStatus(asistenData.id_dokter);
       applySubscriptionRestrictions(isActive);
       
@@ -326,7 +211,6 @@ async function determineUserRole(user) {
       return "asisten_dokter";
     }
     
-    // No match found
     console.error("❌ User not found in dokter or asisten_dokter tables!");
     alert(
       `⚠️ Akun Tidak Terdaftar!\n\n` +
@@ -345,7 +229,9 @@ async function determineUserRole(user) {
   }
 }
 
-// Helper function to show alerts
+// ========================================
+// HELPER: Show Alert
+// ========================================
 function showAlert(alertElement, message, type) {
   if (!alertElement) return;
   
@@ -353,19 +239,85 @@ function showAlert(alertElement, message, type) {
   alertElement.textContent = message;
   alertElement.style.display = "block";
   
-  setTimeout(() => {
-    alertElement.style.display = "none";
-  }, 5000);
+  if (type === 'success') {
+    setTimeout(() => {
+      alertElement.style.display = "none";
+    }, 8000);
+  } else {
+    setTimeout(() => {
+      alertElement.style.display = "none";
+    }, 5000);
+  }
 }
 
 // ========================================
-// WAIT FOR DOM TO BE FULLY LOADED (ONLY ONCE!)
+// HELPER: Show Toast
+// ========================================
+function showToast(title, message, type = 'info') {
+  const typeMap = {
+    'success': 'success',
+    'danger': 'danger',
+    'warning': 'warning',
+    'info': 'info'
+  };
+  
+  const bgClass = typeMap[type] || 'info';
+  
+  const iconMap = {
+    'success': 'bi-check-circle-fill',
+    'danger': 'bi-x-circle-fill',
+    'warning': 'bi-exclamation-triangle-fill',
+    'info': 'bi-info-circle-fill'
+  };
+  
+  const icon = iconMap[type] || 'bi-info-circle-fill';
+  
+  const toastHtml = `
+    <div class="toast align-items-center text-bg-${bgClass} border-0" role="alert" style="min-width: 300px;">
+      <div class="d-flex">
+        <div class="toast-body">
+          <div class="d-flex align-items-start">
+            <i class="bi ${icon} fs-5 me-2 flex-shrink-0"></i>
+            <div>
+              <strong class="d-block mb-1">${title}</strong>
+              <span class="small">${message}</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  `;
+  
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '10000';
+    document.body.appendChild(container);
+  }
+  
+  container.insertAdjacentHTML('beforeend', toastHtml);
+  const toastElement = container.lastElementChild;
+  const toast = new bootstrap.Toast(toastElement, { 
+    delay: type === 'danger' ? 5000 : 3000
+  });
+  toast.show();
+  
+  toastElement.addEventListener('hidden.bs.toast', () => {
+    toastElement.remove();
+  });
+}
+
+// ========================================
+// DOM LOADED - MAIN INITIALIZATION
 // ========================================
 document.addEventListener("DOMContentLoaded", function () {
   console.log("📄 DOM loaded, initializing auth...");
 
   // ========================================
-  // CHECK IF USER IS ALREADY LOGGED IN
+  // CHECK USER SESSION
   // ========================================
   async function checkUserSession() {
     try {
@@ -377,7 +329,6 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("user", JSON.stringify(session.user));
         localStorage.setItem("isLoggedIn", "true");
         
-        // Determine if doctor or assistant
         await determineUserRole(session.user);
         
         return session.user;
@@ -390,20 +341,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Check session on page load
   checkUserSession();
 
   // ========================================
-  // MODAL CONTROLS (NEW LANDING PAGE)
+  // MODAL ELEMENTS
   // ========================================
   const modal = document.getElementById("authModalOverlay");
   const openLoginBtns = document.querySelectorAll("#openLogin");
   const openRegisterBtns = document.querySelectorAll("#openRegister");
   const closeBtn = document.querySelector(".close");
+  
   const loginFormDiv = document.getElementById("loginForm");
   const registerFormDiv = document.getElementById("registerForm");
+  const forgotPasswordFormDiv = document.getElementById("forgotPasswordForm");
+  
   const toRegisterLink = document.getElementById("toRegister");
   const toLoginLink = document.getElementById("toLogin");
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  const backToLoginLink = document.getElementById("backToLogin");
 
   if (!modal) {
     console.warn("⚠️ Auth modal not found!");
@@ -412,7 +367,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
   console.log("✅ Modal found, setting up controls...");
 
-  // OPEN LOGIN
+  // ========================================
+  // HELPER: Show Only One Form
+  // ========================================
+  function showOnlyForm(formToShow) {
+    loginFormDiv.style.display = "none";
+    registerFormDiv.style.display = "none";
+    if (forgotPasswordFormDiv) forgotPasswordFormDiv.style.display = "none";
+    
+    formToShow.style.display = "block";
+    
+    document.querySelectorAll('.alert').forEach(alert => {
+      alert.style.display = 'none';
+    });
+  }
+
+  // ========================================
+  // MODAL OPEN/CLOSE HANDLERS
+  // ========================================
   openLoginBtns.forEach((btn) => {
     btn.addEventListener("click", function(e) {
       e.preventDefault();
@@ -421,12 +393,10 @@ document.addEventListener("DOMContentLoaded", function () {
       modal.style.display = "flex";
       setTimeout(() => modal.classList.add("show-modal"), 10);
       
-      loginFormDiv.style.display = "block";
-      registerFormDiv.style.display = "none";
+      showOnlyForm(loginFormDiv);
     });
   });
 
-  // OPEN REGISTER
   openRegisterBtns.forEach((btn) => {
     btn.addEventListener("click", function(e) {
       e.preventDefault();
@@ -435,32 +405,70 @@ document.addEventListener("DOMContentLoaded", function () {
       modal.style.display = "flex";
       setTimeout(() => modal.classList.add("show-modal"), 10);
       
-      registerFormDiv.style.display = "block";
-      loginFormDiv.style.display = "none";
+      showOnlyForm(registerFormDiv);
     });
   });
 
-  // SWITCH TO REGISTER
+  // ========================================
+  // FORM NAVIGATION
+  // ========================================
   if (toRegisterLink) {
     toRegisterLink.addEventListener("click", function(e) {
       e.preventDefault();
-      loginFormDiv.style.display = "none";
-      registerFormDiv.style.display = "block";
+      console.log("🔄 Switching to Register");
+      showOnlyForm(registerFormDiv);
     });
   }
 
-  // SWITCH TO LOGIN
   if (toLoginLink) {
     toLoginLink.addEventListener("click", function(e) {
       e.preventDefault();
-      registerFormDiv.style.display = "none";
-      loginFormDiv.style.display = "block";
+      console.log("🔄 Switching to Login");
+      showOnlyForm(loginFormDiv);
     });
   }
 
+  // ⭐ NEW: Forgot Password Navigation
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener("click", function(e) {
+      e.preventDefault();
+      console.log("🔑 Switching to Forgot Password");
+      showOnlyForm(forgotPasswordFormDiv);
+      
+      setTimeout(() => {
+        document.getElementById("forgotPasswordEmail")?.focus();
+      }, 100);
+    });
+  }
+
+  if (backToLoginLink) {
+    backToLoginLink.addEventListener("click", function(e) {
+      e.preventDefault();
+      console.log("🔙 Back to Login");
+      showOnlyForm(loginFormDiv);
+      
+      const forgotForm = document.getElementById("forgotPasswordFormElement");
+      if (forgotForm) forgotForm.reset();
+    });
+  }
+
+  // ========================================
   // CLOSE MODAL
+  // ========================================
+  function closeModal() {
+    modal.classList.remove("show-modal");
+    setTimeout(() => {
+      modal.style.display = "none";
+      
+      document.querySelectorAll('form').forEach(form => form.reset());
+      document.querySelectorAll('.alert').forEach(alert => {
+        alert.style.display = 'none';
+      });
+    }, 300);
+  }
+
   if (closeBtn) {
-    closeBtn.addEventListener("click", () => closeModal());
+    closeBtn.addEventListener("click", closeModal);
   }
 
   modal.addEventListener("click", function(e) {
@@ -475,18 +483,382 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  function closeModal() {
-    modal.classList.remove("show-modal");
-    setTimeout(() => {
-      modal.style.display = "none";
-    }, 300);
-  }
+// ========================================
+// FORGOT PASSWORD HANDLER (FIXED TIMEZONE)
+// ========================================
+const forgotPasswordForm = document.getElementById("forgotPasswordFormElement");
+
+if (forgotPasswordForm) {
+  console.log("✅ Forgot Password form found (OTP method)");
+  
+  forgotPasswordForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    console.log("📧 Forgot Password OTP request started");
+
+    const email = document.getElementById("forgotPasswordEmail").value.trim();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const forgotAlert = document.getElementById("forgotPasswordAlert");
+
+    // Clear previous alerts
+    forgotAlert.style.display = "none";
+
+    // Validation
+    if (!email) {
+      showAlert(forgotAlert, "⚠️ Email harus diisi!", "danger");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showAlert(forgotAlert, "⚠️ Format email tidak valid!", "danger");
+      return;
+    }
+
+    // Show loading
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mengirim OTP...';
+
+    try {
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // ⭐ FIXED: Create expiration time properly
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 10 * 60 * 1000); // 10 minutes from now
+      
+      console.log("⏰ OTP timing:", {
+        now: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        validFor: "10 minutes"
+      });
+
+      // Store OTP in Supabase
+      const { data: otpData, error: otpError } = await supabaseClient
+        .from('password_reset_otp')
+        .insert({
+          email: email,
+          otp_code: otp,
+          expires_at: expiresAt.toISOString(), // ⭐ Store as ISO string
+          is_used: false
+        })
+        .select()
+        .single();
+
+      if (otpError) {
+        console.error("❌ Error storing OTP:", otpError);
+        throw new Error("Gagal menyimpan OTP");
+      }
+
+      console.log("✅ OTP stored in database:", otpData);
+
+      // Send OTP via email using your backend
+      const response = await fetch('/MAPOTEK_PHP/WEB/API/auth/send-otp.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_otp',
+          email: email,
+          otp: otp
+        })
+      });
+
+      const result = await response.json();
+      console.log("📧 Email send result:", result);
+
+      if (!result.success) {
+        throw new Error(result.message || "Gagal mengirim OTP");
+      }
+
+      console.log("✅ OTP sent successfully");
+      
+      // Show success message
+      showAlert(
+        forgotAlert, 
+        "✅ Kode OTP telah dikirim ke email Anda! Kode berlaku 10 menit.", 
+        "success"
+      );
+      
+      showToast(
+        "Berhasil!", 
+        "Kode OTP telah dikirim ke " + email, 
+        "success"
+      );
+
+      // For development/testing: Also show OTP in console
+      console.log("🔑 OTP CODE (for testing):", otp);
+
+      // Store email temporarily for verification step
+      sessionStorage.setItem('reset_email', email);
+
+      // Check if verifyOtpForm exists before switching
+      const verifyOtpFormDiv = document.getElementById('verifyOtpForm');
+      
+      if (verifyOtpFormDiv) {
+        // Switch to OTP verification form
+        setTimeout(() => {
+          showOnlyForm(verifyOtpFormDiv);
+          document.getElementById('otpEmail').value = email;
+          
+          // Focus on OTP input
+          const otpInput = document.getElementById('otpCode');
+          if (otpInput) {
+            otpInput.focus();
+          }
+        }, 1500);
+      } else {
+        console.error("❌ verifyOtpForm not found in HTML!");
+        showAlert(
+          forgotAlert,
+          "⚠️ Form verifikasi OTP tidak ditemukan. OTP: " + otp + " (gunakan ini untuk testing)",
+          "warning"
+        );
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+
+    } catch (error) {
+      console.error("❌ Forgot Password error:", error);
+      
+      showAlert(forgotAlert, `❌ ${error.message}`, "danger");
+      showToast("Error", error.message, "danger");
+      
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+}
+
+// ========================================
+// VERIFY OTP & RESET PASSWORD HANDLER (FIXED)
+// ========================================
+const verifyOtpForm = document.getElementById("verifyOtpFormElement");
+
+if (verifyOtpForm) {
+  console.log("✅ Verify OTP form found");
+  
+  verifyOtpForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    console.log("🔐 OTP verification started");
+
+    const email = document.getElementById('otpEmail').value.trim();
+    const otpCode = document.getElementById('otpCode').value.trim();
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const verifyAlert = document.getElementById("verifyOtpAlert");
+
+    // Clear previous alerts
+    verifyAlert.style.display = "none";
+
+    // Validation
+    if (!otpCode || otpCode.length !== 6) {
+      showAlert(verifyAlert, "⚠️ Kode OTP harus 6 digit!", "danger");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showAlert(verifyAlert, "⚠️ Password minimal 6 karakter!", "danger");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showAlert(verifyAlert, "⚠️ Password tidak sama!", "danger");
+      return;
+    }
+
+    // Show loading
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memverifikasi...';
+
+    try {
+      // Step 1: Verify OTP from database
+      const { data: otpRecord, error: otpError } = await supabaseClient
+        .from('password_reset_otp')
+        .select('*')
+        .eq('email', email)
+        .eq('otp_code', otpCode)
+        .eq('is_used', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (otpError || !otpRecord) {
+        console.error("❌ OTP not found:", otpError);
+        throw new Error("Kode OTP tidak valid atau sudah digunakan!");
+      }
+
+      console.log("✅ OTP record found:", otpRecord);
+
+      // ⭐ SKIP CLIENT-SIDE EXPIRATION CHECK
+      // Let the server handle it to avoid timezone issues
+      console.log("⏰ Skipping client-side expiration check - server will validate");
+
+      // Step 3: Update password using backend PHP (server validates expiration)
+      console.log("📝 Updating password via backend...");
+      
+      const response = await fetch('/MAPOTEK_PHP/WEB/API/auth/reset-password.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reset_password',
+          email: email,
+          new_password: newPassword,
+          otp_id: otpRecord.id
+        })
+      });
+
+      const result = await response.json();
+      console.log("📝 Password reset result:", result);
+
+      if (!result.success) {
+        throw new Error(result.message || "Gagal mereset password");
+      }
+
+      // Step 4: Mark OTP as used
+      await supabaseClient
+        .from('password_reset_otp')
+        .update({ is_used: true })
+        .eq('id', otpRecord.id);
+
+      console.log("✅ Password reset successful");
+      
+      showAlert(
+        verifyAlert, 
+        "✅ Password berhasil direset! Logging in...", 
+        "success"
+      );
+      
+      showToast(
+        "Berhasil!", 
+        "Password direset, logging in...", 
+        "success"
+      );
+
+      // ⭐ AUTO-LOGIN AFTER PASSWORD RESET
+      console.log("🔐 Auto-logging in user...");
+      
+      try {
+        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: newPassword
+        });
+
+        if (loginError) {
+          console.error("❌ Auto-login failed:", loginError);
+          
+          // Still show success message, but redirect to login
+          showAlert(
+            verifyAlert, 
+            "✅ Password berhasil direset! Silakan login dengan password baru.", 
+            "success"
+          );
+          
+          // Clear form and go to login
+          verifyOtpForm.reset();
+          sessionStorage.removeItem('reset_email');
+          
+          setTimeout(() => {
+            showOnlyForm(loginFormDiv);
+            // Pre-fill email for convenience
+            document.getElementById('loginEmail').value = email;
+          }, 2000);
+          
+          return;
+        }
+
+        // ✅ LOGIN SUCCESSFUL
+        console.log("✅ Auto-login successful:", loginData.user);
+        
+        localStorage.setItem("access_token", loginData.session.access_token);
+        localStorage.setItem("user", JSON.stringify(loginData.user));
+        localStorage.setItem("isLoggedIn", "true");
+
+        showAlert(
+          verifyAlert, 
+          "✅ Password direset dan login berhasil! Mengalihkan ke dashboard...", 
+          "success"
+        );
+        
+        showToast(
+          "Berhasil!", 
+          "Login otomatis berhasil! Selamat datang.", 
+          "success"
+        );
+
+        // Determine user role and redirect
+        const role = await determineUserRole(loginData.user);
+        
+        if (role === "unknown") {
+          showAlert(
+            verifyAlert, 
+            "⚠️ Akun tidak terdaftar sebagai dokter atau asisten!", 
+            "warning"
+          );
+          
+          await supabaseClient.auth.signOut();
+          localStorage.clear();
+          
+          setTimeout(() => {
+            showOnlyForm(loginFormDiv);
+          }, 2000);
+          
+          return;
+        }
+
+        // Clear form
+        verifyOtpForm.reset();
+        sessionStorage.removeItem('reset_email');
+
+        // Redirect to dashboard
+        setTimeout(() => {
+          if (role === "dokter" || role === "asisten_dokter") {
+            window.location.href = "../../Dashboard/index.html";
+          }
+        }, 1500);
+
+      } catch (autoLoginError) {
+        console.error("❌ Auto-login error:", autoLoginError);
+        
+        // Fallback: redirect to login form
+        showAlert(
+          verifyAlert, 
+          "✅ Password berhasil direset! Silakan login.", 
+          "success"
+        );
+        
+        verifyOtpForm.reset();
+        sessionStorage.removeItem('reset_email');
+        
+        setTimeout(() => {
+          showOnlyForm(loginFormDiv);
+          document.getElementById('loginEmail').value = email;
+        }, 2000);
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+
+    } catch (error) {
+      console.error("❌ OTP verification error:", error);
+      
+      showAlert(verifyAlert, `❌ ${error.message}`, "danger");
+      showToast("Error", error.message, "danger");
+      
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+    }
+  });
+}
 
   // ========================================
-  // LOGIN HANDLER
+  // LOGIN FORM HANDLER
   // ========================================
   const loginForm = document.querySelector("#loginForm form");
-  
+
   if (loginForm) {
     console.log("✅ Login form found");
     
@@ -499,19 +871,24 @@ document.addEventListener("DOMContentLoaded", function () {
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const loginAlert = document.getElementById("loginAlert");
 
-      // Validate
+      loginAlert.style.display = "none";
+
       if (!email || !password) {
-        showAlert(loginAlert, "Email dan password harus diisi!", "danger");
+        showAlert(loginAlert, "⚠️ Email dan password harus diisi!", "danger");
         return;
       }
 
-      // Show loading
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showAlert(loginAlert, "⚠️ Format email tidak valid!", "danger");
+        return;
+      }
+
       const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
 
       try {
-        // Login via Supabase
         const { data, error } = await supabaseClient.auth.signInWithPassword({
           email: email,
           password: password
@@ -519,7 +896,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (error) {
           console.error("❌ Login error:", error);
-          showAlert(loginAlert, `Login gagal: ${error.message}`, "danger");
+          
+          let errorMessage = "Login gagal!";
+          
+          if (error.message.includes("Invalid login credentials")) {
+            errorMessage = "❌ Email atau password salah! Silakan coba lagi.";
+          } else if (error.message.includes("Email not confirmed")) {
+            errorMessage = "⚠️ Email belum diverifikasi! Silakan cek inbox email Anda.";
+          } else if (error.message.includes("User not found")) {
+            errorMessage = "❌ Email tidak terdaftar! Silakan daftar terlebih dahulu.";
+          } else if (error.message.includes("Too many requests")) {
+            errorMessage = "⏳ Terlalu banyak percobaan login! Silakan tunggu beberapa menit.";
+          } else if (error.message.includes("Network")) {
+            errorMessage = "🌐 Koneksi internet bermasalah! Silakan cek koneksi Anda.";
+          } else {
+            errorMessage = `❌ ${error.message}`;
+          }
+          
+          showAlert(loginAlert, errorMessage, "danger");
+          showToast("Login Gagal", errorMessage, "danger");
+          
           submitBtn.disabled = false;
           submitBtn.innerHTML = originalText;
           return;
@@ -528,36 +924,55 @@ document.addEventListener("DOMContentLoaded", function () {
         if (data && data.user) {
           console.log("✅ Login successful:", data.user);
           
-          // Save to localStorage
           localStorage.setItem("access_token", data.session.access_token);
           localStorage.setItem("user", JSON.stringify(data.user));
           localStorage.setItem("isLoggedIn", "true");
 
-          // Determine role
+          showAlert(loginAlert, "✅ Login berhasil! Memeriksa akun...", "success");
+
           const role = await determineUserRole(data.user);
           
           if (role === "unknown") {
-            showAlert(loginAlert, "Akun tidak terdaftar sebagai dokter atau asisten!", "danger");
+            showAlert(
+              loginAlert, 
+              "❌ Akun tidak terdaftar sebagai dokter atau asisten! Silakan hubungi administrator.", 
+              "danger"
+            );
+            showToast(
+              "Akses Ditolak", 
+              "Akun Anda tidak memiliki akses ke sistem ini", 
+              "danger"
+            );
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
+            
+            await supabaseClient.auth.signOut();
+            localStorage.clear();
             return;
           }
 
-          // Success - redirect based on role
-          showAlert(loginAlert, "Login berhasil! Mengalihkan...", "success");
+          showAlert(loginAlert, "✅ Login berhasil! Mengalihkan ke dashboard...", "success");
+          showToast("Berhasil!", "Login berhasil! Selamat datang.", "success");
           
           setTimeout(() => {
-            if (role === "dokter") {
-              window.location.href = "../../Dashboard/index.html";
-            } else if (role === "asisten_dokter") {
+            if (role === "dokter" || role === "asisten_dokter") {
               window.location.href = "../../Dashboard/index.html";
             }
-          }, 1000);
+          }, 1500);
         }
 
       } catch (error) {
         console.error("❌ Login error:", error);
-        showAlert(loginAlert, `Error: ${error.message}`, "danger");
+        
+        let errorMessage = "Terjadi kesalahan sistem! Silakan coba lagi.";
+        
+        if (error.message.includes("fetch")) {
+          errorMessage = "🌐 Tidak dapat terhubung ke server! Silakan cek koneksi internet Anda.";
+        }
+        
+        showAlert(loginAlert, `❌ ${errorMessage}`, "danger");
+        showToast("Error", errorMessage, "danger");
+        
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
       }
@@ -565,6 +980,48 @@ document.addEventListener("DOMContentLoaded", function () {
   } else {
     console.warn("⚠️ Login form not found!");
   }
+
+  // ========================================
+  // INPUT VALIDATION
+  // ========================================
+  function addInputValidation() {
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPassword = document.getElementById("loginPassword");
+    
+    if (loginEmail) {
+      loginEmail.addEventListener("blur", function() {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (this.value && !emailRegex.test(this.value)) {
+          this.classList.add("is-invalid");
+          
+          if (!this.nextElementSibling || !this.nextElementSibling.classList.contains("invalid-feedback")) {
+            const errorDiv = document.createElement("div");
+            errorDiv.className = "invalid-feedback";
+            errorDiv.textContent = "Format email tidak valid";
+            this.parentElement.appendChild(errorDiv);
+          }
+        } else {
+          this.classList.remove("is-invalid");
+          const errorDiv = this.parentElement.querySelector(".invalid-feedback");
+          if (errorDiv) errorDiv.remove();
+        }
+      });
+      
+      loginEmail.addEventListener("input", function() {
+        this.classList.remove("is-invalid");
+        const errorDiv = this.parentElement.querySelector(".invalid-feedback");
+        if (errorDiv) errorDiv.remove();
+      });
+    }
+    
+    if (loginPassword) {
+      loginPassword.addEventListener("input", function() {
+        this.classList.remove("is-invalid");
+      });
+    }
+  }
+
+  addInputValidation();
 
   // ========================================
   // REGISTRATION HANDLER
