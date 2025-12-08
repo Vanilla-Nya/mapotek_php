@@ -132,7 +132,7 @@ function getQueueStats($id_dokter) {
         
         // Get today's queue
         $result = supabase('GET', 'antrian', 
-            "id_dokter=eq.$id_dokter&tanggal_antrian=eq.$today&select=status_antrian"
+            "id_dokter=eq.$id_dokter&tanggal_antrian=eq.$today&is_deleted=eq.0&select=id_antrian,status_antrian"
         );
         
         $stats = [
@@ -143,16 +143,27 @@ function getQueueStats($id_dokter) {
         ];
         
         if (is_array($result) && !isset($result['error'])) {
-            $stats['total'] = count($result);
-            
+            // Validate each antrian with blockchain
             foreach ($result as $item) {
-                $status = strtolower($item['status_antrian'] ?? '');
-                if ($status === 'selesai') {
-                    $stats['selesai']++;
-                } elseif ($status === 'dalam pemeriksaan') {
-                    $stats['dalam_pemeriksaan']++;
-                } elseif ($status === 'menunggu' || $status === 'belum periksa') {
-                    $stats['menunggu']++;
+                $id_antrian = $item['id_antrian'];
+                
+                // Check blockchain validation
+                $blockchainLog = supabase('GET', 'blockchain_log',
+                    "record_id=eq.$id_antrian&table_name=eq.antrian&action=in.(INSERT,UPDATE)&select=id_log"
+                );
+                
+                // Only count if blockchain validated
+                if (is_array($blockchainLog) && !isset($blockchainLog['error']) && !empty($blockchainLog)) {
+                    $stats['total']++;
+                    
+                    $status = strtolower($item['status_antrian'] ?? '');
+                    if ($status === 'selesai') {
+                        $stats['selesai']++;
+                    } elseif ($status === 'dalam pemeriksaan') {    
+                        $stats['dalam_pemeriksaan']++;
+                    } elseif ($status === 'menunggu' || $status === 'belum periksa') {
+                        $stats['menunggu']++;
+                    }
                 }
             }
         }
@@ -268,17 +279,40 @@ function getPatientStats($id_dokter) {
         $startOfMonth = date('Y-m-01');
         $today = date('Y-m-d');
         
-        // Get patient visits this month
-        $result = supabase('GET', 'antrian', 
-            "id_dokter=eq.$id_dokter&tanggal_antrian=gte.$startOfMonth&tanggal_antrian=lte.$today&select=id_antrian"
+        // Query antrian with blockchain validation
+        $antrianResult = supabase('GET', 'antrian', 
+            "id_dokter=eq.$id_dokter&tanggal_antrian=gte.$startOfMonth&tanggal_antrian=lte.$today&is_deleted=eq.0&select=id_antrian"
         );
         
-        $totalPatients = is_array($result) && !isset($result['error']) ? count($result) : 0;
+        if (!is_array($antrianResult) || isset($antrianResult['error'])) {
+            echo json_encode([
+                'success' => true,
+                'data' => ['total_patients' => 0]
+            ]);
+            return;
+        }
+        
+        // Get blockchain logs for these antrian IDs
+        $validatedCount = 0;
+        
+        foreach ($antrianResult as $antrian) {
+            $id_antrian = $antrian['id_antrian'];
+            
+            // Check if this antrian has blockchain validation
+            $blockchainLog = supabase('GET', 'blockchain_log',
+                "record_id=eq.$id_antrian&table_name=eq.antrian&action=in.(INSERT,UPDATE)&select=id_log"
+            );
+            
+            // If blockchain record exists, count it
+            if (is_array($blockchainLog) && !isset($blockchainLog['error']) && !empty($blockchainLog)) {
+                $validatedCount++;
+            }
+        }
         
         echo json_encode([
             'success' => true,
             'data' => [
-                'total_patients' => $totalPatients
+                'total_patients' => $validatedCount
             ]
         ]);
     } catch (Exception $e) {
@@ -295,21 +329,33 @@ function getQueueDetails($id_dokter) {
         
         // Get today's queue with patient details
         $result = supabase('GET', 'antrian', 
-            "id_dokter=eq.$id_dokter&tanggal_antrian=eq.$today&order=no_antrian.asc&select=id_antrian,no_antrian,jenis_pasien,jam_antrian,status_antrian,pasien(nama)"
+            "id_dokter=eq.$id_dokter&tanggal_antrian=eq.$today&is_deleted=eq.0&order=no_antrian.asc&select=id_antrian,no_antrian,jenis_pasien,jam_antrian,status_antrian,pasien(nama)"
         );
         
         $queueList = [];
         
         if (is_array($result) && !isset($result['error'])) {
             foreach ($result as $item) {
-                $queueList[] = [
-                    'id_antrian' => $item['id_antrian'],
-                    'no_antrian' => $item['no_antrian'],
-                    'nama_pasien' => $item['pasien']['nama'] ?? 'Unknown',
-                    'jam_antrian' => $item['jam_antrian'],
-                    'jenis_pasien' => $item['jenis_pasien'],
-                    'status_antrian' => $item['status_antrian']
-                ];
+                $id_antrian = $item['id_antrian'];
+                
+                // Check blockchain validation
+                $blockchainLog = supabase('GET', 'blockchain_log',
+                    "record_id=eq.$id_antrian&table_name=eq.antrian&action=in.(INSERT,UPDATE)&select=id_log,tx_hash,created_at"
+                );
+                
+                // Only include if blockchain validated
+                if (is_array($blockchainLog) && !isset($blockchainLog['error']) && !empty($blockchainLog)) {
+                    $queueList[] = [
+                        'id_antrian' => $item['id_antrian'],
+                        'no_antrian' => $item['no_antrian'],
+                        'nama_pasien' => $item['pasien']['nama'] ?? 'Unknown',
+                        'jam_antrian' => $item['jam_antrian'],
+                        'jenis_pasien' => $item['jenis_pasien'],
+                        'status_antrian' => $item['status_antrian'],
+                        'blockchain_verified' => true,
+                        'tx_hash' => $blockchainLog[0]['tx_hash'] ?? null
+                    ];
+                }
             }
         }
         
@@ -335,16 +381,32 @@ function getPatientVisitChart($id_dokter) {
             $startDate = $month . '-01';
             $endDate = date('Y-m-t', strtotime($startDate));
             
-            // Count patients for this month
+            // Get patients for this month
             $result = supabase('GET', 'antrian', 
-                "id_dokter=eq.$id_dokter&tanggal_antrian=gte.$startDate&tanggal_antrian=lte.$endDate&select=id_antrian"
+                "id_dokter=eq.$id_dokter&tanggal_antrian=gte.$startDate&tanggal_antrian=lte.$endDate&is_deleted=eq.0&select=id_antrian"
             );
             
-            $count = is_array($result) && !isset($result['error']) ? count($result) : 0;
+            $validatedCount = 0;
+            
+            // Validate each antrian with blockchain
+            if (is_array($result) && !isset($result['error'])) {
+                foreach ($result as $item) {
+                    $id_antrian = $item['id_antrian'];
+                    
+                    // Check blockchain validation
+                    $blockchainLog = supabase('GET', 'blockchain_log',
+                        "record_id=eq.$id_antrian&table_name=eq.antrian&action=in.(INSERT,UPDATE)&select=id_log"
+                    );
+                    
+                    if (is_array($blockchainLog) && !isset($blockchainLog['error']) && !empty($blockchainLog)) {
+                        $validatedCount++;
+                    }
+                }
+            }
             
             $monthlyData[] = [
                 'month' => date('M', strtotime($startDate)),
-                'count' => $count
+                'count' => $validatedCount
             ];
         }
         

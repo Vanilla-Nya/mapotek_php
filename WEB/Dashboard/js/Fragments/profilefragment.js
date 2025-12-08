@@ -911,7 +911,7 @@ class ProfileFragment {
     async initializeSubscription(email) {
         const access_token = localStorage.getItem('access_token');
         
-        const { data: { user }, error } = await supabaseClient.auth.getUser(access_token);
+        const { data: { user }, error } = await supabaseClient.auth.getUser();
         
         if (error || !user) {
             localStorage.removeItem("access_token");
@@ -1107,6 +1107,15 @@ class ProfileFragment {
         document.getElementById('qrisOptionUpload')?.addEventListener('change', () => {
             document.getElementById('qrisUploadOption').classList.remove('d-none');
             document.getElementById('qrisLinkOption').classList.add('d-none');
+        });
+
+        document.getElementById('qrisOptionLink')?.addEventListener('change', () => {
+            document.getElementById('qrisUploadOption').classList.add('d-none');
+            document.getElementById('qrisLinkOption').classList.remove('d-none');
+            document.getElementById('qrisPreview').classList.add('d-none');
+            document.getElementById('qrisFile').value = '';
+            this.qrisFileBlob = null;
+            this.qrisUrlLink = null;
         });
 
         document.getElementById('qrisFile')?.addEventListener('change', (e) => this.previewQRIS(e.target.files[0]));
