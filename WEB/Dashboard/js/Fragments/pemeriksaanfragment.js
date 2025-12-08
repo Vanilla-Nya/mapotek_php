@@ -422,7 +422,7 @@ class ICDIXSelectionModal {
     tbody.innerHTML = PemeriksaanSkeletonLoader.searchResults(8);
 
     try {
-      const response = await fetch("../../..//Dashboard/resource/icd9.json");
+      const response = await fetch("../../../Dashboard/resource/icd9.json");
       if (!response.ok) throw new Error("Failed to load icd9.json");
 
       const jsonData = await response.json();
@@ -726,7 +726,7 @@ class ObatSelectionModal {
     }
 
     try {
-      const url = `/MAPOTEK_PHP/WEB/API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
+      const url = `../../../API/obat.php?action=get_all&id_dokter=${this.doctorId}`;
       console.log("📤 Fetching from:", url);
 
       this.showLoading(true);
