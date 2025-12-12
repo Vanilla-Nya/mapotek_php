@@ -161,26 +161,55 @@ function searchPasien() {
  * GET: ?action=generate_number
  */
 function generateQueueNumber() {
-    $today = date('dmy');
     $tanggal = date('Y-m-d');
+    $datePrefix = date('dm'); // DDMM format (e.g., "1212" for Dec 12)
 
     try {
-        $params = "select=no_antrian&tanggal_antrian=eq.$tanggal&order=no_antrian.desc&limit=1";
+        // Get ALL queue numbers for today
+        $params = "select=no_antrian&tanggal_antrian=eq.$tanggal&order=no_antrian.desc&limit=100";
         $result = supabase('GET', 'antrian', $params);
 
         $lastNumber = 0;
-        if (!empty($result) && isset($result[0]['no_antrian'])) {
-            preg_match('/^(\d+)/', $result[0]['no_antrian'], $matches);
-            $lastNumber = isset($matches[1]) ? intval($matches[1]) : 0;
+        
+        if (!empty($result) && is_array($result)) {
+            foreach ($result as $queue) {
+                if (isset($queue['no_antrian'])) {
+                    $queueNum = $queue['no_antrian'];
+                    
+                    // Try to extract number from ANY format
+                    // Format 1: DDMM-NNN (e.g., "1212-001")
+                    if (preg_match('/^' . $datePrefix . '-(\d+)$/', $queueNum, $matches)) {
+                        $num = intval($matches[1]);
+                        if ($num > $lastNumber) {
+                            $lastNumber = $num;
+                        }
+                    }
+                    // Format 2: Old format DDMMYYNNN or DDMMNNN (e.g., "121225002")
+                    else if (preg_match('/^' . $datePrefix . '\d*(\d{3})$/', $queueNum, $matches)) {
+                        $num = intval($matches[1]);
+                        if ($num > $lastNumber) {
+                            $lastNumber = $num;
+                        }
+                    }
+                }
+            }
         }
 
         $newNumber = $lastNumber + 1;
-        $queueNumber = $newNumber . $today;
+        
+        // ✅ ALWAYS use new format: DDMM-NNN
+        $queueNumber = $datePrefix . '-' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
 
         echo json_encode([
             'success' => true,
             'no_antrian' => $queueNumber,
-            'tanggal' => $tanggal
+            'tanggal' => $tanggal,
+            'debug' => [
+                'date_prefix' => $datePrefix,
+                'last_number' => $lastNumber,
+                'new_number' => $newNumber,
+                'found_queues' => count($result ?? [])
+            ]
         ]);
     } catch (Exception $e) {
         echo json_encode([
