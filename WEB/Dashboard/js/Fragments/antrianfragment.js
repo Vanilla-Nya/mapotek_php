@@ -16,8 +16,11 @@ const CustomAlert = {
     showCancel = false,
     autoClose = 0 // Auto close after ms (0 = disabled)
   }) {
-    // Remove existing alert
-    this.hide();
+    // ✅ FIX: Force remove any existing alerts synchronously
+    const existing = document.getElementById('customAlertOverlay');
+    if (existing) {
+      existing.remove();
+    }
     
     const icons = {
       success: '<i class="bi bi-check-circle-fill"></i>',
@@ -72,8 +75,9 @@ const CustomAlert = {
           display: flex;
           justify-content: center;
           align-items: center;
-          z-index: 10000;
+          z-index: 99999; /* ✅ FIX: Higher z-index */
           animation: alertFadeIn 0.2s ease;
+          pointer-events: auto; /* ✅ FIX: Ensure clickable */
         }
         
         @keyframes alertFadeIn {
@@ -111,6 +115,7 @@ const CustomAlert = {
           width: 90%;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
           text-align: center;
+          pointer-events: auto; /* ✅ FIX: Ensure clickable */
         }
         
         .custom-alert-icon {
@@ -154,6 +159,7 @@ const CustomAlert = {
           cursor: pointer;
           transition: all 0.2s;
           border: none;
+          pointer-events: auto; /* ✅ FIX: Ensure clickable */
         }
         
         .custom-alert-btn.btn-confirm {
@@ -179,58 +185,41 @@ const CustomAlert = {
     
     document.body.insertAdjacentHTML('beforeend', alertHTML);
     
-    // Setup event listeners
-    const confirmBtn = document.getElementById('customAlertConfirm');
-    const cancelBtn = document.getElementById('customAlertCancel');
-    
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', () => {
-        this.hide();
-        if (onConfirm) onConfirm();
-      });
-    }
-    
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        this.hide();
-        if (onCancel) onCancel();
-      });
-    }
-    
-    // Auto close
-    if (autoClose > 0) {
-      setTimeout(() => this.hide(), autoClose);
-    }
-    
-    // Return promise for async usage
+    // ✅ FIX: Return promise and setup event listeners ONLY ONCE
     return new Promise((resolve) => {
-      // Setup event listeners (only once)
-      const confirmBtn = document.getElementById('customAlertConfirm');
-      const cancelBtn = document.getElementById('customAlertCancel');
-      
-      if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const confirmBtn = document.getElementById('customAlertConfirm');
+        const cancelBtn = document.getElementById('customAlertCancel');
+        
+        const handleConfirm = () => {
           this.hide();
           if (onConfirm) onConfirm();
           resolve(true);
-        });
-      }
-      
-      if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
+        };
+        
+        const handleCancel = () => {
           this.hide();
           if (onCancel) onCancel();
           resolve(false);
-        });
-      }
-      
-      // Auto close
-      if (autoClose > 0) {
-        setTimeout(() => {
-          this.hide();
-          resolve(false);
-        }, autoClose);
-      }
+        };
+        
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', handleConfirm, { once: true }); // ✅ FIX: Use once option
+        }
+        
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', handleCancel, { once: true }); // ✅ FIX: Use once option
+        }
+        
+        // Auto close
+        if (autoClose > 0) {
+          setTimeout(() => {
+            this.hide();
+            resolve(false);
+          }, autoClose);
+        }
+      }, 50);
     });
   },
   
@@ -735,8 +724,11 @@ class AntrianFragment {
 
                 <div class="mb-3">
                   <label class="form-label">No Antrian (Auto)</label>
-                  <input type="text" class="form-control bg-light" id="queueNumber" placeholder="Auto-generated..." readonly required>
-                  <small class="text-muted">Format: [Nomor][Tanggal] - Contoh: 1081025</small>
+                  <input type="text" class="form-control bg-light" id="queueNumber" placeholder="Contoh: 1212-001" readonly required>
+                  <small class="text-muted d-flex align-items-center mt-2">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Format: <strong class="mx-1">DDMM-NNN</strong> (Contoh: 1212-001)
+                  </small>
                 </div>
 
                 <input type="hidden" id="selectedPatientId">
