@@ -724,7 +724,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Step 3: Update password using backend PHP (server validates expiration)
         console.log("📝 Updating password via backend...");
 
-        const response = await fetch("/WEB/API/auth/reset-password.php", {
+        const response = await fetch("/API/auth/reset-password.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1144,7 +1144,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("💾 Registering doctor with data:", registrationData);
 
       try {
-        const response = await fetch("/WEB/API/auth/auth.php", {
+        const response = await fetch("/API/auth/auth.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(registrationData),
