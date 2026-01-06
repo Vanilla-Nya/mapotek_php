@@ -724,19 +724,16 @@ document.addEventListener("DOMContentLoaded", function () {
         // Step 3: Update password using backend PHP (server validates expiration)
         console.log("📝 Updating password via backend...");
 
-        const response = await fetch(
-          "/MAPOTEK_PHP/WEB/API/auth/reset-password.php",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action: "reset_password",
-              email: email,
-              new_password: newPassword,
-              otp_id: otpRecord.id,
-            }),
-          }
-        );
+        const response = await fetch("/WEB/API/auth/reset-password.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "reset_password",
+            email: email,
+            new_password: newPassword,
+            otp_id: otpRecord.id,
+          }),
+        });
 
         const result = await response.json();
         console.log("📝 Password reset result:", result);
@@ -1147,7 +1144,7 @@ document.addEventListener("DOMContentLoaded", function () {
       console.log("💾 Registering doctor with data:", registrationData);
 
       try {
-        const response = await fetch("/MAPOTEK_PHP/WEB/API/auth/auth.php", {
+        const response = await fetch("/WEB/API/auth/auth.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(registrationData),
