@@ -358,12 +358,15 @@ function getSummary($id_dokter) {
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
         
-        $dateFilter = '';
+        // Get total pemasukan
         if ($startDate && $endDate) {
-            $dateFilter = "&created_at=gte.$startDate&created_at=lte.$endDate";
+            $startDateTime = $startDate . 'T00:00:00Z';
+            $endDateTime = $endDate . 'T23:59:59Z';
+            $dateFilter = "&created_at=gte." . urlencode($startDateTime) . "&created_at=lte." . urlencode($endDateTime);
+        } else {
+            $dateFilter = "";
         }
         
-        // Get total pemasukan
         $pemasukan = supabase('GET', 'pemasukan', 
             "id_dokter=eq.$id_dokter&select=total$dateFilter"
         );
@@ -376,14 +379,22 @@ function getSummary($id_dokter) {
         }
         
         // Get total pengeluaran
+        $pengeluaranDateFilter = "";
+        if ($startDate && $endDate) {
+            $pengeluaranDateFilter = "&tanggal=gte.$startDate&tanggal=lte.$endDate";
+        }
+
         $pengeluaran = supabase('GET', 'pengeluaran', 
-            "id_dokter=eq.$id_dokter&select=pengeluaran_detail(jumlah,harga)$dateFilter"
+            "id_dokter=eq.$id_dokter&select=total,pengeluaran_detail(jumlah,harga)$pengeluaranDateFilter"
         );
         
         $totalPengeluaran = 0;
         if (!isset($pengeluaran['error']) && is_array($pengeluaran)) {
             foreach ($pengeluaran as $item) {
-                if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
+                // ✅ PRIORITIZE 'total' FIELD
+                if (isset($item['total']) && $item['total'] !== null && $item['total'] > 0) {
+                    $totalPengeluaran += floatval($item['total']);
+                } else if (isset($item['pengeluaran_detail']) && is_array($item['pengeluaran_detail'])) {
                     foreach ($item['pengeluaran_detail'] as $detail) {
                         $totalPengeluaran += floatval($detail['jumlah'] ?? 0) * floatval($detail['harga'] ?? 0);
                     }
@@ -429,8 +440,8 @@ function filterPembukuan($id_dokter) {
         }
         
         // Use ISO 8601 format
-        $startDateTime = $startDate . 'T00:00:00+00';
-        $endDateTime = $endDate . 'T23:59:59+00';
+        $startDateTime = $startDate . 'T00:00:00Z';
+        $endDateTime = $endDate . 'T23:59:59Z';
         
         error_log("📅 Using ISO format: start=$startDateTime, end=$endDateTime");
         
