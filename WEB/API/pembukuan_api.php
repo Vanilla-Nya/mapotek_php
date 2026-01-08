@@ -429,8 +429,8 @@ function filterPembukuan($id_dokter) {
         }
         
         // Use ISO 8601 format
-        $startDateTime = $startDate . 'T00:00:00Z';
-        $endDateTime = $endDate . 'T23:59:59Z';
+        $startDateTime = $startDate . 'T00:00:00+00';
+        $endDateTime = $endDate . 'T23:59:59+00';
         
         error_log("📅 Using ISO format: start=$startDateTime, end=$endDateTime");
         

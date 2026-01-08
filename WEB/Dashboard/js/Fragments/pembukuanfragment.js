@@ -1365,8 +1365,10 @@ async function pembukuanFilter() {
       window.PEMBUKUAN_API_URL +
       "?action=filter_pembukuan&start_date=" +
       startDate +
+      "T00:00:00+00" +
       "&end_date=" +
       endDate +
+      "T23:59:59+00" +
       "&dokter_id=" +
       dokterId;
 
