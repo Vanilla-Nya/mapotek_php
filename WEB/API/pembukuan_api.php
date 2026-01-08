@@ -523,9 +523,9 @@ function filterPembukuan($id_dokter) {
         
         error_log("✅ Filter completed. Total days: " . count($dailySummary));
         error_log("📊 SUMMARY:");
-        foreach ($dailySummary as $day) {
-            error_log("   {$day['tanggal']}: +Rp {$day['pemasukan']} -Rp {$day['pengeluaran']} = Rp {$day['saldo']}");
-        }
+        // foreach ($dailySummary as $day) {
+        //     error_log("   {$day['tanggal']}: +Rp {$day['pemasukan']} -Rp {$day['pengeluaran']} = Rp {$day['saldo']}");
+        // }
         
         echo json_encode([
             'success' => true,
@@ -536,7 +536,7 @@ function filterPembukuan($id_dokter) {
                 'pemasukan_count' => is_array($pemasukan) && !isset($pemasukan['error']) ? count($pemasukan) : 0,
                 'pemasukan' => $pemasukan,
                 'pengeluaran' => $pengeluaran,
-                'grouped_by_date' => $groupedByDate,
+                'grouped_by_date' => array_values($groupedByDate),
                 'pengeluaran_count' => is_array($pengeluaran) && !isset($pengeluaran['error']) ? count($pengeluaran) : 0,
                 'total_days' => count($dailySummary)
             ]
