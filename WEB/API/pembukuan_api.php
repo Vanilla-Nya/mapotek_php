@@ -529,7 +529,7 @@ function filterPembukuan($id_dokter) {
         
         echo json_encode([
             'success' => true,
-            'data' => $dailySummary,
+            'data' => $groupedByDate,
             'debug' => [
                 'start_date' => $startDateTime,
                 'end_date' => $endDateTime,
