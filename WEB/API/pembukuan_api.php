@@ -517,9 +517,12 @@ function filterPembukuan($id_dokter) {
         // });
         
         // Calculate running balance
-        foreach ($dailySummary as $day) {
-            $day['saldo'] = $day['pemasukan'] - $day['pengeluaran'];
+        $runningBalance = 0;
+        foreach ($dailySummary as &$day) {
+            $runningBalance += ($day['pemasukan'] - $day['pengeluaran']);
+            $day['saldo'] = $runningBalance;
         }
+        unset($day);
         
         error_log("✅ Filter completed. Total days: " . count($dailySummary));
         error_log("📊 SUMMARY:");
