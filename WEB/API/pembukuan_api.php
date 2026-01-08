@@ -535,6 +535,8 @@ function filterPembukuan($id_dokter) {
                 'end_date' => $endDateTime,
                 'pemasukan_count' => is_array($pemasukan) && !isset($pemasukan['error']) ? count($pemasukan) : 0,
                 'pemasukan' => $pemasukan,
+                'pengeluaran' => $pengeluaran,
+                'grouped_by_date' => $groupedByDate,
                 'pengeluaran_count' => is_array($pengeluaran) && !isset($pengeluaran['error']) ? count($pengeluaran) : 0,
                 'total_days' => count($dailySummary)
             ]
