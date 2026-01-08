@@ -510,9 +510,9 @@ function filterPembukuan($id_dokter) {
         
         // Convert to array and sort by date
         $dailySummary = array_values($groupedByDate);
-        usort($dailySummary, function($a, $b) {
-            return strtotime($a['tanggal']) - strtotime($b['tanggal']);
-        });
+        // usort($dailySummary, function($a, $b) {
+        //     return strtotime($a['tanggal']) - strtotime($b['tanggal']);
+        // });
         
         // Calculate running balance
         $saldo = 0;
@@ -529,7 +529,7 @@ function filterPembukuan($id_dokter) {
         
         echo json_encode([
             'success' => true,
-            'data' => $groupedByDate,
+            'data' => $dailySummary,
             'debug' => [
                 'start_date' => $startDateTime,
                 'end_date' => $endDateTime,
