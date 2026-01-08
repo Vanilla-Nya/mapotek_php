@@ -915,6 +915,7 @@ class AsistenDokterFragment {
           password: password,
           nama: nama,
           alamat: formattedAddress,
+          nik: nik,
         }),
       });
 

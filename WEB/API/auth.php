@@ -39,6 +39,43 @@ try {
             }
         }
 
+        // Check if email already exists in relevant tables to prevent double signup
+        $email = $data['email'];
+        
+        // Check in pasien table
+        if (emailExists($email)) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Email sudah terdaftar sebagai pasien'
+            ]);
+            exit;
+        }
+
+        // Check in dokter table
+        $checkDokter = supabase('GET', 'dokter', 'email=eq.' . urlencode($email) . '&select=email');
+        if (!empty($checkDokter) && !isset($checkDokter['error'])) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'Email sudah terdaftar sebagai dokter'
+            ]);
+            exit;
+        }
+        
+        // Optional: Check if NIK already exists (if provided)
+        if (!empty($data['nik'])) {
+            $nik = $data['nik'];
+            $checkNikPasien = nikExists($nik);
+            $checkNikDokter = supabase('GET', 'dokter', 'nik=eq.' . urlencode($nik) . '&select=nik');
+            
+            if ($checkNikPasien || (!empty($checkNikDokter) && !isset($checkNikDokter['error']))) {
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'NIK sudah terdaftar'
+                ]);
+                exit;
+            }
+        }
+
         // Call Supabase auth signup endpoint
         $result = supabaseAuth('POST', 'signup', $authData);
 

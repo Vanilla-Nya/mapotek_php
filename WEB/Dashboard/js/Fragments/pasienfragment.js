@@ -1750,6 +1750,7 @@ class PasienFragment {
         password: password,
         nama: nama,
         alamat: formattedAddress,
+        nik: nik,
       };
 
       const authResponse = await fetch("../../../API/auth.php", {
