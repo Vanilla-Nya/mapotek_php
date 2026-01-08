@@ -516,7 +516,7 @@ function filterPembukuan($id_dokter) {
         
         // Calculate running balance
         $saldo = 0;
-        foreach ($dailySummary as &$day) {
+        foreach ($dailySummary as $day) {
             $saldo += $day['pemasukan'] - $day['pengeluaran'];
             $day['saldo'] = $saldo;
         }
