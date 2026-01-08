@@ -466,6 +466,7 @@ function filterPembukuan($id_dokter) {
                         'tanggal' => $tanggal,
                         'pemasukan' => 0,
                         'pengeluaran' => 0,
+                        'saldo' => 0,
                         'created_at' => $item['created_at']
                     ];
                 }
@@ -484,6 +485,7 @@ function filterPembukuan($id_dokter) {
                         'tanggal' => $tanggal,
                         'pemasukan' => 0,
                         'pengeluaran' => 0,
+                        'saldo' => 0,
                         'created_at' => $item['created_at'] ?? ($tanggal . 'T00:00:00Z')
                     ];
                 }
