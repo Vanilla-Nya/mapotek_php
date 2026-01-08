@@ -435,7 +435,7 @@ function filterPembukuan($id_dokter) {
         error_log("📅 Using ISO format: start=$startDateTime, end=$endDateTime");
         
         // Get filtered pemasukan
-        $pemasukanQuery = "id_dokter=eq.$id_dokter&created_at=gte.$startDateTime&created_at=lte.$endDateTime&select=*&order=created_at.desc";
+        $pemasukanQuery = "id_dokter=eq.$id_dokter&created_at=gte." . urlencode($startDateTime) . "&created_at=lte." . urlencode($endDateTime) . "&select=*&order=created_at.desc";
         $pemasukan = supabase('GET', 'pemasukan', $pemasukanQuery);
         
         // ✅ Get filtered pengeluaran - SELECT 'total' FIELD
