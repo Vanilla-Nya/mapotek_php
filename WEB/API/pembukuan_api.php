@@ -459,7 +459,7 @@ function filterPembukuan($id_dokter) {
         // Process pemasukan
         if (!isset($pemasukan['error']) && is_array($pemasukan)) {
             foreach ($pemasukan as $item) {
-                $tanggal = $item['created_at'] ? date('Y-m-d', strtotime($item['created_at'])) : date('Y-m-d');
+                $tanggal = $item['tanggal'] ? date('Y-m-d', strtotime($item['tanggal'])) : date('Y-m-d');
                 
                 if (!isset($groupedByDate[$tanggal])) {
                     $groupedByDate[$tanggal] = [
