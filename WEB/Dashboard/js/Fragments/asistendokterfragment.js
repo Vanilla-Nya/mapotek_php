@@ -907,7 +907,7 @@ class AsistenDokterFragment {
 
       // ⭐ STEP 1: Create auth account
       console.log("📝 Creating auth account...");
-      const authResponse = await fetch("/MAPOTEK_PHP/WEB/API/auth.php", {
+      const authResponse = await fetch("../API/auth.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1153,28 +1153,23 @@ class AsistenDokterFragment {
 
     return `
             <div class="asisten-card-wrapper">
-                <div class="card asisten-card shadow" data-asisten-id="${
-                  asisten.id_asisten_dokter
-                }">
+                <div class="card asisten-card shadow" data-asisten-id="${asisten.id_asisten_dokter
+      }">
                     <div class="card-header-custom">
-                        <div class="header-gradient ${
-                          gradients[index % gradients.length]
-                        }">
+                        <div class="header-gradient ${gradients[index % gradients.length]
+      }">
                             <div class="avatar-name-card">
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-wrapper">
-                                        <img src="${avatarUrl}" alt="${
-      asisten.nama_lengkap
-    }">
+                                        <img src="${avatarUrl}" alt="${asisten.nama_lengkap
+      }">
                                     </div>
                                     <div class="ms-3 flex-grow-1">
-                                        <h5 class="mb-1 fw-bold text-dark">${
-                                          asisten.nama_lengkap
-                                        }</h5>
+                                        <h5 class="mb-1 fw-bold text-dark">${asisten.nama_lengkap
+      }</h5>
                                         <div class="d-flex align-items-center justify-content-between">
-                                            <small class="text-muted"><i class="bi bi-telephone me-1"></i>${
-                                              asisten.no_telp || "-"
-                                            }</small>
+                                            <small class="text-muted"><i class="bi bi-telephone me-1"></i>${asisten.no_telp || "-"
+      }</small>
                                             ${statusBadge}
                                         </div>
                                     </div>
@@ -1203,15 +1198,13 @@ class AsistenDokterFragment {
                                     </div>
                                     <div class="mb-2">
                                         <i class="bi bi-phone me-1"></i>
-                                        <small>+62${
-                                          asisten.no_telp || "-"
-                                        }</small>
+                                        <small>+62${asisten.no_telp || "-"
+      }</small>
                                     </div>
                                     <div>
                                         <i class="bi bi-at me-1"></i>
-                                        <small>${
-                                          asisten.username || "-"
-                                        }</small>
+                                        <small>${asisten.username || "-"
+      }</small>
                                     </div>
                                 </div>
                             </div>
@@ -1225,9 +1218,8 @@ class AsistenDokterFragment {
                                 <div class="detail-value">
                                     <div class="mb-2">
                                         <small><strong>NIK:</strong></small><br>
-                                        <small>${
-                                          asisten.nik || "Tidak tersedia"
-                                        }</small>
+                                        <small>${asisten.nik || "Tidak tersedia"
+      }</small>
                                     </div>
                                     <div class="mb-2">
                                         <small><strong>Jenis Kelamin:</strong></small><br>
@@ -1235,9 +1227,8 @@ class AsistenDokterFragment {
                                     </div>
                                     <div>
                                         <small><strong>RFID:</strong></small><br>
-                                        <small>${
-                                          asisten.rfid || "Tidak terdaftar"
-                                        }</small>
+                                        <small>${asisten.rfid || "Tidak terdaftar"
+      }</small>
                                     </div>
                                 </div>
                             </div>
@@ -1282,9 +1273,9 @@ class AsistenDokterFragment {
                                     <div class="mb-2">
                                         <small><strong>ID Asisten:</strong></small><br>
                                         <small class="text-truncate d-block">${asisten.id_asisten_dokter?.substring(
-                                          0,
-                                          20
-                                        )}...</small>
+        0,
+        20
+      )}...</small>
                                     </div>
                                     <div class="mb-2">
                                         <small><strong>Terdaftar:</strong></small><br>
@@ -1327,8 +1318,8 @@ class AsistenDokterFragment {
     return !gender
       ? "-"
       : gender.toLowerCase() === "l"
-      ? "Laki-laki"
-      : "Perempuan";
+        ? "Laki-laki"
+        : "Perempuan";
   }
   formatDate(dateString) {
     if (!dateString) return "-";
